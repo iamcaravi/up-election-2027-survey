@@ -1,69 +1,98 @@
-import Image from "next/image";
+import Link from "next/link";
+import { getHomeStats, getDistricts, getTrendingConstituencies } from "@/lib/data";
+import { getStatewideTopIssues } from "@/lib/analytics";
+import { Hero } from "@/components/home/Hero";
+import { DistrictExplorer } from "@/components/map/DistrictExplorer";
+import { SectionHeading } from "@/components/home/SectionHeading";
+import { TrendingConstituencies } from "@/components/home/TrendingConstituencies";
+import { TopIssues } from "@/components/home/TopIssues";
+import { HowItWorks } from "@/components/home/HowItWorks";
+import { Container } from "@/components/ui/Container";
 
-export default function Home() {
+export const revalidate = 60;
+
+export default async function Home() {
+  const [stats, districts, trending, topIssues] = await Promise.all([
+    getHomeStats(),
+    getDistricts(),
+    getTrendingConstituencies(6),
+    getStatewideTopIssues(6),
+  ]);
+
+  const districtNodes = districts.map((d) => ({
+    slug: d.slug,
+    name: d.name,
+    constituencyCount: d._count.constituencies,
+    responseCount: 0,
+  }));
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <div>
+      <Hero stats={stats} />
+
+      <Container className="py-16 sm:py-20">
+        <DistrictExplorer districts={districtNodes} />
+      </Container>
+
+      <Container className="py-16 sm:py-20">
+        <SectionHeading
+          eyebrow="Explore"
+          title="Trending Constituencies"
+          subtitle="Ranked by real survey participation — never fabricated."
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+        <TrendingConstituencies
+          items={trending.map((c) => ({
+            slug: c.slug,
+            name: c.name,
+            districtSlug: c.district.slug,
+            districtName: c.district.name,
+            responseCount: c._count.surveyResponses,
+          }))}
+        />
+      </Container>
+
+      <Container className="py-16 sm:py-20">
+        <SectionHeading
+          eyebrow="Issues"
+          title="Top Issues Across UP"
+          subtitle="What survey respondents say matters most in their constituency."
+        />
+        <TopIssues
+          issues={topIssues.issues}
+          sufficientSample={topIssues.sufficientSample}
+          minRequired={topIssues.minRequired}
+        />
+      </Container>
+
+      <Container className="py-16 sm:py-20">
+        <SectionHeading eyebrow="How it works" title="सर्वे कैसे काम करता है" />
+        <HowItWorks />
+      </Container>
+
+      <Container className="py-16 sm:py-20">
+        <div className="grid gap-6 rounded-2xl border border-border bg-surface-2 p-8 sm:grid-cols-2">
+          <div>
+            <h3 className="font-display text-xl font-bold">Methodology</h3>
+            <p className="mt-2 text-sm text-muted">
+              Learn how responses are collected, validated, and how we protect against manipulation and small-sample
+              disclosure.
+            </p>
+            <Link href="/methodology" className="mt-3 inline-block text-sm font-semibold text-ink underline underline-offset-4">
+              Read the methodology →
+            </Link>
+          </div>
+          <div>
+            <h3 className="font-display text-xl font-bold">Disclaimer</h3>
+            <p className="mt-2 text-sm text-muted">
+              This platform presents results from voluntary online survey responses. Survey results are not official
+              election results.
+            </p>
+            <Link href="/disclaimer" className="mt-3 inline-block text-sm font-semibold text-ink underline underline-offset-4">
+              Full disclaimer →
+            </Link>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+      </Container>
     </div>
   );
 }

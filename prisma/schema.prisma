@@ -1,0 +1,297 @@
+// UP Election 2027 — Public Mood & Survey Platform
+// Data model. Provider is SQLite for zero-config local development;
+// switch `provider` to "postgresql" and point DATABASE_URL at a real
+// Postgres instance for production (see README "Production database").
+// Enum-like fields are plain Strings validated in the app layer (src/lib/enums.ts)
+// so the same schema works unchanged on both SQLite and Postgres.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Geography
+// ---------------------------------------------------------------------------
+
+model District {
+  id            String         @id @default(cuid())
+  name          String
+  slug          String         @unique
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  constituencies Constituency[]
+
+  @@map("districts")
+}
+
+model Constituency {
+  id              String   @id @default(cuid())
+  number          Int      @unique // 1-403, official AC number
+  name            String
+  slug            String   @unique
+  districtId      String
+  district        District @relation(fields: [districtId], references: [id])
+  reservedStatus  String   @default("None") // None | SC | ST
+  currentMlaName  String?
+  currentMlaParty String?
+  result2022WinnerName  String?
+  result2022WinnerParty String?
+  result2022Margin      Int?
+  result2022TurnoutPct  Float?
+  historicalNotes String? // free text, source-cited
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  candidates       Candidate[]
+  surveys          Survey[]
+  surveyResponses  SurveyResponse[]
+  analyticsSnapshots AnalyticsSnapshot[]
+
+  @@index([districtId])
+  @@map("constituencies")
+}
+
+// ---------------------------------------------------------------------------
+// Parties & Candidates
+// ---------------------------------------------------------------------------
+
+model Party {
+  id          String   @id @default(cuid())
+  name        String
+  shortName   String   @unique // e.g. BJP, SP, INC, BSP
+  slug        String   @unique
+  colorHex    String   @default("#6b7280")
+  logoUrl     String?
+  isActive    Boolean  @default(true)
+  displayOrder Int     @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  candidates       Candidate[]
+  surveyOptions    SurveyOption[]
+
+  @@map("parties")
+}
+
+model Candidate {
+  id             String   @id @default(cuid())
+  constituencyId String
+  constituency   Constituency @relation(fields: [constituencyId], references: [id])
+  partyId        String?
+  party          Party?   @relation(fields: [partyId], references: [id])
+  name           String
+  slug           String
+  status         String   // DECLARED | LIKELY | POSSIBLE | INCUMBENT | HISTORICAL
+  confidenceScore String  @default("LOW") // HIGH | MEDIUM | LOW
+  currentOffice  String?
+  background     String?  // short political background, source-cited
+  sourceNotes    String?
+  sourceUrls     String?  // JSON-encoded string[]
+
+  photoUrl          String?
+  photoSourceUrl     String?
+  photoSourceName    String?
+  photoLicense       String?
+  photoVerified      Boolean  @default(false)
+  photoRetrievedAt   DateTime?
+
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  imageSources   ImageSource[]
+
+  @@unique([constituencyId, slug])
+  @@index([constituencyId])
+  @@index([partyId])
+  @@map("candidates")
+}
+
+model ImageSource {
+  id             String   @id @default(cuid())
+  candidateId    String
+  candidate      Candidate @relation(fields: [candidateId], references: [id])
+  imageUrl       String
+  sourceUrl      String
+  sourceName     String
+  license        String?
+  status         String   @default("PENDING") // PENDING | VERIFIED | REJECTED | REPLACE
+  reviewedBy     String?
+  reviewedAt     DateTime?
+  notes          String?
+  retrievedAt    DateTime @default(now())
+  createdAt      DateTime @default(now())
+
+  @@index([candidateId])
+  @@map("image_sources")
+}
+
+// ---------------------------------------------------------------------------
+// Survey engine (generic, admin-editable questions/options)
+// ---------------------------------------------------------------------------
+
+model Survey {
+  id             String   @id @default(cuid())
+  constituencyId String?
+  constituency   Constituency? @relation(fields: [constituencyId], references: [id])
+  title          String
+  description    String?
+  type           String   @default("CONSTITUENCY") // CONSTITUENCY | STATEWIDE
+  isActive       Boolean  @default(true)
+  startsAt       DateTime?
+  endsAt         DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  questions      SurveyQuestion[]
+  responses      SurveyResponse[]
+
+  @@index([constituencyId])
+  @@map("surveys")
+}
+
+model SurveyQuestion {
+  id          String   @id @default(cuid())
+  surveyId    String
+  survey      Survey   @relation(fields: [surveyId], references: [id])
+  key         String   // candidate_choice | party_preference | top_issue | age_group | gender | social_category | religion
+  label       String
+  type        String   @default("SINGLE_CHOICE") // SINGLE_CHOICE
+  required    Boolean  @default(false)
+  allowSkip   Boolean  @default(true)
+  order       Int      @default(0)
+
+  options     SurveyOption[]
+  answers     SurveyAnswer[]
+
+  @@unique([surveyId, key])
+  @@map("survey_questions")
+}
+
+model SurveyOption {
+  id          String   @id @default(cuid())
+  questionId  String
+  question    SurveyQuestion @relation(fields: [questionId], references: [id])
+  key         String
+  label       String
+  order       Int      @default(0)
+  isActive    Boolean  @default(true)
+  candidateRef String? // optional linked candidate id (for candidate_choice questions)
+  partyId     String?
+  party       Party?   @relation(fields: [partyId], references: [id])
+
+  answers     SurveyAnswer[]
+
+  @@unique([questionId, key])
+  @@map("survey_options")
+}
+
+model SurveyResponse {
+  id             String   @id @default(cuid())
+  surveyId       String
+  survey         Survey   @relation(fields: [surveyId], references: [id])
+  constituencyId String
+  constituency   Constituency @relation(fields: [constituencyId], references: [id])
+  status         String   @default("VALID") // VALID | FLAGGED | REJECTED
+  ipHash         String?  // salted hash, never raw IP
+  fingerprint    String?  // salted device/browser fingerprint hash
+  flagReason     String?
+  createdAt      DateTime @default(now())
+
+  answers        SurveyAnswer[]
+  moderationFlags ModerationFlag[]
+
+  @@index([surveyId])
+  @@index([constituencyId])
+  @@index([fingerprint])
+  @@index([createdAt])
+  @@map("survey_responses")
+}
+
+model SurveyAnswer {
+  id          String   @id @default(cuid())
+  responseId  String
+  response    SurveyResponse @relation(fields: [responseId], references: [id])
+  questionId  String
+  question    SurveyQuestion @relation(fields: [questionId], references: [id])
+  optionId    String?
+  option      SurveyOption?  @relation(fields: [optionId], references: [id])
+  valueText   String?
+
+  @@index([responseId])
+  @@index([questionId])
+  @@index([optionId])
+  @@map("survey_answers")
+}
+
+model AnalyticsSnapshot {
+  id             String   @id @default(cuid())
+  constituencyId String
+  constituency   Constituency @relation(fields: [constituencyId], references: [id])
+  computedAt     DateTime @default(now())
+  payload        String   // JSON-encoded aggregate result (candidate %, party %, issues, demographics)
+
+  @@index([constituencyId, computedAt])
+  @@map("analytics_snapshots")
+}
+
+model ModerationFlag {
+  id          String   @id @default(cuid())
+  responseId  String
+  response    SurveyResponse @relation(fields: [responseId], references: [id])
+  reason      String
+  severity    String   @default("LOW") // LOW | MEDIUM | HIGH
+  createdAt   DateTime @default(now())
+  resolvedAt  DateTime?
+  resolvedBy  String?
+
+  @@index([responseId])
+  @@map("moderation_flags")
+}
+
+// ---------------------------------------------------------------------------
+// Admin & platform
+// ---------------------------------------------------------------------------
+
+model AdminUser {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         String   @default("EDITOR") // ADMIN | EDITOR | MODERATOR
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  lastLoginAt  DateTime?
+
+  auditLogs    AuditLog[]
+
+  @@map("admin_users")
+}
+
+model AuditLog {
+  id           String   @id @default(cuid())
+  adminUserId  String?
+  adminUser    AdminUser? @relation(fields: [adminUserId], references: [id])
+  action       String
+  entityType   String
+  entityId     String?
+  metadata     String?  // JSON-encoded
+  createdAt    DateTime @default(now())
+
+  @@index([adminUserId])
+  @@index([entityType, entityId])
+  @@map("audit_logs")
+}
+
+model SiteSetting {
+  key         String   @id
+  value       String   // JSON-encoded
+  updatedAt   DateTime @updatedAt
+
+  @@map("site_settings")
+}

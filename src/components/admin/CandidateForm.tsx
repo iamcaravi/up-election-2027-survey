@@ -1,0 +1,239 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { ConstituencyPicker } from "./ConstituencyPicker";
+import { Button } from "@/components/ui/Button";
+import { CANDIDATE_STATUSES, CONFIDENCE_SCORES, CANDIDATE_STATUS_LABELS } from "@/lib/enums";
+
+interface Party {
+  id: string;
+  shortName: string;
+}
+
+interface InitialCandidate {
+  id: string;
+  name: string;
+  partyId: string | null;
+  status: string;
+  confidenceScore: string;
+  currentOffice: string | null;
+  background: string | null;
+  sourceNotes: string | null;
+  photoUrl: string | null;
+  photoSourceUrl: string | null;
+  photoSourceName: string | null;
+  photoLicense: string | null;
+  constituency: { id: string; name: string; number: number; district: { name: string } };
+}
+
+export function CandidateForm({ initial }: { initial?: InitialCandidate }) {
+  const router = useRouter();
+  const [parties, setParties] = useState<Party[]>([]);
+  const [constituency, setConstituency] = useState(
+    initial
+      ? { id: initial.constituency.id, name: initial.constituency.name, number: initial.constituency.number, districtName: initial.constituency.district.name }
+      : null
+  );
+  const [name, setName] = useState(initial?.name ?? "");
+  const [partyId, setPartyId] = useState(initial?.partyId ?? "");
+  const [status, setStatus] = useState(initial?.status ?? "POSSIBLE");
+  const [confidenceScore, setConfidenceScore] = useState(initial?.confidenceScore ?? "LOW");
+  const [currentOffice, setCurrentOffice] = useState(initial?.currentOffice ?? "");
+  const [background, setBackground] = useState(initial?.background ?? "");
+  const [sourceNotes, setSourceNotes] = useState(initial?.sourceNotes ?? "");
+  const [photoUrl, setPhotoUrl] = useState(initial?.photoUrl ?? "");
+  const [photoSourceUrl, setPhotoSourceUrl] = useState(initial?.photoSourceUrl ?? "");
+  const [photoSourceName, setPhotoSourceName] = useState(initial?.photoSourceName ?? "");
+  const [photoLicense, setPhotoLicense] = useState(initial?.photoLicense ?? "");
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/admin/parties").then((r) => r.json()).then(setParties);
+  }, []);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!initial && !constituency) {
+      setError("Select a constituency.");
+      return;
+    }
+    setSaving(true);
+    setError(null);
+
+    const payload = {
+      constituencyId: constituency?.id,
+      name,
+      partyId: partyId || null,
+      status,
+      confidenceScore,
+      currentOffice: currentOffice || undefined,
+      background: background || undefined,
+      sourceNotes: sourceNotes || undefined,
+      photoUrl: photoUrl || undefined,
+      photoSourceUrl: photoSourceUrl || undefined,
+      photoSourceName: photoSourceName || undefined,
+      photoLicense: photoLicense || undefined,
+    };
+
+    const res = await fetch(initial ? `/api/admin/candidates/${initial.id}` : "/api/admin/candidates", {
+      method: initial ? "PATCH" : "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    setSaving(false);
+    if (!res.ok) {
+      setError(data.error ?? "Something went wrong.");
+      return;
+    }
+    router.push("/admin/candidates");
+    router.refresh();
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="card-surface max-w-2xl space-y-5 rounded-2xl p-6">
+      {error && <p className="rounded-lg bg-danger/10 p-3 text-sm text-danger">{error}</p>}
+
+      <Field label="Constituency">
+        {initial ? (
+          <p className="text-sm text-muted">
+            {initial.constituency.name} ({initial.constituency.district.name}) — constituency cannot be changed after creation.
+          </p>
+        ) : (
+          <ConstituencyPicker value={constituency} onChange={setConstituency} />
+        )}
+      </Field>
+
+      <Field label="Candidate name">
+        <Input value={name} onChange={setName} required />
+      </Field>
+
+      <Field label="Party (leave unset for independent)">
+        <select
+          value={partyId}
+          onChange={(e) => setPartyId(e.target.value)}
+          className="h-11 w-full rounded-xl border border-border bg-surface px-3.5 text-sm"
+        >
+          <option value="">Independent / Unaffiliated</option>
+          {parties.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.shortName}
+            </option>
+          ))}
+        </select>
+      </Field>
+
+      <div className="grid grid-cols-2 gap-4">
+        <Field label="Status">
+          <select
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
+            className="h-11 w-full rounded-xl border border-border bg-surface px-3.5 text-sm"
+          >
+            {CANDIDATE_STATUSES.map((s) => (
+              <option key={s} value={s}>
+                {CANDIDATE_STATUS_LABELS[s]}
+              </option>
+            ))}
+          </select>
+        </Field>
+        <Field label="Confidence">
+          <select
+            value={confidenceScore}
+            onChange={(e) => setConfidenceScore(e.target.value)}
+            className="h-11 w-full rounded-xl border border-border bg-surface px-3.5 text-sm"
+          >
+            {CONFIDENCE_SCORES.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </select>
+        </Field>
+      </div>
+
+      <Field label="Current office (optional)">
+        <Input value={currentOffice} onChange={setCurrentOffice} />
+      </Field>
+
+      <Field label="Short political background">
+        <Textarea value={background} onChange={setBackground} />
+      </Field>
+
+      <Field label="Source notes (why this status/confidence)">
+        <Textarea value={sourceNotes} onChange={setSourceNotes} />
+      </Field>
+
+      <div className="rounded-xl border border-dashed border-border p-4">
+        <p className="mb-3 text-sm font-semibold">Candidate photo (optional)</p>
+        <div className="space-y-3">
+          <Field label="Image URL">
+            <Input value={photoUrl} onChange={setPhotoUrl} placeholder="https://..." />
+          </Field>
+          <Field label="Source URL (where you found it)">
+            <Input value={photoSourceUrl} onChange={setPhotoSourceUrl} placeholder="https://..." />
+          </Field>
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Source name">
+              <Input value={photoSourceName} onChange={setPhotoSourceName} placeholder="e.g. Wikimedia Commons" />
+            </Field>
+            <Field label="License / usage status">
+              <Input value={photoLicense} onChange={setPhotoLicense} placeholder="e.g. CC BY-SA 4.0" />
+            </Field>
+          </div>
+          <p className="text-xs text-muted">
+            New or changed photos are marked PENDING and must be verified in Image Review before being fully trusted.
+          </p>
+        </div>
+      </div>
+
+      <Button type="submit" variant="primary" size="lg" disabled={saving}>
+        {saving ? "Saving..." : initial ? "Save changes" : "Create candidate"}
+      </Button>
+    </form>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <label className="mb-1.5 block text-sm font-medium">{label}</label>
+      {children}
+    </div>
+  );
+}
+
+function Input({
+  value,
+  onChange,
+  required,
+  placeholder,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  required?: boolean;
+  placeholder?: string;
+}) {
+  return (
+    <input
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      required={required}
+      placeholder={placeholder}
+      className="h-11 w-full rounded-xl border border-border bg-surface px-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink/30"
+    />
+  );
+}
+
+function Textarea({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  return (
+    <textarea
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      rows={3}
+      className="w-full rounded-xl border border-border bg-surface px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink/30"
+    />
+  );
+}
