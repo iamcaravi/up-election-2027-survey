@@ -7,12 +7,14 @@ import { CANDIDATE_STATUSES, CONFIDENCE_SCORES } from "@/lib/enums";
 
 const updateSchema = z.object({
   name: z.string().min(2).max(120).optional(),
+  nameHindi: z.string().max(120).nullable().optional(),
   partyId: z.string().nullable().optional(),
   status: z.enum(CANDIDATE_STATUSES).optional(),
   confidenceScore: z.enum(CONFIDENCE_SCORES).optional(),
   currentOffice: z.string().max(200).nullable().optional(),
   background: z.string().max(2000).nullable().optional(),
   sourceNotes: z.string().max(2000).nullable().optional(),
+  verified: z.boolean().optional(),
   photoUrl: z.string().url().nullable().optional(),
   photoSourceUrl: z.string().url().nullable().optional(),
   photoSourceName: z.string().max(200).nullable().optional(),

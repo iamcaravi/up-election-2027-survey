@@ -7,6 +7,7 @@ export const CANDIDATE_STATUSES = [
   "POSSIBLE",
   "INCUMBENT",
   "HISTORICAL",
+  "OTHER",
 ] as const;
 export type CandidateStatus = (typeof CANDIDATE_STATUSES)[number];
 
@@ -16,7 +17,19 @@ export const CANDIDATE_STATUS_LABELS: Record<CandidateStatus, string> = {
   POSSIBLE: "Potential Contender",
   INCUMBENT: "Sitting MLA",
   HISTORICAL: "Historical Candidate",
+  OTHER: "Other",
 };
+
+// The default set of statuses eligible to appear as a live 2027
+// "candidate_choice" survey option (see syncCandidateChoiceOptions).
+// INCUMBENT deliberately excluded: being the current sitting MLA never by
+// itself means they are contesting in 2027. HISTORICAL/OTHER excluded too —
+// a live survey must never surface a stale or out-of-scope record.
+export const SURVEY_ELIGIBLE_CANDIDATE_STATUSES: readonly CandidateStatus[] = [
+  "DECLARED",
+  "LIKELY",
+  "POSSIBLE",
+] as const;
 
 export const CONFIDENCE_SCORES = ["HIGH", "MEDIUM", "LOW"] as const;
 export type ConfidenceScore = (typeof CONFIDENCE_SCORES)[number];

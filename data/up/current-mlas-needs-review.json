@@ -1,0 +1,652 @@
+[
+  {
+    "memberId": "25358",
+    "name": "Shri Chandra  Prakash",
+    "constituencyNumberOnSource": 91,
+    "constituencyNameOnSource": "Fatehpur",
+    "partyRaw": "Samajwadi Party",
+    "resolvedConstituency": "91-Fatehpur Sikri",
+    "status": "NEEDS_REVIEW",
+    "reason": "Name mismatch: source=\"Fatehpur\" db=\"Fatehpur Sikri\""
+  },
+  {
+    "memberId": "25295",
+    "name": "Shri Anil  Parashar",
+    "constituencyNumberOnSource": 0,
+    "constituencyNameOnSource": "Kol",
+    "partyRaw": "Bharatiya Janta Party",
+    "resolvedConstituency": null,
+    "status": "UNRESOLVED_CONSTITUENCY",
+    "reason": "Source constituency number is 0 (data-entry error); name \"Kol\" does not uniquely match a DB constituency"
+  },
+  {
+    "memberId": "25356",
+    "name": "Shrimati Geeta Shastri  (Pasi)",
+    "constituencyNumberOnSource": 0,
+    "constituencyNameOnSource": "Soranv",
+    "partyRaw": "Samajwadi Party",
+    "resolvedConstituency": null,
+    "status": "UNRESOLVED_CONSTITUENCY",
+    "reason": "Source constituency number is 0 (data-entry error); name \"Soranv\" does not uniquely match a DB constituency"
+  },
+  {
+    "memberId": "25666",
+    "name": "Shri Manohar  Lal",
+    "constituencyNumberOnSource": 0,
+    "constituencyNameOnSource": "Mehroni",
+    "partyRaw": "Bharatiya Janta Party",
+    "resolvedConstituency": "227-Mehroni",
+    "status": "NEEDS_REVIEW",
+    "reason": "Source listed constituency number as 0; resolved by name to #227 Mehroni — needs manual confirmation before import"
+  },
+  {
+    "memberId": "25293",
+    "name": "Shri Anil Kumar  Singh",
+    "constituencyNumberOnSource": 0,
+    "constituencyNameOnSource": "Purwa",
+    "partyRaw": "Bharatiya Janta Party",
+    "resolvedConstituency": "167-Purwa",
+    "status": "NEEDS_REVIEW",
+    "reason": "Source listed constituency number as 0; resolved by name to #167 Purwa — needs manual confirmation before import"
+  },
+  {
+    "memberId": "25785",
+    "name": "Shri Surendra  diler",
+    "constituencyNumberOnSource": 71,
+    "constituencyNameOnSource": "Khair",
+    "partyRaw": "Bharatiya Janta Party",
+    "resolvedConstituency": "71-Khair",
+    "status": "DUP_SEAT",
+    "reason": "2 rows map to constituency number 71 (Khair); cannot determine which is the current sitting MLA without further verification"
+  },
+  {
+    "memberId": "25914",
+    "name": "Shri Anoop Singh lias Anoop Pradhan Valmiki",
+    "constituencyNumberOnSource": 71,
+    "constituencyNameOnSource": "Khair",
+    "partyRaw": "Bharatiya Janta Party",
+    "resolvedConstituency": "71-Khair",
+    "status": "DUP_SEAT",
+    "reason": "2 rows map to constituency number 71 (Khair); cannot determine which is the current sitting MLA without further verification"
+  },
+  {
+    "memberId": "25618",
+    "name": "Shri Deepak  Patel",
+    "constituencyNumberOnSource": 256,
+    "constituencyNameOnSource": "Phulpur",
+    "partyRaw": "Bharatiya Janta Party",
+    "resolvedConstituency": "256-Phulpur",
+    "status": "DUP_SEAT",
+    "reason": "2 rows map to constituency number 256 (Phulpur); cannot determine which is the current sitting MLA without further verification"
+  },
+  {
+    "memberId": "25920",
+    "name": "Shri Praveen  Patel",
+    "constituencyNumberOnSource": 256,
+    "constituencyNameOnSource": "Phulpur",
+    "partyRaw": "Bharatiya Janta Party",
+    "resolvedConstituency": "256-Phulpur",
+    "status": "DUP_SEAT",
+    "reason": "2 rows map to constituency number 256 (Phulpur); cannot determine which is the current sitting MLA without further verification"
+  },
+  {
+    "memberId": "25915",
+    "name": "Shri Siddhartha Nath  Singh",
+    "constituencyNumberOnSource": 261,
+    "constituencyNameOnSource": "Allahabad West",
+    "partyRaw": "Bharatiya Janta Party",
+    "resolvedConstituency": "261-Prayagraj West",
+    "status": "NEEDS_REVIEW",
+    "reason": "Name mismatch: source=\"Allahabad West\" db=\"Prayagraj West\""
+  },
+  {
+    "memberId": "25522",
+    "name": "Shri Harsh Vardhan Bajpai",
+    "constituencyNumberOnSource": 262,
+    "constituencyNameOnSource": "Allahabad North",
+    "partyRaw": "Bharatiya Janta Party",
+    "resolvedConstituency": "262-Prayagraj North",
+    "status": "NEEDS_REVIEW",
+    "reason": "Name mismatch: source=\"Allahabad North\" db=\"Prayagraj North\""
+  },
+  {
+    "memberId": "25732",
+    "name": "Shri Vachaspati",
+    "constituencyNumberOnSource": 264,
+    "constituencyNameOnSource": "Bara",
+    "partyRaw": "Apna Dal",
+    "resolvedConstituency": "264-Bara",
+    "status": "UNRESOLVED_PARTY",
+    "reason": "Unmapped party \"Apna Dal\""
+  },
+  {
+    "memberId": "25541",
+    "name": "Shri Nand Gopal Gupta  \"Nandi\"",
+    "constituencyNumberOnSource": 263,
+    "constituencyNameOnSource": "Allahabad South",
+    "partyRaw": "Bharatiya Janta Party",
+    "resolvedConstituency": "263-Prayagraj South",
+    "status": "NEEDS_REVIEW",
+    "reason": "Name mismatch: source=\"Allahabad South\" db=\"Prayagraj South\""
+  },
+  {
+    "memberId": "25596",
+    "name": "Shri Lalji  Verma",
+    "constituencyNumberOnSource": 277,
+    "constituencyNameOnSource": "Katehari",
+    "partyRaw": "Samajwadi Party",
+    "resolvedConstituency": "277-Katehari",
+    "status": "DUP_SEAT",
+    "reason": "2 rows map to constituency number 277 (Katehari); cannot determine which is the current sitting MLA without further verification"
+  },
+  {
+    "memberId": "25619",
+    "name": "Shri Dharamraj  Nishad",
+    "constituencyNumberOnSource": 277,
+    "constituencyNameOnSource": "Katehari",
+    "partyRaw": "Samajwadi Party",
+    "resolvedConstituency": "277-Katehari",
+    "status": "DUP_SEAT",
+    "reason": "2 rows map to constituency number 277 (Katehari); cannot determine which is the current sitting MLA without further verification"
+  },
+  {
+    "memberId": "25498",
+    "name": "Shri Tribhuwan  Dutt",
+    "constituencyNumberOnSource": 279,
+    "constituencyNameOnSource": "Aalapur",
+    "partyRaw": "Samajwadi Party",
+    "resolvedConstituency": "279-Alapur",
+    "status": "NEEDS_REVIEW",
+    "reason": "Name mismatch: source=\"Aalapur\" db=\"Alapur\""
+  },
+  {
+    "memberId": "25761",
+    "name": "Dr Sangram  Yadav",
+    "constituencyNumberOnSource": 343,
+    "constituencyNameOnSource": "Atraulia",
+    "partyRaw": "Samajwadi Party",
+    "resolvedConstituency": "343-Atrauliya",
+    "status": "NEEDS_REVIEW",
+    "reason": "Name mismatch: source=\"Atraulia\" db=\"Atrauliya\""
+  },
+  {
+    "memberId": "25813",
+    "name": "Shri Yogesh  Dhama",
+    "constituencyNumberOnSource": 52,
+    "constituencyNameOnSource": "Baghpat",
+    "partyRaw": "Bharatiya Janta Party",
+    "resolvedConstituency": "52-Bagpat",
+    "status": "NEEDS_REVIEW",
+    "reason": "Name mismatch: source=\"Baghpat\" db=\"Bagpat\""
+  },
+  {
+    "memberId": "25201",
+    "name": "Shri Shiv Pratap Kumar Yadav",
+    "constituencyNumberOnSource": 292,
+    "constituencyNameOnSource": "Gainsari",
+    "partyRaw": "Samajwadi Party",
+    "resolvedConstituency": "292-Gainsari",
+    "status": "DUP_SEAT",
+    "reason": "2 rows map to constituency number 292 (Gainsari); cannot determine which is the current sitting MLA without further verification"
+  },
+  {
+    "memberId": "25602",
+    "name": "Dr Shiv Pratap  Yadav",
+    "constituencyNumberOnSource": 292,
+    "constituencyNameOnSource": "Gainsari",
+    "partyRaw": "Samajwadi Party",
+    "resolvedConstituency": "292-Gainsari",
+    "status": "DUP_SEAT",
+    "reason": "2 rows map to constituency number 292 (Gainsari); cannot determine which is the current sitting MLA without further verification"
+  },
+  {
+    "memberId": "25634",
+    "name": "Shri Fareed Mahfooz  Kidwai",
+    "constituencyNumberOnSource": 267,
+    "constituencyNameOnSource": "Ramnagar",
+    "partyRaw": "Samajwadi Party",
+    "resolvedConstituency": "267-Ram Nagar",
+    "status": "NEEDS_REVIEW",
+    "reason": "Name mismatch: source=\"Ramnagar\" db=\"Ram Nagar\""
+  },
+  {
+    "memberId": "25513",
+    "name": "Shri Devendra Singh  Lodhi",
+    "constituencyNumberOnSource": 66,
+    "constituencyNameOnSource": "Siana",
+    "partyRaw": "Bharatiya Janta Party",
+    "resolvedConstituency": "66-Syana",
+    "status": "NEEDS_REVIEW",
+    "reason": "Name mismatch: source=\"Siana\" db=\"Syana\""
+  },
+  {
+    "memberId": "25589",
+    "name": "Shri Pradeep Kumar  Chaudhary",
+    "constituencyNumberOnSource": 65,
+    "constituencyNameOnSource": "Bulandshahr",
+    "partyRaw": "Bharatiya Janta Party",
+    "resolvedConstituency": "65-Bulandshahr",
+    "status": "DUP_SEAT",
+    "reason": "3 rows map to constituency number 65 (Bulandshahr); cannot determine which is the current sitting MLA without further verification"
+  },
+  {
+    "memberId": "25562",
+    "name": "Shri Manvendra  Singh",
+    "constituencyNumberOnSource": 65,
+    "constituencyNameOnSource": "Dadraul",
+    "partyRaw": "Bharatiya Janta Party",
+    "resolvedConstituency": "65-Bulandshahr",
+    "status": "DUP_SEAT",
+    "reason": "3 rows map to constituency number 65 (Bulandshahr); cannot determine which is the current sitting MLA without further verification"
+  },
+  {
+    "memberId": "25615",
+    "name": "Shri Arvind Kumar Singh",
+    "constituencyNumberOnSource": 65,
+    "constituencyNameOnSource": "Dadraul",
+    "partyRaw": "Bharatiya Janta Party",
+    "resolvedConstituency": "65-Bulandshahr",
+    "status": "DUP_SEAT",
+    "reason": "3 rows map to constituency number 65 (Bulandshahr); cannot determine which is the current sitting MLA without further verification"
+  },
+  {
+    "memberId": "25452",
+    "name": "Shri Babulal",
+    "constituencyNumberOnSource": 240,
+    "constituencyNameOnSource": "Fatehpur Sikri",
+    "partyRaw": "Bharatiya Janta Party",
+    "resolvedConstituency": "240-Fatehpur",
+    "status": "NEEDS_REVIEW",
+    "reason": "Name mismatch: source=\"Fatehpur Sikri\" db=\"Fatehpur\""
+  },
+  {
+    "memberId": "25527",
+    "name": "Shri Atul  Garg",
+    "constituencyNumberOnSource": 56,
+    "constituencyNameOnSource": "Ghaziabad",
+    "partyRaw": "Bharatiya Janta Party",
+    "resolvedConstituency": "56-Ghaziabad",
+    "status": "DUP_SEAT",
+    "reason": "2 rows map to constituency number 56 (Ghaziabad); cannot determine which is the current sitting MLA without further verification"
+  },
+  {
+    "memberId": "25770",
+    "name": "Shri Sanjeev  Sharma",
+    "constituencyNumberOnSource": 56,
+    "constituencyNameOnSource": "Ghaziabad",
+    "partyRaw": "Bharatiya Janta Party",
+    "resolvedConstituency": "56-Ghaziabad",
+    "status": "DUP_SEAT",
+    "reason": "2 rows map to constituency number 56 (Ghaziabad); cannot determine which is the current sitting MLA without further verification"
+  },
+  {
+    "memberId": "25416",
+    "name": "Shri Jai Kishan  Sahu",
+    "constituencyNumberOnSource": 375,
+    "constituencyNameOnSource": "Ghazipur",
+    "partyRaw": "Samajwadi Party",
+    "resolvedConstituency": "375-Ghazipur Sadar",
+    "status": "NEEDS_REVIEW",
+    "reason": "Name mismatch: source=\"Ghazipur\" db=\"Ghazipur Sadar\""
+  },
+  {
+    "memberId": "25747",
+    "name": "Shri Veer Vikram  Singh",
+    "constituencyNumberOnSource": 297,
+    "constituencyNameOnSource": "Katra",
+    "partyRaw": "Bharatiya Janta Party",
+    "resolvedConstituency": "297-Katra Bazar",
+    "status": "NEEDS_REVIEW",
+    "reason": "Name mismatch: source=\"Katra\" db=\"Katra Bazar\""
+  },
+  {
+    "memberId": "25633",
+    "name": "Shri Fateh  Bahadur",
+    "constituencyNumberOnSource": 320,
+    "constituencyNameOnSource": "Caimpiyarganj",
+    "partyRaw": "Bharatiya Janta Party",
+    "resolvedConstituency": "320-Campierganj",
+    "status": "NEEDS_REVIEW",
+    "reason": "Name mismatch: source=\"Caimpiyarganj\" db=\"Campierganj\""
+  },
+  {
+    "memberId": "25677",
+    "name": "Shri Madhavendra Pratap  Singh",
+    "constituencyNumberOnSource": 154,
+    "constituencyNameOnSource": "Sawaijpur",
+    "partyRaw": "Bharatiya Janta Party",
+    "resolvedConstituency": "154-Sawayazpur",
+    "status": "NEEDS_REVIEW",
+    "reason": "Name mismatch: source=\"Sawaijpur\" db=\"Sawayazpur\""
+  },
+  {
+    "memberId": "25515",
+    "name": "Shri Hariom",
+    "constituencyNumberOnSource": 101,
+    "constituencyNameOnSource": "Amapur",
+    "partyRaw": "Bharatiya Janta Party",
+    "resolvedConstituency": "101-Amanpur",
+    "status": "NEEDS_REVIEW",
+    "reason": "Name mismatch: source=\"Amapur\" db=\"Amanpur\""
+  },
+  {
+    "memberId": "25656",
+    "name": "Shrimati Manju  Tyagi",
+    "constituencyNumberOnSource": 140,
+    "constituencyNameOnSource": "Srinagar",
+    "partyRaw": "Bharatiya Janta Party",
+    "resolvedConstituency": "140-Sri Nagar",
+    "status": "NEEDS_REVIEW",
+    "reason": "Name mismatch: source=\"Srinagar\" db=\"Sri Nagar\""
+  },
+  {
+    "memberId": "25730",
+    "name": "Shri Lokendra Pratap  Singh",
+    "constituencyNumberOnSource": 144,
+    "constituencyNameOnSource": "Mohammadi",
+    "partyRaw": "Bharatiya Janta Party",
+    "resolvedConstituency": "144-Mohammdi",
+    "status": "NEEDS_REVIEW",
+    "reason": "Name mismatch: source=\"Mohammadi\" db=\"Mohammdi\""
+  },
+  {
+    "memberId": "25601",
+    "name": "Shri Ashutosh Tandon  'Gopal Ji'",
+    "constituencyNumberOnSource": 173,
+    "constituencyNameOnSource": "Lucknow East",
+    "partyRaw": "Bharatiya Janta Party",
+    "resolvedConstituency": "173-Lucknow East",
+    "status": "DUP_SEAT",
+    "reason": "2 rows map to constituency number 173 (Lucknow East); cannot determine which is the current sitting MLA without further verification"
+  },
+  {
+    "memberId": "25616",
+    "name": "Shri O.P.  Srivastava",
+    "constituencyNumberOnSource": 173,
+    "constituencyNameOnSource": "Lucknow East",
+    "partyRaw": "Bharatiya Janta Party",
+    "resolvedConstituency": "173-Lucknow East",
+    "status": "DUP_SEAT",
+    "reason": "2 rows map to constituency number 173 (Lucknow East); cannot determine which is the current sitting MLA without further verification"
+  },
+  {
+    "memberId": "25531",
+    "name": "Shri Akhilesh  Yadav",
+    "constituencyNumberOnSource": 110,
+    "constituencyNameOnSource": "Karhal",
+    "partyRaw": "Samajwadi Party",
+    "resolvedConstituency": "110-Karhal",
+    "status": "DUP_SEAT",
+    "reason": "2 rows map to constituency number 110 (Karhal); cannot determine which is the current sitting MLA without further verification"
+  },
+  {
+    "memberId": "25617",
+    "name": "Shri Tej Pratap Singh",
+    "constituencyNumberOnSource": 110,
+    "constituencyNameOnSource": "Karhal",
+    "partyRaw": "Samajwadi Party",
+    "resolvedConstituency": "110-Karhal",
+    "status": "DUP_SEAT",
+    "reason": "2 rows map to constituency number 110 (Karhal); cannot determine which is the current sitting MLA without further verification"
+  },
+  {
+    "memberId": "25603",
+    "name": "Shri Sudhakar  Singh",
+    "constituencyNumberOnSource": 354,
+    "constituencyNameOnSource": "Ghosi",
+    "partyRaw": "Samajwadi Party",
+    "resolvedConstituency": "354-Ghosi",
+    "status": "DUP_SEAT",
+    "reason": "2 rows map to constituency number 354 (Ghosi); cannot determine which is the current sitting MLA without further verification"
+  },
+  {
+    "memberId": "25597",
+    "name": "Shri Dara Singh  Chauhan",
+    "constituencyNumberOnSource": 354,
+    "constituencyNameOnSource": "Ghosi",
+    "partyRaw": "Samajwadi Party",
+    "resolvedConstituency": "354-Ghosi",
+    "status": "DUP_SEAT",
+    "reason": "2 rows map to constituency number 354 (Ghosi); cannot determine which is the current sitting MLA without further verification"
+  },
+  {
+    "memberId": "25301",
+    "name": "Shri Amit  Agrawal",
+    "constituencyNumberOnSource": 48,
+    "constituencyNameOnSource": "Meerut Cantt",
+    "partyRaw": "Bharatiya Janta Party",
+    "resolvedConstituency": "48-Meerut",
+    "status": "NEEDS_REVIEW",
+    "reason": "Name mismatch: source=\"Meerut Cantt\" db=\"Meerut\""
+  },
+  {
+    "memberId": "25491",
+    "name": "Dr Somendra Singh  Tomar",
+    "constituencyNumberOnSource": 47,
+    "constituencyNameOnSource": "Meerut South",
+    "partyRaw": "Bharatiya Janta Party",
+    "resolvedConstituency": "47-Meerut Cantt.",
+    "status": "NEEDS_REVIEW",
+    "reason": "Name mismatch: source=\"Meerut South\" db=\"Meerut Cantt.\""
+  },
+  {
+    "memberId": "25689",
+    "name": "Shri Rafiq  Ansari",
+    "constituencyNumberOnSource": 49,
+    "constituencyNameOnSource": "Meerut",
+    "partyRaw": "Samajwadi Party",
+    "resolvedConstituency": "49-Meerut South",
+    "status": "NEEDS_REVIEW",
+    "reason": "Name mismatch: source=\"Meerut\" db=\"Meerut South\""
+  },
+  {
+    "memberId": "25598",
+    "name": "Dr Vinod Kumar  Bind",
+    "constituencyNumberOnSource": 397,
+    "constituencyNameOnSource": "Majhawan",
+    "partyRaw": "Nirbal Indian Shoshit Hamara Aam Dal",
+    "resolvedConstituency": "397-Majhawan",
+    "status": "DUP_SEAT",
+    "reason": "2 rows map to constituency number 397 (Majhawan); cannot determine which is the current sitting MLA without further verification"
+  },
+  {
+    "memberId": "24722",
+    "name": "Shrimati Shuchismita  Maurya",
+    "constituencyNumberOnSource": 397,
+    "constituencyNameOnSource": "Majhawan",
+    "partyRaw": "Bharatiya Janta Party",
+    "resolvedConstituency": "397-Majhawan",
+    "status": "DUP_SEAT",
+    "reason": "2 rows map to constituency number 397 (Majhawan); cannot determine which is the current sitting MLA without further verification"
+  },
+  {
+    "memberId": "25525",
+    "name": "Shri Rahul Prakash KolKol",
+    "constituencyNumberOnSource": 395,
+    "constituencyNameOnSource": "Chhanbey",
+    "partyRaw": "Apna Dal (Sonelal)",
+    "resolvedConstituency": "395-Chhanbey",
+    "status": "NEEDS_REVIEW",
+    "reason": "Excluded — Verified via official member profiles: Rinki Kol (25728) elected 2022 by-election; Rahul Prakash Kol (25525) profile shows 'Dead: Yes' — excluded as deceased/former."
+  },
+  {
+    "memberId": "25623",
+    "name": "Shri Madan  Bhaiya",
+    "constituencyNumberOnSource": 15,
+    "constituencyNameOnSource": "Khatauli",
+    "partyRaw": "Rashtriya Lok Dal",
+    "resolvedConstituency": "15-Khatauli",
+    "status": "DUP_SEAT",
+    "reason": "2 rows map to constituency number 15 (Khatauli); cannot determine which is the current sitting MLA without further verification"
+  },
+  {
+    "memberId": "25607",
+    "name": "Shri Vikram  Singh",
+    "constituencyNumberOnSource": 15,
+    "constituencyNameOnSource": "Khatauli",
+    "partyRaw": "Bharatiya Janta Party",
+    "resolvedConstituency": "15-Khatauli",
+    "status": "DUP_SEAT",
+    "reason": "2 rows map to constituency number 15 (Khatauli); cannot determine which is the current sitting MLA without further verification"
+  },
+  {
+    "memberId": "25741",
+    "name": "Shri Vinod  Saroj",
+    "constituencyNumberOnSource": 245,
+    "constituencyNameOnSource": "Babaganj",
+    "partyRaw": "Jansatta Dal Loktantrik Party",
+    "resolvedConstituency": "245-Babaganj",
+    "status": "UNRESOLVED_PARTY",
+    "reason": "Unmapped party \"Jansatta Dal Loktantrik Party\""
+  },
+  {
+    "memberId": "25687",
+    "name": "Shri Raghuraj Pratap  Singh",
+    "constituencyNumberOnSource": 246,
+    "constituencyNameOnSource": "Kunda",
+    "partyRaw": "Jansatta Dal Loktantrik Party",
+    "resolvedConstituency": "246-Kunda",
+    "status": "UNRESOLVED_PARTY",
+    "reason": "Unmapped party \"Jansatta Dal Loktantrik Party\""
+  },
+  {
+    "memberId": "25605",
+    "name": "Shri Moh. Azam  Khan",
+    "constituencyNumberOnSource": 37,
+    "constituencyNameOnSource": "Rampur",
+    "partyRaw": "Samajwadi Party",
+    "resolvedConstituency": "37-Rampur",
+    "status": "DUP_SEAT",
+    "reason": "2 rows map to constituency number 37 (Rampur); cannot determine which is the current sitting MLA without further verification"
+  },
+  {
+    "memberId": "25323",
+    "name": "Shri Akash  Saxsena (Hani)",
+    "constituencyNumberOnSource": 37,
+    "constituencyNameOnSource": "Rampur",
+    "partyRaw": "Bharatiya Janta Party",
+    "resolvedConstituency": "37-Rampur",
+    "status": "DUP_SEAT",
+    "reason": "2 rows map to constituency number 37 (Rampur); cannot determine which is the current sitting MLA without further verification"
+  },
+  {
+    "memberId": "25546",
+    "name": "Shri Moh. Abdullah  Azam Khan",
+    "constituencyNumberOnSource": 34,
+    "constituencyNameOnSource": "Suar",
+    "partyRaw": "Samajwadi Party",
+    "resolvedConstituency": "34-Suar",
+    "status": "DUP_SEAT",
+    "reason": "2 rows map to constituency number 34 (Suar); cannot determine which is the current sitting MLA without further verification"
+  },
+  {
+    "memberId": "24924",
+    "name": "Shri Shafiq Ahmad  Ansari",
+    "constituencyNumberOnSource": 34,
+    "constituencyNameOnSource": "Suar",
+    "partyRaw": "Apna Dal (Sonelal)",
+    "resolvedConstituency": "34-Suar",
+    "status": "DUP_SEAT",
+    "reason": "2 rows map to constituency number 34 (Suar); cannot determine which is the current sitting MLA without further verification"
+  },
+  {
+    "memberId": "25242",
+    "name": "Shrimati Rajbala  Singh",
+    "constituencyNumberOnSource": 38,
+    "constituencyNameOnSource": "Milak",
+    "partyRaw": "Bharatiya Janta Party",
+    "resolvedConstituency": "38-Milak",
+    "status": "DUP_SEAT",
+    "reason": "2 rows map to constituency number 38 (Milak); cannot determine which is the current sitting MLA without further verification"
+  },
+  {
+    "memberId": "25648",
+    "name": "Shri Baldev Singh  Aulakh",
+    "constituencyNumberOnSource": 38,
+    "constituencyNameOnSource": "Bilaspur",
+    "partyRaw": "Bharatiya Janta Party",
+    "resolvedConstituency": "38-Milak",
+    "status": "DUP_SEAT",
+    "reason": "2 rows map to constituency number 38 (Milak); cannot determine which is the current sitting MLA without further verification"
+  },
+  {
+    "memberId": "25226",
+    "name": "Shri Ankur  Tiwari",
+    "constituencyNumberOnSource": 313,
+    "constituencyNameOnSource": "Khalilabad",
+    "partyRaw": "Bharatiya Janta Party",
+    "resolvedConstituency": "313-Khalilabad",
+    "status": "DUP_SEAT",
+    "reason": "2 rows map to constituency number 313 (Khalilabad); cannot determine which is the current sitting MLA without further verification"
+  },
+  {
+    "memberId": "25432",
+    "name": "Shri Ankur  Tiwari",
+    "constituencyNumberOnSource": 313,
+    "constituencyNameOnSource": "Khalilabad",
+    "partyRaw": "Bharatiya Janta Party",
+    "resolvedConstituency": "313-Khalilabad",
+    "status": "DUP_SEAT",
+    "reason": "2 rows map to constituency number 313 (Khalilabad); cannot determine which is the current sitting MLA without further verification"
+  },
+  {
+    "memberId": "25351",
+    "name": "Shri Ganesh  Chandra",
+    "constituencyNumberOnSource": 314,
+    "constituencyNameOnSource": "Ghanghata",
+    "partyRaw": "Bharatiya Janta Party",
+    "resolvedConstituency": "314-Dhanghata",
+    "status": "NEEDS_REVIEW",
+    "reason": "Name mismatch: source=\"Ghanghata\" db=\"Dhanghata\""
+  },
+  {
+    "memberId": "25649",
+    "name": "Shri Bawan  Singh",
+    "constituencyNumberOnSource": 131,
+    "constituencyNameOnSource": "Katra Bazar",
+    "partyRaw": "Bharatiya Janta Party",
+    "resolvedConstituency": "131-Katra",
+    "status": "NEEDS_REVIEW",
+    "reason": "Name mismatch: source=\"Katra Bazar\" db=\"Katra\""
+  },
+  {
+    "memberId": "25559",
+    "name": "Shrimati Syeda  Khatoon",
+    "constituencyNumberOnSource": 306,
+    "constituencyNameOnSource": "Domariaganj",
+    "partyRaw": "Samajwadi Party",
+    "resolvedConstituency": "306-Domariyaganj",
+    "status": "NEEDS_REVIEW",
+    "reason": "Name mismatch: source=\"Domariaganj\" db=\"Domariyaganj\""
+  },
+  {
+    "memberId": "25791",
+    "name": "Shri Suresh  Rahi",
+    "constituencyNumberOnSource": 147,
+    "constituencyNameOnSource": "Hargoan",
+    "partyRaw": "Bharatiya Janta Party",
+    "resolvedConstituency": "147-Hargaon",
+    "status": "NEEDS_REVIEW",
+    "reason": "Name mismatch: source=\"Hargoan\" db=\"Hargaon\""
+  },
+  {
+    "memberId": "25330",
+    "name": "Shri Ashutosh  Shukla",
+    "constituencyNumberOnSource": 166,
+    "constituencyNameOnSource": "Bhagwant Nagar",
+    "partyRaw": "Bharatiya Janta Party",
+    "resolvedConstituency": "166-Bhagwantnagar",
+    "status": "NEEDS_REVIEW",
+    "reason": "Name mismatch: source=\"Bhagwant Nagar\" db=\"Bhagwantnagar\""
+  },
+  {
+    "memberId": "25674",
+    "name": "Shri Mahesh Chandra  Gupta",
+    "constituencyNumberOnSource": 115,
+    "constituencyNameOnSource": "Budaun",
+    "partyRaw": "Bharatiya Janta Party",
+    "resolvedConstituency": "115-Badaun",
+    "status": "NEEDS_REVIEW",
+    "reason": "Name mismatch: source=\"Budaun\" db=\"Badaun\""
+  }
+]

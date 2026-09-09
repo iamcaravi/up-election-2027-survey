@@ -1,5 +1,6 @@
 import "server-only";
 import { prisma } from "./prisma";
+import { SURVEY_ELIGIBLE_CANDIDATE_STATUSES } from "./enums";
 
 // Keeps the "candidate_choice" survey question's options in sync with a
 // constituency's candidate roster whenever candidates are added, edited,
@@ -20,8 +21,12 @@ export async function syncCandidateChoiceOptions(constituencyId: string, electio
   });
   if (!question) return;
 
+  // Only DECLARED/LIKELY/POSSIBLE candidates are eligible to appear as a
+  // live survey option — see SURVEY_ELIGIBLE_CANDIDATE_STATUSES. Being the
+  // current sitting MLA (INCUMBENT) never by itself means contesting in
+  // 2027, and HISTORICAL/OTHER records must never leak into a live survey.
   const candidates = await prisma.candidate.findMany({
-    where: { constituencyId, electionId, isActive: true },
+    where: { constituencyId, electionId, isActive: true, status: { in: [...SURVEY_ELIGIBLE_CANDIDATE_STATUSES] } },
   });
 
   const existingByCandidate = new Map(

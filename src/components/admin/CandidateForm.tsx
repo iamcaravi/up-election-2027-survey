@@ -17,12 +17,14 @@ interface Party {
 interface InitialCandidate {
   id: string;
   name: string;
+  nameHindi: string | null;
   partyId: string | null;
   status: string;
   confidenceScore: string;
   currentOffice: string | null;
   background: string | null;
   sourceNotes: string | null;
+  verified: boolean;
   photoUrl: string | null;
   photoSourceUrl: string | null;
   photoSourceName: string | null;
@@ -43,12 +45,14 @@ export function CandidateForm({ initial }: { initial?: InitialCandidate }) {
   const [constituencyId, setConstituencyId] = useState(initial?.constituency.id ?? "");
 
   const [name, setName] = useState(initial?.name ?? "");
+  const [nameHindi, setNameHindi] = useState(initial?.nameHindi ?? "");
   const [partyId, setPartyId] = useState(initial?.partyId ?? "");
   const [status, setStatus] = useState(initial?.status ?? "POSSIBLE");
   const [confidenceScore, setConfidenceScore] = useState(initial?.confidenceScore ?? "LOW");
   const [currentOffice, setCurrentOffice] = useState(initial?.currentOffice ?? "");
   const [background, setBackground] = useState(initial?.background ?? "");
   const [sourceNotes, setSourceNotes] = useState(initial?.sourceNotes ?? "");
+  const [verified, setVerified] = useState(initial?.verified ?? false);
   const [photoUrl, setPhotoUrl] = useState(initial?.photoUrl ?? "");
   const [photoSourceUrl, setPhotoSourceUrl] = useState(initial?.photoSourceUrl ?? "");
   const [photoSourceName, setPhotoSourceName] = useState(initial?.photoSourceName ?? "");
@@ -84,12 +88,14 @@ export function CandidateForm({ initial }: { initial?: InitialCandidate }) {
       constituencyId: initial ? undefined : constituencyId,
       electionId: initial ? undefined : electionId || undefined,
       name,
+      nameHindi: nameHindi || undefined,
       partyId: partyId || null,
       status,
       confidenceScore,
       currentOffice: currentOffice || undefined,
       background: background || undefined,
       sourceNotes: sourceNotes || undefined,
+      verified,
       photoUrl: photoUrl || undefined,
       photoSourceUrl: photoSourceUrl || undefined,
       photoSourceName: photoSourceName || undefined,
@@ -130,9 +136,14 @@ export function CandidateForm({ initial }: { initial?: InitialCandidate }) {
         </div>
       )}
 
-      <Field label="Candidate name">
-        <Input value={name} onChange={setName} required />
-      </Field>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Field label="Candidate name">
+          <Input value={name} onChange={setName} required />
+        </Field>
+        <Field label="Name in Hindi (optional — enter/verify manually, never auto-generated)">
+          <Input value={nameHindi} onChange={setNameHindi} placeholder="हिन्दी में नाम" />
+        </Field>
+      </div>
 
       <Field label="Party (leave unset for independent)">
         <select
@@ -178,7 +189,25 @@ export function CandidateForm({ initial }: { initial?: InitialCandidate }) {
         </Field>
       </div>
 
-      <Field label="Current office (optional)">
+      {status === "INCUMBENT" && (
+        <p className="rounded-lg border border-accent/40 bg-accent/10 p-3 text-xs text-foreground">
+          <strong>INCUMBENT</strong> means this person is the <strong>current sitting MLA</strong>. It does{" "}
+          <strong>not</strong> mean they are a declared candidate for the 2027 election, and this record will not
+          appear as a survey option. Change the status separately once/if an official 2027 candidacy is announced.
+        </p>
+      )}
+
+      <Field label="">
+        <label className="flex items-center gap-2 text-sm">
+          <input type="checkbox" checked={verified} onChange={(e) => setVerified(e.target.checked)} className="h-4 w-4 rounded border-border" />
+          <span>
+            <strong>Verified</strong> — an admin has checked this record&apos;s name/party/constituency/status against
+            the source notes below. Never set automatically by an import.
+          </span>
+        </label>
+      </Field>
+
+      <Field label="Current office (e.g. Sitting MLA — separate from 2027 candidacy status above)">
         <Input value={currentOffice} onChange={setCurrentOffice} />
       </Field>
 
@@ -186,7 +215,7 @@ export function CandidateForm({ initial }: { initial?: InitialCandidate }) {
         <Textarea value={background} onChange={setBackground} />
       </Field>
 
-      <Field label="Source notes (why this status/confidence)">
+      <Field label="Source / evidence notes (why this status/confidence — cite where this came from)">
         <Textarea value={sourceNotes} onChange={setSourceNotes} />
       </Field>
 

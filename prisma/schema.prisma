@@ -164,13 +164,18 @@ model Candidate {
   partyId        String?
   party          Party?   @relation(fields: [partyId], references: [id])
   name           String
+  nameHindi      String?  // Devanagari form, entered/verified by an admin — never machine-transliterated
   slug           String
-  status         String   // DECLARED | LIKELY | POSSIBLE | INCUMBENT | HISTORICAL
+  status         String   // DECLARED | LIKELY | POSSIBLE | INCUMBENT | HISTORICAL | OTHER
   confidenceScore String  @default("LOW") // HIGH | MEDIUM | LOW
   currentOffice  String?
   background     String?  // short political background, source-cited
   sourceNotes    String?
   sourceUrls     String?  // JSON-encoded string[]
+  // Distinct from photoVerified (which covers only the photo). This means an
+  // admin has checked the record's core facts (name/party/constituency/status)
+  // against sourceNotes/sourceUrls — never set true by an automated import.
+  verified       Boolean  @default(false)
 
   photoUrl          String?
   photoSourceUrl     String?

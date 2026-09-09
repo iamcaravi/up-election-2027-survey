@@ -7,6 +7,7 @@ const STATUS_STYLES: Record<CandidateStatus, string> = {
   POSSIBLE: "bg-accent/15 text-[#8a6a15] dark:text-accent-2 border-accent/40",
   INCUMBENT: "bg-[#0f9b8e]/10 text-positive border-positive/30",
   HISTORICAL: "bg-muted/10 text-muted border-border",
+  OTHER: "bg-muted/10 text-muted border-border",
 };
 
 export function StatusBadge({ status, className }: { status: CandidateStatus; className?: string }) {
