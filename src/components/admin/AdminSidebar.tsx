@@ -39,7 +39,7 @@ export function AdminSidebar({ userName, userRole }: { userName: string; userRol
     <aside className="flex w-64 shrink-0 flex-col border-r border-border bg-surface p-4">
       <div className="mb-6 px-2">
         <p className="font-display text-lg font-extrabold">Admin</p>
-        <p className="text-xs text-muted">UP Election 2027</p>
+        <p className="text-xs text-muted">India Election Survey</p>
       </div>
 
       <nav className="flex-1 space-y-1">

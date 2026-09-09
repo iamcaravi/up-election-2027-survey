@@ -1,9 +1,15 @@
-// UP Election 2027 — Public Mood & Survey Platform
+// India Election Survey — Public Mood & Survey Platform
 // Data model. Provider is SQLite for zero-config local development;
 // switch `provider` to "postgresql" and point DATABASE_URL at a real
 // Postgres instance for production (see README "Production database").
 // Enum-like fields are plain Strings validated in the app layer (src/lib/enums.ts)
 // so the same schema works unchanged on both SQLite and Postgres.
+//
+// Hierarchy: State -> Election -> District / Constituency -> Candidate / Survey.
+// A Constituency belongs to a State (and District) independent of any one
+// election; ElectionConstituency links a specific Election to the
+// constituencies contested in it, so historical data never gets mixed across
+// elections or states. Candidate and Survey are scoped to (Election, Constituency).
 
 generator client {
   provider = "prisma-client-js"
@@ -15,27 +21,77 @@ datasource db {
 }
 
 // ---------------------------------------------------------------------------
-// Geography
+// Geography / elections
 // ---------------------------------------------------------------------------
 
-model District {
-  id            String         @id @default(cuid())
-  name          String
-  slug          String         @unique
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+model State {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  code      String   @unique // e.g. UP, MH
+  shortName String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  elections     Election[]
+  districts     District[]
   constituencies Constituency[]
 
+  @@map("states")
+}
+
+model Election {
+  id            String    @id @default(cuid())
+  stateId       String
+  state         State     @relation(fields: [stateId], references: [id])
+  name          String
+  slug          String
+  electionType  String    @default("ASSEMBLY") // ASSEMBLY | LOK_SABHA | LOCAL
+  year          Int
+  status        String    @default("UPCOMING") // UPCOMING | ONGOING | COMPLETED
+  electionDate  DateTime?
+  description   String?
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  electionConstituencies ElectionConstituency[]
+  candidates             Candidate[]
+  surveys                Survey[]
+
+  @@unique([stateId, slug])
+  @@index([stateId])
+  @@map("elections")
+}
+
+model District {
+  id        String   @id @default(cuid())
+  stateId   String
+  state     State    @relation(fields: [stateId], references: [id])
+  name      String
+  slug      String
+  code      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  constituencies Constituency[]
+
+  @@unique([stateId, slug])
+  @@index([stateId])
   @@map("districts")
 }
 
 model Constituency {
   id              String   @id @default(cuid())
-  number          Int      @unique // 1-403, official AC number
-  name            String
-  slug            String   @unique
+  stateId         String
+  state           State    @relation(fields: [stateId], references: [id])
   districtId      String
   district        District @relation(fields: [districtId], references: [id])
+  number          Int      // official AC number, unique within a state
+  name            String
+  slug            String
+  type            String   @default("ASSEMBLY") // ASSEMBLY | LOK_SABHA
   reservedStatus  String   @default("None") // None | SC | ST
   currentMlaName  String?
   currentMlaParty String?
@@ -47,13 +103,34 @@ model Constituency {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  candidates       Candidate[]
-  surveys          Survey[]
-  surveyResponses  SurveyResponse[]
-  analyticsSnapshots AnalyticsSnapshot[]
+  electionConstituencies ElectionConstituency[]
+  candidates             Candidate[]
+  surveys                Survey[]
+  surveyResponses        SurveyResponse[]
+  analyticsSnapshots     AnalyticsSnapshot[]
 
+  @@unique([stateId, number])
+  @@unique([stateId, slug])
+  @@index([stateId])
   @@index([districtId])
   @@map("constituencies")
+}
+
+// Links a specific Election to the constituencies contested in it, so the
+// same physical constituency can appear (or not) across different election
+// cycles without corrupting historical data from other years.
+model ElectionConstituency {
+  id             String       @id @default(cuid())
+  electionId     String
+  election       Election     @relation(fields: [electionId], references: [id])
+  constituencyId String
+  constituency   Constituency @relation(fields: [constituencyId], references: [id])
+  isActive       Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+
+  @@unique([electionId, constituencyId])
+  @@index([constituencyId])
+  @@map("election_constituencies")
 }
 
 // ---------------------------------------------------------------------------
@@ -80,6 +157,8 @@ model Party {
 
 model Candidate {
   id             String   @id @default(cuid())
+  electionId     String
+  election       Election @relation(fields: [electionId], references: [id])
   constituencyId String
   constituency   Constituency @relation(fields: [constituencyId], references: [id])
   partyId        String?
@@ -106,7 +185,8 @@ model Candidate {
 
   imageSources   ImageSource[]
 
-  @@unique([constituencyId, slug])
+  @@unique([electionId, constituencyId, slug])
+  @@index([electionId])
   @@index([constituencyId])
   @@index([partyId])
   @@map("candidates")
@@ -137,20 +217,25 @@ model ImageSource {
 
 model Survey {
   id             String   @id @default(cuid())
+  electionId     String
+  election       Election @relation(fields: [electionId], references: [id])
   constituencyId String?
   constituency   Constituency? @relation(fields: [constituencyId], references: [id])
   title          String
   description    String?
   type           String   @default("CONSTITUENCY") // CONSTITUENCY | STATEWIDE
+  status         String   @default("ACTIVE") // ACTIVE | CLOSED | DRAFT
   isActive       Boolean  @default(true)
   startsAt       DateTime?
   endsAt         DateTime?
+  minimumSampleSize Int?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
   questions      SurveyQuestion[]
   responses      SurveyResponse[]
 
+  @@index([electionId])
   @@index([constituencyId])
   @@map("surveys")
 }

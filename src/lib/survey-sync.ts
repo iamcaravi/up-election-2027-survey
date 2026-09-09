@@ -4,8 +4,14 @@ import { prisma } from "./prisma";
 // Keeps the "candidate_choice" survey question's options in sync with a
 // constituency's candidate roster whenever candidates are added, edited,
 // deactivated or removed via the admin panel / CSV import.
-export async function syncCandidateChoiceOptions(constituencyId: string) {
-  const survey = await prisma.survey.findFirst({ where: { constituencyId, isActive: true } });
+//
+// electionId is required scoping: a constituency can have more than one
+// survey across different elections, and without it this would pick an
+// arbitrary active survey (and pull in candidates from every election) —
+// silently corrupting a different election's option list with the wrong
+// election's candidates.
+export async function syncCandidateChoiceOptions(constituencyId: string, electionId: string) {
+  const survey = await prisma.survey.findFirst({ where: { constituencyId, electionId, isActive: true } });
   if (!survey) return;
 
   const question = await prisma.surveyQuestion.findFirst({
@@ -15,7 +21,7 @@ export async function syncCandidateChoiceOptions(constituencyId: string) {
   if (!question) return;
 
   const candidates = await prisma.candidate.findMany({
-    where: { constituencyId, isActive: true },
+    where: { constituencyId, electionId, isActive: true },
   });
 
   const existingByCandidate = new Map(

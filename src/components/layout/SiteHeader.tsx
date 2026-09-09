@@ -14,7 +14,7 @@ export function SiteHeader() {
 
   const navItems = [
     { href: "/", label: t.nav.home },
-    { href: "/uttar-pradesh", label: t.nav.districts },
+    { href: "/states", label: t.nav.districts },
     { href: "/methodology", label: t.nav.methodology },
   ];
 
@@ -23,7 +23,7 @@ export function SiteHeader() {
       <div className="mx-auto flex h-16 w-full max-w-7xl items-center gap-4 px-4 sm:px-6 lg:px-8">
         <Link href="/" className="flex shrink-0 items-center gap-2 font-display text-lg font-extrabold">
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-ink text-sm text-white">
-            यू
+            भा
           </span>
           <span className="hidden sm:inline">{t.common.siteName}</span>
         </Link>

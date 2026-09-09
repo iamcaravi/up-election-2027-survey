@@ -13,21 +13,21 @@ const notoDevanagari = Noto_Sans_Devanagari({
   weight: ["400", "500", "600", "700", "800"],
 });
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://up-election-2027.example";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://india-election-survey.example";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "UP Election 2027 — Public Mood & Survey Platform",
-    template: "%s | UP Election 2027",
+    default: "India Election Survey — Public Mood & Survey Platform",
+    template: "%s | India Election Survey",
   },
   description:
-    "Voluntary public-opinion survey across all 403 Uttar Pradesh assembly constituencies — candidates, issues and live survey trends. Not an official election result.",
+    "Voluntary public-opinion survey platform covering state assembly elections across India — candidates, issues and live survey trends, state by state. Not an official election result.",
   openGraph: {
     type: "website",
-    siteName: "UP Election 2027",
-    title: "UP Election 2027 — Public Mood & Survey Platform",
-    description: "Public opinion across 403 UP assembly constituencies — candidates, issues and survey results.",
+    siteName: "India Election Survey",
+    title: "India Election Survey — Public Mood & Survey Platform",
+    description: "Public opinion across Indian state elections — candidates, issues and survey results.",
   },
   twitter: {
     card: "summary_large_image",

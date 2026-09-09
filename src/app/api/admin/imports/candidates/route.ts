@@ -5,6 +5,8 @@ import { getAdminSession, logAudit } from "@/lib/auth";
 import { csvToObjects } from "@/lib/csv";
 import { slugify } from "@/lib/slugify";
 import { syncCandidateChoiceOptions } from "@/lib/survey-sync";
+import { getActiveElectionForConstituency } from "@/lib/data";
+import { resolveImportConstituency } from "@/lib/candidate-import";
 import { CANDIDATE_STATUSES, CONFIDENCE_SCORES } from "@/lib/enums";
 
 const bodySchema = z.object({ csv: z.string().min(1), commit: z.boolean().default(false) });
@@ -34,7 +36,10 @@ export async function POST(req: NextRequest) {
   const partyByShortName = new Map(parties.map((p) => [p.shortName.toLowerCase(), p]));
 
   const results: RowResult[] = [];
-  const affectedConstituencies = new Set<string>();
+  // Track (constituencyId, electionId) pairs, not just constituencyId — a
+  // bare Set<constituencyId> would lose which election each row's candidate
+  // actually belonged to, and syncCandidateChoiceOptions must never guess.
+  const affectedPairs = new Map<string, { constituencyId: string; electionId: string }>();
 
   for (let i = 0; i < records.length; i++) {
     const r = records[i];
@@ -52,14 +57,9 @@ export async function POST(req: NextRequest) {
       errors.push(`confidence_score must be one of ${CONFIDENCE_SCORES.join(", ")}`);
     }
 
-    let constituency = null;
-    if (!Number.isNaN(constituencyNumber)) {
-      constituency = await prisma.constituency.findUnique({ where: { number: constituencyNumber } });
-      if (!constituency) errors.push(`No constituency with number ${constituencyNumber}`);
-      else if (r.constituency_name && constituency.name.toLowerCase() !== r.constituency_name.toLowerCase()) {
-        errors.push(`constituency_name "${r.constituency_name}" does not match AC#${constituencyNumber} ("${constituency.name}")`);
-      }
-    }
+    const resolution = await resolveImportConstituency(prisma, r, constituencyNumber);
+    errors.push(...resolution.errors);
+    const constituency = resolution.constituency;
 
     let party = null;
     if (r.party) {
@@ -78,8 +78,14 @@ export async function POST(req: NextRequest) {
     results.push({ row: i + 2, data: r, errors });
 
     if (errors.length === 0 && parsed.data.commit && constituency) {
+      const election = await getActiveElectionForConstituency(constituency.id);
+      if (!election) {
+        errors.push(`Constituency AC#${constituencyNumber} has no active election`);
+        continue;
+      }
+
       let slug = slugify(r.candidate_name);
-      const existing = await prisma.candidate.findFirst({ where: { constituencyId: constituency.id, slug } });
+      const existing = await prisma.candidate.findFirst({ where: { electionId: election.id, constituencyId: constituency.id, slug } });
       if (existing) slug = `${slug}-${i}`;
 
       const sourceUrls = r.source_urls
@@ -88,6 +94,7 @@ export async function POST(req: NextRequest) {
 
       const candidate = await prisma.candidate.create({
         data: {
+          electionId: election.id,
           constituencyId: constituency.id,
           name: r.candidate_name,
           slug,
@@ -117,14 +124,16 @@ export async function POST(req: NextRequest) {
         });
       }
 
-      affectedConstituencies.add(constituency.id);
+      affectedPairs.set(`${constituency.id}:${election.id}`, { constituencyId: constituency.id, electionId: election.id });
     }
   }
 
   const errorCount = results.filter((r) => r.errors.length > 0).length;
 
   if (parsed.data.commit) {
-    for (const cid of affectedConstituencies) await syncCandidateChoiceOptions(cid);
+    for (const { constituencyId, electionId } of affectedPairs.values()) {
+      await syncCandidateChoiceOptions(constituencyId, electionId);
+    }
     await logAudit({
       adminUserId: session.sub,
       action: "CSV_IMPORT",

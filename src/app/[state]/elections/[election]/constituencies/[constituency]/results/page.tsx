@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { getConstituencyBySlug } from "@/lib/data";
+import { getStateAndElection, getConstituencyBySlug } from "@/lib/data";
 import { getConstituencyResults } from "@/lib/analytics";
 import { Container } from "@/components/ui/Container";
 import { ResultBars } from "@/components/results/ResultBars";
@@ -14,17 +14,21 @@ export const revalidate = 10;
 export default async function ResultsPage({
   params,
 }: {
-  params: Promise<{ district: string; constituency: string }>;
+  params: Promise<{ state: string; election: string; constituency: string }>;
 }) {
-  const { district: districtSlug, constituency: slug } = await params;
-  const constituency = await getConstituencyBySlug(slug);
-  if (!constituency || constituency.district.slug !== districtSlug) notFound();
+  const { state: stateSlug, election: electionSlug, constituency: slug } = await params;
+  const result = await getStateAndElection(stateSlug, electionSlug);
+  if (!result?.election) notFound();
+  const { election } = result;
 
-  const results = await getConstituencyResults(constituency.id);
+  const constituency = await getConstituencyBySlug(stateSlug, slug, electionSlug);
+  if (!constituency) notFound();
+
+  const results = await getConstituencyResults(constituency.id, election.id);
 
   return (
     <Container className="max-w-3xl py-12">
-      <p className="text-xs font-semibold uppercase tracking-wider text-accent">{constituency.district.name}</p>
+      <p className="text-xs font-semibold uppercase tracking-wider text-accent">{constituency.district.name}, {constituency.state.name}</p>
       <h1 className="font-display text-3xl font-extrabold sm:text-4xl">{constituency.name} — सर्वे परिणाम</h1>
 
       <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-1 text-sm text-muted">
@@ -80,7 +84,7 @@ export default async function ResultsPage({
           Among survey respondents in each group. This describes survey participants, not the full electorate.
         </p>
         <div className="mt-4">
-          <DemographicAnalytics constituencySlug={slug} />
+          <DemographicAnalytics constituencySlug={slug} stateSlug={stateSlug} electionSlug={election.slug} />
         </div>
       </section>
     </Container>

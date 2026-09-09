@@ -24,7 +24,15 @@ interface GroupData {
   partyOptions: { key: string; label: string; count: number; pct: number; colorHex?: string }[];
 }
 
-export function DemographicAnalytics({ constituencySlug }: { constituencySlug: string }) {
+export function DemographicAnalytics({
+  constituencySlug,
+  stateSlug,
+  electionSlug,
+}: {
+  constituencySlug: string;
+  stateSlug: string;
+  electionSlug: string;
+}) {
   const [dimension, setDimension] = useState<Dimension>("age_group");
   const [target, setTarget] = useState<Target>("candidate_choice");
   const [data, setData] = useState<{ groups: GroupData[] } | null>(null);
@@ -32,11 +40,12 @@ export function DemographicAnalytics({ constituencySlug }: { constituencySlug: s
 
   useEffect(() => {
     setLoading(true);
-    fetch(`/api/constituencies/${constituencySlug}/analytics?dimension=${dimension}&target=${target}`)
+    const qs = new URLSearchParams({ state: stateSlug, election: electionSlug, dimension, target });
+    fetch(`/api/constituencies/${constituencySlug}/analytics?${qs}`)
       .then((r) => r.json())
       .then(setData)
       .finally(() => setLoading(false));
-  }, [constituencySlug, dimension, target]);
+  }, [constituencySlug, stateSlug, electionSlug, dimension, target]);
 
   return (
     <div className="card-surface rounded-2xl p-6">

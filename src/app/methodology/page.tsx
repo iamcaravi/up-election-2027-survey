@@ -4,7 +4,7 @@ import { MIN_ANALYTICS_GROUP_SIZE_DEFAULT } from "@/lib/enums";
 
 export const metadata: Metadata = {
   title: "Methodology",
-  description: "How UP Election 2027 collects, validates and aggregates public survey responses.",
+  description: "How India Election Survey collects, validates and aggregates public survey responses.",
 };
 
 export default function MethodologyPage() {
@@ -15,14 +15,14 @@ export default function MethodologyPage() {
 
       <div className="mt-8 space-y-8 text-sm leading-relaxed text-foreground/90">
         <Section title="What this is">
-          UP Election 2027 is a voluntary, opt-in online public-opinion survey covering all 403 assembly
-          constituencies of Uttar Pradesh. Anyone can participate; there is no sampling frame, quota, or attempt to
-          represent the state&apos;s electorate proportionally. Results describe <em>survey respondents</em>, not
-          the electorate as a whole.
+          India Election Survey is a voluntary, opt-in online public-opinion survey covering state assembly
+          elections, constituency by constituency, for each state published on this platform. Anyone can
+          participate; there is no sampling frame, quota, or attempt to represent any state&apos;s electorate
+          proportionally. Results describe <em>survey respondents</em>, not the electorate as a whole.
         </Section>
 
         <Section title="How responses are collected">
-          Each constituency has one active survey with questions on candidate preference, party preference, the
+          Each constituency, within a specific election, has one active survey with questions on candidate preference, party preference, the
           most important local issue, and optional demographics (age group, gender, social category, religion).
           Every optional question can be skipped. We never collect name, phone number, email, voter ID, Aadhaar,
           exact address, GPS location, or booth number.

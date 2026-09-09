@@ -6,7 +6,7 @@ if (!sessionSecret) throw new Error("SESSION_SECRET must be configured.");
 const SECRET = new TextEncoder().encode(sessionSecret);
 const COOKIE_NAME = "up2027_admin_session";
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   if (!pathname.startsWith("/admin") || pathname.startsWith("/admin/login")) {
     return NextResponse.next();

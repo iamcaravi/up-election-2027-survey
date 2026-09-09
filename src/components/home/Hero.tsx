@@ -1,14 +1,25 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { LinkButton } from "@/components/ui/Button";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { AnimatedCounter } from "@/components/ui/AnimatedCounter";
+import { StateSelector } from "@/components/home/StateSelector";
+
+interface StateItem {
+  slug: string;
+  name: string;
+  shortName: string | null;
+  districtCount: number;
+  constituencyCount: number;
+  activeElectionName: string | null;
+}
 
 export function Hero({
   stats,
+  states,
 }: {
-  stats: { constituencies: number; districts: number; responses: number; activeSurveys: number };
+  stats: { states: number; constituencies: number; districts: number; responses: number; activeSurveys: number };
+  states: StateItem[];
 }) {
   const { t } = useLocale();
 
@@ -53,23 +64,19 @@ export function Hero({
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row"
+          className="mt-9"
         >
-          <LinkButton href="/uttar-pradesh" size="lg" variant="primary">
-            {t.hero.ctaPrimary}
-          </LinkButton>
-          <LinkButton href="/uttar-pradesh" size="lg" variant="outline">
-            {t.hero.ctaSecondary}
-          </LinkButton>
+          <StateSelector states={states} />
         </motion.div>
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.3 }}
-          className="mx-auto mt-16 grid max-w-3xl grid-cols-2 gap-4 sm:grid-cols-4"
+          className="mx-auto mt-16 grid max-w-3xl grid-cols-2 gap-4 sm:grid-cols-5"
         >
           {[
+            { value: stats.states, label: "States" },
             { value: stats.constituencies, label: t.stats.constituencies },
             { value: stats.districts, label: t.stats.districts },
             { value: stats.responses, label: t.stats.responses },

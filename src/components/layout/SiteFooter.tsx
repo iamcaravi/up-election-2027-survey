@@ -18,7 +18,7 @@ export function SiteFooter() {
           <div>
             <p className="text-sm font-semibold">Explore</p>
             <ul className="mt-3 space-y-2 text-sm text-muted">
-              <li><Link href="/uttar-pradesh" className="hover:text-foreground">Districts</Link></li>
+              <li><Link href="/states" className="hover:text-foreground">States</Link></li>
               <li><Link href="/" className="hover:text-foreground">Home</Link></li>
             </ul>
           </div>

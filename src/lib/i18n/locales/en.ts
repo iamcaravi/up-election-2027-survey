@@ -2,7 +2,7 @@ import type hi from "./hi";
 
 const en: typeof hi = {
   common: {
-    siteName: "UP Election 2027",
+    siteName: "India Election Survey",
     loading: "Loading...",
     error: "Something went wrong.",
     retry: "Try again",
@@ -17,15 +17,15 @@ const en: typeof hi = {
   },
   nav: {
     home: "Home",
-    districts: "Districts",
+    districts: "States",
     results: "Survey Results",
     methodology: "Methodology",
     admin: "Admin",
   },
   hero: {
-    title1: "Uttar Pradesh 2027",
+    title1: "India Elections",
     title2: "What does the public mood say?",
-    subtitle: "Public opinion across 403 assembly constituencies — candidates, issues and survey results.",
+    subtitle: "Your platform for understanding elections, voters, candidates and public opinion — state by state.",
     ctaPrimary: "Find Your Assembly",
     ctaSecondary: "Take the Survey",
   },
@@ -36,7 +36,7 @@ const en: typeof hi = {
     activeSurveys: "Active Surveys",
   },
   map: {
-    title: "Uttar Pradesh Map",
+    titleSuffix: "Map",
     subtitle: "Click a district to explore",
     surveyLeader: "Current Survey Leader",
     notWinner: "This is not an official election result",

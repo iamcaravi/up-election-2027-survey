@@ -1,21 +1,26 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { getConstituencyBySlug, getFullSurveyForConstituency } from "@/lib/data";
+import { getStateAndElection, getConstituencyBySlug, getFullSurveyForConstituency } from "@/lib/data";
 import { SurveyFlow } from "@/components/survey/SurveyFlow";
 import { Container } from "@/components/ui/Container";
+import { electionPath } from "@/lib/routes";
 
 export const metadata: Metadata = { title: "Take the Survey" };
 
 export default async function SurveyPage({
   params,
 }: {
-  params: Promise<{ district: string; constituency: string }>;
+  params: Promise<{ state: string; election: string; constituency: string }>;
 }) {
-  const { district: districtSlug, constituency: slug } = await params;
-  const constituency = await getConstituencyBySlug(slug);
-  if (!constituency || constituency.district.slug !== districtSlug) notFound();
+  const { state: stateSlug, election: electionSlug, constituency: slug } = await params;
+  const result = await getStateAndElection(stateSlug, electionSlug);
+  if (!result?.election) notFound();
+  const { state, election } = result;
 
-  const survey = await getFullSurveyForConstituency(constituency.id);
+  const constituency = await getConstituencyBySlug(stateSlug, slug, electionSlug);
+  if (!constituency) notFound();
+
+  const survey = await getFullSurveyForConstituency(constituency.id, election.id);
   if (!survey) notFound();
 
   return (
@@ -23,7 +28,7 @@ export default async function SurveyPage({
       <SurveyFlow
         surveyId={survey.id}
         constituencyName={constituency.name}
-        districtSlug={districtSlug}
+        basePath={electionPath(state.slug, election.slug)}
         constituencySlug={slug}
         candidates={constituency.candidates.map((c) => ({
           id: c.id,

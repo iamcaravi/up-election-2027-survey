@@ -58,7 +58,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     });
   }
 
-  await syncCandidateChoiceOptions(existing.constituencyId);
+  await syncCandidateChoiceOptions(existing.constituencyId, existing.electionId);
   await logAudit({
     adminUserId: session.sub,
     action: "UPDATE",
@@ -79,7 +79,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   await prisma.candidate.update({ where: { id }, data: { isActive: false } });
-  await syncCandidateChoiceOptions(existing.constituencyId);
+  await syncCandidateChoiceOptions(existing.constituencyId, existing.electionId);
   await logAudit({ adminUserId: session.sub, action: "DEACTIVATE", entityType: "Candidate", entityId: id });
 
   return NextResponse.json({ ok: true });

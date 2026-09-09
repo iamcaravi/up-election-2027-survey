@@ -14,8 +14,8 @@ export default function DisclaimerPage() {
           election results and may not represent the views of the entire electorate.
         </p>
         <p>
-          UP Election 2027 is an independent public-opinion survey product. It is not affiliated with, endorsed by,
-          or run on behalf of the Election Commission of India, the Government of Uttar Pradesh, or any political
+          India Election Survey is an independent public-opinion survey product. It is not affiliated with,
+          endorsed by, or run on behalf of the Election Commission of India, any state government, or any political
           party or candidate.
         </p>
         <p>

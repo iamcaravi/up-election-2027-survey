@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getAdminSession, logAudit } from "@/lib/auth";
 import { syncCandidateChoiceOptions } from "@/lib/survey-sync";
 import { slugify } from "@/lib/slugify";
+import { getActiveElectionForConstituency } from "@/lib/data";
 import { CANDIDATE_STATUSES, CONFIDENCE_SCORES } from "@/lib/enums";
 
 const createSchema = z.object({
@@ -27,8 +28,12 @@ export async function GET(req: NextRequest) {
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const constituencyId = req.nextUrl.searchParams.get("constituencyId");
+  const electionId = req.nextUrl.searchParams.get("electionId");
   const candidates = await prisma.candidate.findMany({
-    where: constituencyId ? { constituencyId } : undefined,
+    where: {
+      ...(constituencyId ? { constituencyId } : {}),
+      ...(electionId ? { electionId } : {}),
+    },
     include: { party: true, constituency: { include: { district: true } } },
     orderBy: { createdAt: "desc" },
     take: 200,
@@ -49,12 +54,18 @@ export async function POST(req: NextRequest) {
   const constituency = await prisma.constituency.findUnique({ where: { id: data.constituencyId } });
   if (!constituency) return NextResponse.json({ error: "Constituency not found" }, { status: 404 });
 
+  const election = await getActiveElectionForConstituency(data.constituencyId);
+  if (!election) {
+    return NextResponse.json({ error: "This constituency has no active election to attach the candidate to." }, { status: 400 });
+  }
+
   let slug = slugify(data.name);
-  const existing = await prisma.candidate.findFirst({ where: { constituencyId: data.constituencyId, slug } });
+  const existing = await prisma.candidate.findFirst({ where: { electionId: election.id, constituencyId: data.constituencyId, slug } });
   if (existing) slug = `${slug}-${Date.now().toString(36)}`;
 
   const candidate = await prisma.candidate.create({
     data: {
+      electionId: election.id,
       constituencyId: data.constituencyId,
       name: data.name,
       slug,
@@ -87,7 +98,7 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  await syncCandidateChoiceOptions(data.constituencyId);
+  await syncCandidateChoiceOptions(data.constituencyId, election.id);
   await logAudit({
     adminUserId: session.sub,
     action: "CREATE",

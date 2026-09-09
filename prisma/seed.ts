@@ -15,7 +15,35 @@ import { slugify } from "../src/lib/slugify";
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log("Seeding UP Election 2027 database...");
+  console.log("Seeding India Election Survey database...");
+
+  // --- State + Election -------------------------------------------------------
+  const upState = await prisma.state.upsert({
+    where: { slug: "uttar-pradesh" },
+    update: {},
+    create: {
+      name: "Uttar Pradesh",
+      slug: "uttar-pradesh",
+      code: "UP",
+      shortName: "UP",
+      isActive: true,
+    },
+  });
+
+  const upElection = await prisma.election.upsert({
+    where: { stateId_slug: { stateId: upState.id, slug: "assembly-2027" } },
+    update: {},
+    create: {
+      stateId: upState.id,
+      name: "Uttar Pradesh Assembly Election 2027",
+      slug: "assembly-2027",
+      electionType: "ASSEMBLY",
+      year: 2027,
+      status: "UPCOMING",
+      description: "Voluntary public-opinion survey ahead of the 2027 UP Assembly election. Not an official election result.",
+      isActive: true,
+    },
+  });
 
   // --- Site settings -------------------------------------------------------
   await prisma.siteSetting.upsert({
@@ -57,9 +85,9 @@ async function main() {
   for (const name of districtNames) {
     const slug = slugify(name);
     const d = await prisma.district.upsert({
-      where: { slug },
+      where: { stateId_slug: { stateId: upState.id, slug } },
       update: { name },
-      create: { name, slug },
+      create: { name, slug, stateId: upState.id },
     });
     districtSlugs.set(name, d.id);
   }
@@ -75,19 +103,26 @@ async function main() {
     usedSlugs.add(slug);
 
     const constituency = await prisma.constituency.upsert({
-      where: { number },
+      where: { stateId_number: { stateId: upState.id, number } },
       update: { name, districtId, reservedStatus: reserved, slug },
-      create: { number, name, slug, districtId, reservedStatus: reserved },
+      create: { number, name, slug, districtId, reservedStatus: reserved, stateId: upState.id },
     });
     constituencyCount++;
+
+    await prisma.electionConstituency.upsert({
+      where: { electionId_constituencyId: { electionId: upElection.id, constituencyId: constituency.id } },
+      update: {},
+      create: { electionId: upElection.id, constituencyId: constituency.id },
+    });
 
     // Seed one statewide-template survey per constituency with the standard
     // question set. Candidate options are added later as candidates are
     // imported (see src/lib/survey-sync.ts).
-    const existingSurvey = await prisma.survey.findFirst({ where: { constituencyId: constituency.id } });
+    const existingSurvey = await prisma.survey.findFirst({ where: { constituencyId: constituency.id, electionId: upElection.id } });
     if (!existingSurvey) {
       const survey = await prisma.survey.create({
         data: {
+          electionId: upElection.id,
           constituencyId: constituency.id,
           title: `${name} — 2027 विधानसभा सर्वे`,
           description: "Voluntary public-opinion survey. Not an official election result.",

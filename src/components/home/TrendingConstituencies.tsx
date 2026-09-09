@@ -4,12 +4,14 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { TrendingUp } from "lucide-react";
 import { formatNumber } from "@/lib/utils";
+import { constituencyPath } from "@/lib/routes";
 
 interface TrendingItem {
   slug: string;
   name: string;
-  districtSlug: string;
   districtName: string;
+  stateSlug: string;
+  electionSlug: string | null;
   responseCount: number;
 }
 
@@ -26,7 +28,7 @@ export function TrendingConstituencies({ items }: { items: TrendingItem[] }) {
 
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {items.map((c, i) => (
+      {items.filter((c) => c.electionSlug).map((c, i) => (
         <motion.div
           key={c.slug}
           initial={{ opacity: 0, y: 16 }}
@@ -35,7 +37,7 @@ export function TrendingConstituencies({ items }: { items: TrendingItem[] }) {
           transition={{ duration: 0.4, delay: i * 0.05 }}
         >
           <Link
-            href={`/uttar-pradesh/${c.districtSlug}/${c.slug}`}
+            href={constituencyPath(c.stateSlug, c.electionSlug!, c.slug)}
             className="card-surface group block rounded-2xl p-5 transition-transform duration-200 hover:-translate-y-1"
           >
             <div className="flex items-center gap-1.5 text-xs font-semibold text-positive">

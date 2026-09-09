@@ -8,13 +8,20 @@ export async function GET(req: NextRequest) {
   }
   const results = await searchAll(q);
   return NextResponse.json({
-    districts: results.districts.map((d) => ({ type: "district", slug: d.slug, name: d.name })),
+    districts: results.districts.map((d) => ({
+      type: "district",
+      slug: d.slug,
+      name: d.name,
+      stateSlug: d.state.slug,
+      electionSlug: d.electionSlug,
+    })),
     constituencies: results.constituencies.map((c) => ({
       type: "constituency",
       slug: c.slug,
       name: c.name,
       districtName: c.district.name,
-      districtSlug: c.district.slug,
+      stateSlug: c.state.slug,
+      electionSlug: c.electionSlug,
       number: c.number,
     })),
     candidates: results.candidates.map((c) => ({
@@ -24,7 +31,8 @@ export async function GET(req: NextRequest) {
       partyShortName: c.party?.shortName,
       constituencyName: c.constituency.name,
       constituencySlug: c.constituency.slug,
-      districtSlug: c.constituency.district.slug,
+      stateSlug: c.constituency.state.slug,
+      electionSlug: c.electionSlug,
     })),
   });
 }

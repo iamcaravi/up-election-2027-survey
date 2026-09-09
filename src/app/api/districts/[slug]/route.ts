@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDistrictBySlug } from "@/lib/data";
 
-export async function GET(_req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
+// `state` is required, not defaulted — see /api/districts/route.ts for why.
+export async function GET(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const district = await getDistrictBySlug(slug);
+  const stateSlug = req.nextUrl.searchParams.get("state");
+  if (!stateSlug) {
+    return NextResponse.json({ error: "Missing required ?state=<slug> parameter." }, { status: 400 });
+  }
+  const district = await getDistrictBySlug(stateSlug, slug);
   if (!district) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json({
     id: district.id,

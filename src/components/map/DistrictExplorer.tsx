@@ -13,7 +13,15 @@ export interface DistrictNode {
   responseCount: number;
 }
 
-export function DistrictExplorer({ districts }: { districts: DistrictNode[] }) {
+export function DistrictExplorer({
+  districts,
+  basePath,
+  stateName,
+}: {
+  districts: DistrictNode[];
+  basePath: string;
+  stateName: string;
+}) {
   const { t } = useLocale();
   const router = useRouter();
   const [hovered, setHovered] = useState<DistrictNode | null>(null);
@@ -30,8 +38,8 @@ export function DistrictExplorer({ districts }: { districts: DistrictNode[] }) {
       />
 
       <div className="relative flex flex-col gap-1 pb-6 text-center">
-        <h3 className="font-display text-2xl font-extrabold sm:text-3xl">{t.map.title}</h3>
-        <p className="text-sm text-muted">{t.map.subtitle} · 75 {t.stats.districts.toLowerCase()}</p>
+        <h3 className="font-display text-2xl font-extrabold sm:text-3xl">{stateName} {t.map.titleSuffix}</h3>
+        <p className="text-sm text-muted">{t.map.subtitle} · {districts.length} {t.stats.districts.toLowerCase()}</p>
       </div>
 
       <div className="relative grid grid-cols-5 gap-2.5 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12">
@@ -46,7 +54,7 @@ export function DistrictExplorer({ districts }: { districts: DistrictNode[] }) {
               transition={{ delay: (i % 40) * 0.012, duration: 0.35, ease: "easeOut" }}
               onMouseEnter={() => setHovered(d)}
               onMouseLeave={() => setHovered((h) => (h?.slug === d.slug ? null : h))}
-              onClick={() => router.push(`/uttar-pradesh/${d.slug}`)}
+              onClick={() => router.push(`${basePath}/districts/${d.slug}`)}
               className={cn(
                 "group relative aspect-square rounded-lg border transition-all duration-200",
                 "hover:scale-110 hover:z-10 hover:shadow-[var(--shadow-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/40"

@@ -9,11 +9,20 @@ export async function GET(req: NextRequest) {
   const q = req.nextUrl.searchParams.get("q") ?? "";
   const results = await prisma.constituency.findMany({
     where: q ? { name: { contains: q } } : undefined,
-    include: { district: true },
+    include: { district: true, state: true },
     orderBy: { number: "asc" },
     take: 20,
   });
+  // District (and now state) name is included so admins can disambiguate
+  // same-named constituencies across states — the created candidate is
+  // always tied to the exact constituency id selected, never the name.
   return NextResponse.json(
-    results.map((c) => ({ id: c.id, name: c.name, number: c.number, districtName: c.district.name }))
+    results.map((c) => ({
+      id: c.id,
+      name: c.name,
+      number: c.number,
+      districtName: c.district.name,
+      stateName: c.state.name,
+    }))
   );
 }

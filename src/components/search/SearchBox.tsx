@@ -5,15 +5,17 @@ import { useRouter } from "next/navigation";
 import { Search, Loader2, MapPin, Building2, User } from "lucide-react";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
+import { districtPath, constituencyPath } from "@/lib/routes";
 
 interface SearchResults {
-  districts: { type: "district"; slug: string; name: string }[];
+  districts: { type: "district"; slug: string; name: string; stateSlug: string; electionSlug: string | null }[];
   constituencies: {
     type: "constituency";
     slug: string;
     name: string;
-    districtSlug: string;
     districtName: string;
+    stateSlug: string;
+    electionSlug: string | null;
     number: number;
   }[];
   candidates: {
@@ -22,7 +24,8 @@ interface SearchResults {
     name: string;
     partyShortName?: string;
     constituencySlug: string;
-    districtSlug: string;
+    stateSlug: string;
+    electionSlug: string | null;
     constituencyName: string;
   }[];
 }
@@ -100,7 +103,7 @@ export function SearchBox({ className, autoFocus }: { className?: string; autoFo
                 <button
                   key={d.slug}
                   onClick={() => {
-                    router.push(`/uttar-pradesh/${d.slug}`);
+                    if (d.electionSlug) router.push(districtPath(d.stateSlug, d.electionSlug, d.slug));
                     setOpen(false);
                   }}
                   className="flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-left text-sm hover:bg-surface-2"
@@ -121,7 +124,7 @@ export function SearchBox({ className, autoFocus }: { className?: string; autoFo
                 <button
                   key={c.slug}
                   onClick={() => {
-                    router.push(`/uttar-pradesh/${c.districtSlug}/${c.slug}`);
+                    if (c.electionSlug) router.push(constituencyPath(c.stateSlug, c.electionSlug, c.slug));
                     setOpen(false);
                   }}
                   className="flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-left text-sm hover:bg-surface-2"
@@ -143,7 +146,7 @@ export function SearchBox({ className, autoFocus }: { className?: string; autoFo
                 <button
                   key={c.slug + c.constituencySlug}
                   onClick={() => {
-                    router.push(`/uttar-pradesh/${c.districtSlug}/${c.constituencySlug}`);
+                    if (c.electionSlug) router.push(constituencyPath(c.stateSlug, c.electionSlug, c.constituencySlug));
                     setOpen(false);
                   }}
                   className="flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-left text-sm hover:bg-surface-2"

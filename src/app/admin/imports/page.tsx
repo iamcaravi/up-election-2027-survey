@@ -18,7 +18,7 @@ interface ValidateResponse {
 }
 
 const TEMPLATE_HEADER =
-  "district,constituency_number,constituency_name,candidate_name,party,candidate_status,confidence_score,photo_url,photo_source_url,photo_source_name,photo_license,source_notes,source_urls";
+  "state_slug,district,constituency_number,constituency_name,candidate_name,party,candidate_status,confidence_score,photo_url,photo_source_url,photo_source_name,photo_license,source_notes,source_urls";
 
 export default function ImportsPage() {
   const [csv, setCsv] = useState("");
@@ -67,6 +67,10 @@ export default function ImportsPage() {
       <div className="mt-6 card-surface rounded-2xl p-6">
         <p className="mb-2 text-sm font-semibold">Expected columns</p>
         <code className="block overflow-x-auto rounded-lg bg-surface-2 p-3 text-xs">{TEMPLATE_HEADER}</code>
+        <p className="mt-2 text-xs text-muted">
+          <code className="font-semibold">state_slug</code> is required on every row (e.g. <code>uttar-pradesh</code>) —
+          it is never assumed, since constituency numbers are only unique within a state.
+        </p>
 
         <div className="mt-5">
           <input type="file" accept=".csv,text/csv" onChange={handleFile} className="text-sm" />

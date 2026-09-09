@@ -77,8 +77,11 @@ async function tallyQuestion(surveyId: string, questionKey: string): Promise<Que
   };
 }
 
-export async function getConstituencyResults(constituencyId: string) {
-  const survey = await prisma.survey.findFirst({ where: { constituencyId, isActive: true } });
+// electionId is required scoping: a constituency can in principle have more
+// than one active survey across different elections (e.g. an Assembly and a
+// Lok Sabha election both active at once), and results must never mix them.
+export async function getConstituencyResults(constituencyId: string, electionId: string) {
+  const survey = await prisma.survey.findFirst({ where: { constituencyId, electionId, isActive: true } });
   if (!survey) return null;
 
   const [candidateResult, partyResult, issueResult] = await Promise.all([
@@ -118,13 +121,18 @@ export interface DemographicBreakdown {
   }>;
 }
 
-export async function getStatewideTopIssues(limit = 6) {
+// electionId is required scoping — without it this aggregates "top issue"
+// answers across every election in every state, which is never the intended
+// meaning of "statewide" despite the function's name (kept for the one
+// election it was originally written against; a true multi-election
+// statewide rollup would need to aggregate per-election explicitly).
+export async function getStatewideTopIssues(electionId: string, limit = 6) {
   const minRequired = await getMinGroupSize();
   const answers = await prisma.surveyAnswer.findMany({
     where: {
       question: { key: "top_issue" },
       optionId: { not: null },
-      response: { status: "VALID" },
+      response: { status: "VALID", survey: { electionId } },
     },
     select: { option: { select: { key: true, label: true } } },
   });
@@ -145,10 +153,11 @@ export async function getStatewideTopIssues(limit = 6) {
 
 export async function getConstituencyDemographicBreakdown(
   constituencyId: string,
+  electionId: string,
   dimension: DemographicDimension,
   target: "candidate_choice" | "party_preference" = "candidate_choice"
 ): Promise<DemographicBreakdown | null> {
-  const survey = await prisma.survey.findFirst({ where: { constituencyId, isActive: true } });
+  const survey = await prisma.survey.findFirst({ where: { constituencyId, electionId, isActive: true } });
   if (!survey) return null;
 
   const minRequired = await getMinGroupSize();

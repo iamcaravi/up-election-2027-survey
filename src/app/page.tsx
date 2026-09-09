@@ -1,67 +1,67 @@
 import Link from "next/link";
-import { getHomeStats, getDistricts, getTrendingConstituencies } from "@/lib/data";
-import { getStatewideTopIssues } from "@/lib/analytics";
+import { getHomeStats, getStates } from "@/lib/data";
 import { Hero } from "@/components/home/Hero";
-import { DistrictExplorer } from "@/components/map/DistrictExplorer";
 import { SectionHeading } from "@/components/home/SectionHeading";
-import { TrendingConstituencies } from "@/components/home/TrendingConstituencies";
-import { TopIssues } from "@/components/home/TopIssues";
 import { HowItWorks } from "@/components/home/HowItWorks";
 import { Container } from "@/components/ui/Container";
+import { ArrowRight, MapPin } from "lucide-react";
+import { statePath } from "@/lib/routes";
 
 export const revalidate = 60;
 
 export default async function Home() {
-  const [stats, districts, trending, topIssues] = await Promise.all([
-    getHomeStats(),
-    getDistricts(),
-    getTrendingConstituencies(6),
-    getStatewideTopIssues(6),
-  ]);
+  const [stats, states] = await Promise.all([getHomeStats(), getStates()]);
 
-  const districtNodes = districts.map((d) => ({
-    slug: d.slug,
-    name: d.name,
-    constituencyCount: d._count.constituencies,
-    responseCount: 0,
+  const stateItems = states.map((s) => ({
+    slug: s.slug,
+    name: s.name,
+    shortName: s.shortName,
+    districtCount: s._count.districts,
+    constituencyCount: s._count.constituencies,
+    activeElectionName: s.elections[0]?.name ?? null,
   }));
 
   return (
     <div>
-      <Hero stats={stats} />
-
-      <Container className="py-16 sm:py-20">
-        <DistrictExplorer districts={districtNodes} />
-      </Container>
+      <Hero stats={stats} states={stateItems} />
 
       <Container className="py-16 sm:py-20">
         <SectionHeading
-          eyebrow="Explore"
-          title="Trending Constituencies"
-          subtitle="Ranked by real survey participation — never fabricated."
+          eyebrow="States"
+          title="Explore Elections by State"
+          subtitle="Pick a state to see its districts, assembly constituencies, candidates and public survey."
         />
-        <TrendingConstituencies
-          items={trending.map((c) => ({
-            slug: c.slug,
-            name: c.name,
-            districtSlug: c.district.slug,
-            districtName: c.district.name,
-            responseCount: c._count.surveyResponses,
-          }))}
-        />
-      </Container>
-
-      <Container className="py-16 sm:py-20">
-        <SectionHeading
-          eyebrow="Issues"
-          title="Top Issues Across UP"
-          subtitle="What survey respondents say matters most in their constituency."
-        />
-        <TopIssues
-          issues={topIssues.issues}
-          sufficientSample={topIssues.sufficientSample}
-          minRequired={topIssues.minRequired}
-        />
+        {stateItems.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-border bg-surface-2 p-10 text-center text-sm text-muted">
+            No states published yet.
+          </div>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {stateItems.map((s) => (
+              <Link
+                key={s.slug}
+                href={statePath(s.slug)}
+                className="card-surface group flex flex-col rounded-2xl p-5 transition-all duration-200 hover:-translate-y-1"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-ink/10 text-ink">
+                    <MapPin size={16} />
+                  </span>
+                  <p className="font-display text-lg font-bold group-hover:text-ink">{s.name}</p>
+                </div>
+                <p className="mt-3 text-sm text-muted">
+                  {s.districtCount} districts · {s.constituencyCount} constituencies
+                </p>
+                {s.activeElectionName && (
+                  <p className="mt-1 text-xs font-medium text-accent">{s.activeElectionName}</p>
+                )}
+                <div className="mt-4 flex items-center gap-1.5 text-sm font-semibold text-ink opacity-0 transition-opacity group-hover:opacity-100">
+                  Explore <ArrowRight size={14} />
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
       </Container>
 
       <Container className="py-16 sm:py-20">

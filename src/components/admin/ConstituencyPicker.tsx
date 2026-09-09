@@ -7,6 +7,7 @@ interface Item {
   name: string;
   number: number;
   districtName: string;
+  stateName?: string;
 }
 
 export function ConstituencyPicker({
@@ -60,7 +61,10 @@ export function ConstituencyPicker({
               <span>
                 AC #{r.number} · {r.name}
               </span>
-              <span className="text-xs text-muted">{r.districtName}</span>
+              <span className="text-xs text-muted">
+                {r.districtName}
+                {r.stateName ? `, ${r.stateName}` : ""}
+              </span>
             </button>
           ))}
         </div>

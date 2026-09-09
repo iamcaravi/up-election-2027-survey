@@ -36,14 +36,14 @@ const DEMO_KEYS = ["age_group", "gender", "social_category", "religion"];
 export function SurveyFlow({
   surveyId,
   constituencyName,
-  districtSlug,
+  basePath,
   constituencySlug,
   candidates,
   questions,
 }: {
   surveyId: string;
   constituencyName: string;
-  districtSlug: string;
+  basePath: string;
   constituencySlug: string;
   candidates: CandidateOption[];
   questions: QuestionData[];
@@ -228,9 +228,7 @@ export function SurveyFlow({
         {step === "complete" && (
           <CompletionScreen
             key="complete"
-            districtSlug={districtSlug}
-            constituencySlug={constituencySlug}
-            onViewResults={() => router.push(`/uttar-pradesh/${districtSlug}/${constituencySlug}/results`)}
+            onViewResults={() => router.push(`${basePath}/constituencies/${constituencySlug}/results`)}
           />
         )}
       </>
@@ -312,12 +310,8 @@ function QuestionStep({
 }
 
 function CompletionScreen({
-  districtSlug,
-  constituencySlug,
   onViewResults,
 }: {
-  districtSlug: string;
-  constituencySlug: string;
   onViewResults: () => void;
 }) {
   const { t } = useLocale();

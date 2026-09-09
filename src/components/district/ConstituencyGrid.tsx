@@ -19,10 +19,10 @@ interface ConstituencyItem {
 }
 
 export function ConstituencyGrid({
-  districtSlug,
+  basePath,
   constituencies,
 }: {
-  districtSlug: string;
+  basePath: string;
   constituencies: ConstituencyItem[];
 }) {
   const { t } = useLocale();
@@ -37,7 +37,7 @@ export function ConstituencyGrid({
           transition={{ duration: 0.4, delay: (i % 9) * 0.06 }}
         >
           <Link
-            href={`/uttar-pradesh/${districtSlug}/${c.slug}`}
+            href={`${basePath}/constituencies/${c.slug}`}
             className="card-surface group flex h-full flex-col rounded-2xl p-5 transition-all duration-200 hover:-translate-y-1"
           >
             <div className="flex items-center justify-between">
