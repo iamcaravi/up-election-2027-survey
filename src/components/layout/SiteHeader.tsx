@@ -13,8 +13,10 @@ export function SiteHeader() {
   const [open, setOpen] = useState(false);
 
   const navItems = [
-    { href: "/", label: t.nav.home },
+    { href: "/#elections", label: t.nav.elections },
     { href: "/states", label: t.nav.districts },
+    { href: "/#surveys", label: t.nav.surveys },
+    { href: "/#issues", label: t.nav.issues },
     { href: "/methodology", label: t.nav.methodology },
   ];
 
@@ -25,22 +27,25 @@ export function SiteHeader() {
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-ink text-sm text-white">
             भा
           </span>
-          <span className="hidden sm:inline">{t.common.siteName}</span>
+          <span className="hidden flex-col leading-tight lg:flex">
+            <span>{t.common.siteName}</span>
+            <span className="text-[10px] font-medium tracking-wide text-muted">{t.common.siteTagline}</span>
+          </span>
         </Link>
 
-        <nav className="hidden items-center gap-1 md:flex">
+        <nav className="hidden items-center gap-0.5 md:flex">
           {navItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className="rounded-lg px-3 py-2 text-sm font-medium text-foreground/70 transition-colors hover:bg-surface-2 hover:text-foreground"
+              className="rounded-lg px-2 py-2 text-sm font-medium text-foreground/70 transition-colors hover:bg-surface-2 hover:text-foreground lg:px-3"
             >
               {item.label}
             </Link>
           ))}
         </nav>
 
-        <div className="ml-auto hidden max-w-xs flex-1 sm:block">
+        <div className="ml-auto hidden max-w-xs flex-1 lg:block">
           <SearchBox />
         </div>
 

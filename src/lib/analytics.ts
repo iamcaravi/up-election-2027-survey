@@ -151,6 +151,37 @@ export async function getStatewideTopIssues(electionId: string, limit = 6) {
   return { total, sufficientSample: total >= minRequired, minRequired, issues: sorted };
 }
 
+// Cross-state variant of getStatewideTopIssues: aggregates "top_issue"
+// answers across every currently-active election rather than one. Used only
+// by the homepage's "चुनावी मुद्दे" section, which has no single election to
+// scope to. Kept as a separate function rather than changing the existing
+// one's signature/behavior, since other callers depend on the single-election
+// version exactly as it is.
+export async function getTopIssuesOverall(limit = 6) {
+  const minRequired = await getMinGroupSize();
+  const answers = await prisma.surveyAnswer.findMany({
+    where: {
+      question: { key: "top_issue" },
+      optionId: { not: null },
+      response: { status: "VALID", survey: { election: { isActive: true } } },
+    },
+    select: { option: { select: { key: true, label: true } } },
+  });
+  const counts = new Map<string, { label: string; count: number }>();
+  for (const a of answers) {
+    if (!a.option || a.option.key === "other") continue;
+    const cur = counts.get(a.option.key) ?? { label: a.option.label, count: 0 };
+    cur.count += 1;
+    counts.set(a.option.key, cur);
+  }
+  const total = answers.length;
+  const sorted = Array.from(counts.entries())
+    .map(([key, v]) => ({ key, label: v.label, count: v.count, pct: total ? Math.round((v.count / total) * 1000) / 10 : 0 }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, limit);
+  return { total, sufficientSample: total >= minRequired, minRequired, issues: sorted };
+}
+
 export async function getConstituencyDemographicBreakdown(
   constituencyId: string,
   electionId: string,

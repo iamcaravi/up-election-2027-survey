@@ -1,98 +1,118 @@
-import Link from "next/link";
-import { getHomeStats, getStates } from "@/lib/data";
+import {
+  getHomeStats,
+  getStates,
+  getFeaturedActiveSurveys,
+  getHistoricalWinnersSummary,
+} from "@/lib/data";
+import { getTopIssuesOverall } from "@/lib/analytics";
 import { Hero } from "@/components/home/Hero";
-import { SectionHeading } from "@/components/home/SectionHeading";
 import { HowItWorks } from "@/components/home/HowItWorks";
+import { StateElections } from "@/components/home/StateElections";
+import { ActiveSurveys } from "@/components/home/ActiveSurveys";
+import { IssuesSection } from "@/components/home/IssuesSection";
+import { ElectionExplorer } from "@/components/home/ElectionExplorer";
+import { HistoricalElections } from "@/components/home/HistoricalElections";
+import { TrustSection } from "@/components/home/TrustSection";
 import { Container } from "@/components/ui/Container";
-import { ArrowRight, MapPin } from "lucide-react";
-import { statePath } from "@/lib/routes";
 
 export const revalidate = 60;
 
 export default async function Home() {
-  const [stats, states] = await Promise.all([getHomeStats(), getStates()]);
+  const [stats, states, activeSurveys, topIssues, historicalByState] = await Promise.all([
+    getHomeStats(),
+    getStates(),
+    getFeaturedActiveSurveys(6),
+    getTopIssuesOverall(6),
+    getHistoricalWinnersSummary(),
+  ]);
 
-  const stateItems = states.map((s) => ({
+  // "Primary" state for this UP-first launch phase: the first (and today,
+  // only) configured state. When more states are added this naturally
+  // becomes "the first one alphabetically" rather than a hardcoded pick —
+  // the sections below already fall back to a general multi-state layout
+  // once states.length > 1.
+  const primary = states[0] ?? null;
+  const primaryElection = primary?.elections[0] ?? null;
+  const primaryState = primary
+    ? {
+        slug: primary.slug,
+        name: primary.name,
+        districtCount: primary._count.districts,
+        constituencyCount: primary._count.constituencies,
+        surveyCount: stats.activeSurveys,
+        election: primaryElection
+          ? { slug: primaryElection.slug, name: primaryElection.name, year: primaryElection.year, status: primaryElection.status }
+          : null,
+      }
+    : null;
+
+  const stateElectionItems = states.map((s) => ({
     slug: s.slug,
     name: s.name,
-    shortName: s.shortName,
     districtCount: s._count.districts,
     constituencyCount: s._count.constituencies,
-    activeElectionName: s.elections[0]?.name ?? null,
+    activeElection: s.elections[0]
+      ? {
+          slug: s.elections[0].slug,
+          name: s.elections[0].name,
+          year: s.elections[0].year,
+          status: s.elections[0].status,
+        }
+      : null,
   }));
+
+  const historicalItems = states
+    .map((s) => {
+      const summary = historicalByState.get(s.id);
+      if (!summary) return null;
+      return { stateName: s.name, totalSeats: summary.totalSeats, parties: summary.parties };
+    })
+    .filter((x): x is NonNullable<typeof x> => x !== null);
 
   return (
     <div>
-      <Hero stats={stats} states={stateItems} />
+      <Hero stats={stats} primaryState={primaryState} />
 
-      <Container className="py-16 sm:py-20">
-        <SectionHeading
-          eyebrow="States"
-          title="Explore Elections by State"
-          subtitle="Pick a state to see its districts, assembly constituencies, candidates and public survey."
-        />
-        {stateItems.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border bg-surface-2 p-10 text-center text-sm text-muted">
-            No states published yet.
-          </div>
-        ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {stateItems.map((s) => (
-              <Link
-                key={s.slug}
-                href={statePath(s.slug)}
-                className="card-surface group flex flex-col rounded-2xl p-5 transition-all duration-200 hover:-translate-y-1"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-ink/10 text-ink">
-                    <MapPin size={16} />
-                  </span>
-                  <p className="font-display text-lg font-bold group-hover:text-ink">{s.name}</p>
-                </div>
-                <p className="mt-3 text-sm text-muted">
-                  {s.districtCount} districts · {s.constituencyCount} constituencies
-                </p>
-                {s.activeElectionName && (
-                  <p className="mt-1 text-xs font-medium text-accent">{s.activeElectionName}</p>
-                )}
-                <div className="mt-4 flex items-center gap-1.5 text-sm font-semibold text-ink opacity-0 transition-opacity group-hover:opacity-100">
-                  Explore <ArrowRight size={14} />
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
+      {/* राज्यों के चुनाव — primary section */}
+      <Container className="py-14 sm:py-16" id="elections">
+        <StateElections items={stateElectionItems} />
       </Container>
 
-      <Container className="py-16 sm:py-20">
-        <SectionHeading eyebrow="How it works" title="सर्वे कैसे काम करता है" />
+      {/* जनता का मूड — primary section */}
+      <div className="border-y border-border bg-surface-2">
+        <Container className="py-14 sm:py-16" id="surveys">
+          <ActiveSurveys items={activeSurveys} primaryState={primaryState} />
+        </Container>
+      </div>
+
+      {/* चुनावी मुद्दे — supporting section */}
+      <Container className="py-10 sm:py-12" id="issues">
+        <IssuesSection issues={topIssues.issues} sufficientSample={topIssues.sufficientSample} />
+      </Container>
+
+      {/* Election Explorer — supporting section */}
+      <div className="border-y border-border bg-surface-2">
+        <Container className="py-10 sm:py-12">
+          <ElectionExplorer primaryState={primaryState} />
+        </Container>
+      </div>
+
+      {/* आपकी राय, आंकड़ों में — supporting section */}
+      <Container className="py-10 sm:py-12">
         <HowItWorks />
       </Container>
 
-      <Container className="py-16 sm:py-20">
-        <div className="grid gap-6 rounded-2xl border border-border bg-surface-2 p-8 sm:grid-cols-2">
-          <div>
-            <h3 className="font-display text-xl font-bold">Methodology</h3>
-            <p className="mt-2 text-sm text-muted">
-              Learn how responses are collected, validated, and how we protect against manipulation and small-sample
-              disclosure.
-            </p>
-            <Link href="/methodology" className="mt-3 inline-block text-sm font-semibold text-ink underline underline-offset-4">
-              Read the methodology →
-            </Link>
-          </div>
-          <div>
-            <h3 className="font-display text-xl font-bold">Disclaimer</h3>
-            <p className="mt-2 text-sm text-muted">
-              This platform presents results from voluntary online survey responses. Survey results are not official
-              election results.
-            </p>
-            <Link href="/disclaimer" className="mt-3 inline-block text-sm font-semibold text-ink underline underline-offset-4">
-              Full disclaimer →
-            </Link>
-          </div>
-        </div>
+      {/* पारदर्शिता / Methodology — supporting, slim */}
+      <Container>
+        <TrustSection />
       </Container>
+
+      {/* पिछले चुनाव — supporting, compact */}
+      <div className="border-t border-border bg-surface-2">
+        <Container className="py-10 sm:py-12">
+          <HistoricalElections items={historicalItems} />
+        </Container>
+      </div>
     </div>
   );
 }

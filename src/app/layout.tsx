@@ -18,16 +18,16 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://india-election-surv
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "India Election Survey — Public Mood & Survey Platform",
-    template: "%s | India Election Survey",
+    default: "भारत चुनाव | जनता का मूड — राज्यों के चुनाव",
+    template: "%s | भारत चुनाव",
   },
   description:
-    "Voluntary public-opinion survey platform covering state assembly elections across India — candidates, issues and live survey trends, state by state. Not an official election result.",
+    "राज्यों के चुनाव, उम्मीदवार, चुनावी मुद्दे और जनता की राय को एक जगह explore करें। स्वैच्छिक सार्वजनिक सर्वे पर आधारित — यह कोई आधिकारिक चुनाव परिणाम नहीं है।",
   openGraph: {
     type: "website",
-    siteName: "India Election Survey",
-    title: "India Election Survey — Public Mood & Survey Platform",
-    description: "Public opinion across Indian state elections — candidates, issues and survey results.",
+    siteName: "भारत चुनाव",
+    title: "भारत चुनाव | जनता का मूड — राज्यों के चुनाव",
+    description: "राज्यों के चुनाव, उम्मीदवार, चुनावी मुद्दे और जनता की राय — एक जगह।",
   },
   twitter: {
     card: "summary_large_image",

@@ -10,7 +10,9 @@ export function SiteFooter() {
       <div className="mx-auto w-full max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
           <div>
-            <p className="font-display text-lg font-bold">{t.common.siteName}</p>
+            <p className="font-display text-lg font-bold">
+              {t.common.siteName} <span className="font-normal text-muted">· {t.common.siteTagline}</span>
+            </p>
             <p className="mt-2 max-w-xs text-sm text-muted">
               A public-opinion survey platform. Independent of, and not affiliated with, any political party.
             </p>
@@ -18,8 +20,10 @@ export function SiteFooter() {
           <div>
             <p className="text-sm font-semibold">Explore</p>
             <ul className="mt-3 space-y-2 text-sm text-muted">
+              <li><Link href="/#elections" className="hover:text-foreground">{t.nav.elections}</Link></li>
               <li><Link href="/states" className="hover:text-foreground">States</Link></li>
-              <li><Link href="/" className="hover:text-foreground">Home</Link></li>
+              <li><Link href="/#surveys" className="hover:text-foreground">{t.nav.surveys}</Link></li>
+              <li><Link href="/#issues" className="hover:text-foreground">{t.nav.issues}</Link></li>
             </ul>
           </div>
           <div>

@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import constituencyData from "./data/constituencies.json";
 import { DEFAULT_PARTIES, DEFAULT_ISSUES, MIN_ANALYTICS_GROUP_SIZE_DEFAULT } from "../src/lib/enums";
 import { slugify } from "../src/lib/slugify";
-import { createDefaultSurveyQuestions } from "../src/lib/survey-template";
+import { createDefaultSurveyQuestions } from "../src/lib/survey-template-data";
 
 const prisma = new PrismaClient();
 

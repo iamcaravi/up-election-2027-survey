@@ -255,6 +255,60 @@ export async function getActiveElectionForConstituency(constituencyId: string) {
   return ec?.election ?? null;
 }
 
+// A small, real cross-state sample of active surveys for the homepage
+// "जनता का मूड" section — state/election/district/constituency context plus
+// a real (possibly zero) valid-response count. Never returns fabricated data;
+// an empty array means the section should render its empty state.
+export async function getFeaturedActiveSurveys(limit = 6) {
+  const surveys = await prisma.survey.findMany({
+    where: { isActive: true, status: "ACTIVE" },
+    include: {
+      election: { include: { state: true } },
+      constituency: { include: { district: true } },
+      _count: { select: { responses: { where: { status: "VALID" } } } },
+    },
+    orderBy: { createdAt: "asc" },
+    take: limit,
+  });
+  return surveys.map((s) => ({
+    id: s.id,
+    title: s.title,
+    stateName: s.election.state.name,
+    stateSlug: s.election.state.slug,
+    electionSlug: s.election.slug,
+    electionName: s.election.name,
+    districtName: s.constituency?.district?.name ?? null,
+    constituencyName: s.constituency?.name ?? null,
+    constituencySlug: s.constituency?.slug ?? null,
+    responseCount: s._count.responses,
+  }));
+}
+
+// Real, already-recorded 2022 result fields on Constituency (result2022Winner*),
+// grouped by state and party — used for the homepage's historical-elections
+// section. Never fabricated: constituencies with no recorded 2022 winner are
+// simply excluded from the tally.
+export async function getHistoricalWinnersSummary() {
+  const rows = await prisma.constituency.groupBy({
+    by: ["stateId", "result2022WinnerParty"],
+    where: { result2022WinnerParty: { not: null } },
+    _count: { _all: true },
+  });
+
+  const byState = new Map<string, { totalSeats: number; parties: Array<{ party: string; seats: number }> }>();
+  for (const row of rows) {
+    if (!row.result2022WinnerParty) continue;
+    const entry = byState.get(row.stateId) ?? { totalSeats: 0, parties: [] };
+    entry.totalSeats += row._count._all;
+    entry.parties.push({ party: row.result2022WinnerParty, seats: row._count._all });
+    byState.set(row.stateId, entry);
+  }
+  for (const entry of byState.values()) {
+    entry.parties.sort((a, b) => b.seats - a.seats);
+  }
+  return byState;
+}
+
 export async function getSiteSetting<T = unknown>(key: string, fallback: T): Promise<T> {
   const row = await prisma.siteSetting.findUnique({ where: { key } });
   if (!row) return fallback;
