@@ -2,7 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ConstituencyPicker } from "./ConstituencyPicker";
+import { StateSelector } from "./selectors/StateSelector";
+import { ElectionSelector } from "./selectors/ElectionSelector";
+import { DistrictSelector } from "./selectors/DistrictSelector";
+import { ConstituencySelector } from "./selectors/ConstituencySelector";
 import { Button } from "@/components/ui/Button";
 import { CANDIDATE_STATUSES, CONFIDENCE_SCORES, CANDIDATE_STATUS_LABELS } from "@/lib/enums";
 
@@ -30,11 +33,15 @@ interface InitialCandidate {
 export function CandidateForm({ initial }: { initial?: InitialCandidate }) {
   const router = useRouter();
   const [parties, setParties] = useState<Party[]>([]);
-  const [constituency, setConstituency] = useState(
-    initial
-      ? { id: initial.constituency.id, name: initial.constituency.name, number: initial.constituency.number, districtName: initial.constituency.district.name }
-      : null
-  );
+
+  // Cascading hierarchy — only used in create mode. Changing a parent
+  // scope clears every dependent selection so a stale election/district/
+  // constituency can never be silently submitted.
+  const [stateId, setStateId] = useState("");
+  const [electionId, setElectionId] = useState("");
+  const [districtId, setDistrictId] = useState("");
+  const [constituencyId, setConstituencyId] = useState(initial?.constituency.id ?? "");
+
   const [name, setName] = useState(initial?.name ?? "");
   const [partyId, setPartyId] = useState(initial?.partyId ?? "");
   const [status, setStatus] = useState(initial?.status ?? "POSSIBLE");
@@ -53,9 +60,20 @@ export function CandidateForm({ initial }: { initial?: InitialCandidate }) {
     fetch("/api/admin/parties").then((r) => r.json()).then(setParties);
   }, []);
 
+  function handleStateChange(id: string) {
+    setStateId(id);
+    setElectionId("");
+    setDistrictId("");
+    setConstituencyId("");
+  }
+  function handleDistrictChange(id: string) {
+    setDistrictId(id);
+    setConstituencyId("");
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!initial && !constituency) {
+    if (!initial && !constituencyId) {
       setError("Select a constituency.");
       return;
     }
@@ -63,7 +81,8 @@ export function CandidateForm({ initial }: { initial?: InitialCandidate }) {
     setError(null);
 
     const payload = {
-      constituencyId: constituency?.id,
+      constituencyId: initial ? undefined : constituencyId,
+      electionId: initial ? undefined : electionId || undefined,
       name,
       partyId: partyId || null,
       status,
@@ -96,15 +115,20 @@ export function CandidateForm({ initial }: { initial?: InitialCandidate }) {
     <form onSubmit={handleSubmit} className="card-surface max-w-2xl space-y-5 rounded-2xl p-6">
       {error && <p className="rounded-lg bg-danger/10 p-3 text-sm text-danger">{error}</p>}
 
-      <Field label="Constituency">
-        {initial ? (
+      {initial ? (
+        <Field label="Constituency">
           <p className="text-sm text-muted">
             {initial.constituency.name} ({initial.constituency.district.name}) — constituency cannot be changed after creation.
           </p>
-        ) : (
-          <ConstituencyPicker value={constituency} onChange={setConstituency} />
-        )}
-      </Field>
+        </Field>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2">
+          <StateSelector value={stateId} onChange={handleStateChange} required />
+          <ElectionSelector stateId={stateId} value={electionId} onChange={setElectionId} required />
+          <DistrictSelector stateId={stateId} value={districtId} onChange={handleDistrictChange} required />
+          <ConstituencySelector stateId={stateId} districtId={districtId} value={constituencyId} onChange={setConstituencyId} required />
+        </div>
+      )}
 
       <Field label="Candidate name">
         <Input value={name} onChange={setName} required />

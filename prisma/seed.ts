@@ -1,16 +1,9 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import constituencyData from "./data/constituencies.json";
-import {
-  DEFAULT_PARTIES,
-  DEFAULT_ISSUES,
-  AGE_GROUPS,
-  GENDERS,
-  SOCIAL_CATEGORIES,
-  RELIGIONS,
-  MIN_ANALYTICS_GROUP_SIZE_DEFAULT,
-} from "../src/lib/enums";
+import { DEFAULT_PARTIES, DEFAULT_ISSUES, MIN_ANALYTICS_GROUP_SIZE_DEFAULT } from "../src/lib/enums";
 import { slugify } from "../src/lib/slugify";
+import { createDefaultSurveyQuestions } from "../src/lib/survey-template";
 
 const prisma = new PrismaClient();
 
@@ -66,15 +59,15 @@ async function main() {
   });
 
   // --- Parties ---------------------------------------------------------------
-  const parties: Record<string, string> = {};
+  // createDefaultSurveyQuestions looks these up itself when building the
+  // party_preference question, so this loop only needs to ensure they exist.
   for (let i = 0; i < DEFAULT_PARTIES.length; i++) {
     const p = DEFAULT_PARTIES[i];
-    const party = await prisma.party.upsert({
+    await prisma.party.upsert({
       where: { shortName: p.shortName },
       update: { name: p.name, colorHex: p.colorHex, displayOrder: i },
       create: { ...p, displayOrder: i },
     });
-    parties[p.shortName] = party.id;
   }
 
   // --- Districts + Constituencies --------------------------------------------
@@ -131,81 +124,7 @@ async function main() {
         },
       });
 
-      const candidateQ = await prisma.surveyQuestion.create({
-        data: {
-          surveyId: survey.id,
-          key: "candidate_choice",
-          label: "2027 में आप अपने क्षेत्र से किसे विधायक देखना चाहते हैं?",
-          required: true,
-          allowSkip: false,
-          order: 1,
-        },
-      });
-      await prisma.surveyOption.create({
-        data: { questionId: candidateQ.id, key: "other", label: "Other", order: 999 },
-      });
-
-      const partyQ = await prisma.surveyQuestion.create({
-        data: {
-          surveyId: survey.id,
-          key: "party_preference",
-          label: "अगर आज विधानसभा चुनाव हों तो आप किस पार्टी को वोट देना पसंद करेंगे?",
-          required: false,
-          allowSkip: true,
-          order: 2,
-        },
-      });
-      for (let i = 0; i < DEFAULT_PARTIES.length; i++) {
-        const p = DEFAULT_PARTIES[i];
-        await prisma.surveyOption.create({
-          data: {
-            questionId: partyQ.id,
-            key: p.slug,
-            label: p.shortName,
-            order: i,
-            partyId: parties[p.shortName],
-          },
-        });
-      }
-
-      const issueQ = await prisma.surveyQuestion.create({
-        data: {
-          surveyId: survey.id,
-          key: "top_issue",
-          label: "आपके क्षेत्र में सबसे बड़ा मुद्दा क्या है?",
-          required: false,
-          allowSkip: true,
-          order: 3,
-        },
-      });
-      for (let i = 0; i < DEFAULT_ISSUES.length; i++) {
-        const issue = DEFAULT_ISSUES[i];
-        await prisma.surveyOption.create({
-          data: { questionId: issueQ.id, key: issue.key, label: issue.label, order: i },
-        });
-      }
-
-      const demoQuestions: Array<{ key: string; label: string; options: readonly { key: string; label: string }[] }> = [
-        { key: "age_group", label: "आयु वर्ग", options: AGE_GROUPS },
-        { key: "gender", label: "लिंग", options: GENDERS },
-        { key: "social_category", label: "सामाजिक श्रेणी", options: SOCIAL_CATEGORIES },
-        { key: "religion", label: "धर्म", options: RELIGIONS },
-      ];
-      let order = 4;
-      for (const dq of demoQuestions) {
-        const q = await prisma.surveyQuestion.create({
-          data: { surveyId: survey.id, key: dq.key, label: dq.label, required: false, allowSkip: true, order: order++ },
-        });
-        for (let i = 0; i < dq.options.length; i++) {
-          const opt = dq.options[i];
-          await prisma.surveyOption.create({
-            data: { questionId: q.id, key: opt.key, label: opt.label, order: i },
-          });
-        }
-        await prisma.surveyOption.create({
-          data: { questionId: q.id, key: "prefer_not_to_say", label: "Prefer not to say", order: 999 },
-        });
-      }
+      await createDefaultSurveyQuestions(prisma, survey.id);
     }
   }
   console.log(`Seeded ${constituencyCount} constituencies with surveys`);

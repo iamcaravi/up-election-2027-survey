@@ -3,17 +3,40 @@ import { prisma } from "@/lib/prisma";
 import { CANDIDATE_STATUS_LABELS, type CandidateStatus } from "@/lib/enums";
 import { Plus } from "lucide-react";
 
-export default async function AdminCandidatesPage() {
-  const candidates = await prisma.candidate.findMany({
-    include: { party: true, constituency: { include: { district: true } } },
-    orderBy: { createdAt: "desc" },
-    take: 200,
-  });
+export default async function AdminCandidatesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ constituencyId?: string; electionId?: string }>;
+}) {
+  const { constituencyId, electionId } = await searchParams;
+
+  const [candidates, scopedConstituency] = await Promise.all([
+    prisma.candidate.findMany({
+      where: {
+        ...(constituencyId ? { constituencyId } : {}),
+        ...(electionId ? { electionId } : {}),
+      },
+      include: { party: true, constituency: { include: { district: true } } },
+      orderBy: { createdAt: "desc" },
+      take: 200,
+    }),
+    constituencyId ? prisma.constituency.findUnique({ where: { id: constituencyId }, select: { name: true } }) : null,
+  ]);
 
   return (
     <div>
       <div className="flex items-center justify-between">
-        <h1 className="font-display text-2xl font-extrabold">Candidates</h1>
+        <div>
+          <h1 className="font-display text-2xl font-extrabold">Candidates</h1>
+          {scopedConstituency && (
+            <p className="mt-1 text-sm text-muted">
+              Filtered to <strong className="text-foreground">{scopedConstituency.name}</strong> —{" "}
+              <Link href="/admin/candidates" className="underline">
+                clear filter
+              </Link>
+            </p>
+          )}
+        </div>
         <Link
           href="/admin/candidates/new"
           className="inline-flex items-center gap-2 rounded-xl bg-ink px-4 py-2.5 text-sm font-semibold text-white"

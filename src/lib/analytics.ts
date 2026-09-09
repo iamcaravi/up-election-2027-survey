@@ -1,7 +1,6 @@
 import "server-only";
 import { prisma } from "./prisma";
-import { getSiteSetting } from "./data";
-import { MIN_ANALYTICS_GROUP_SIZE_DEFAULT } from "./enums";
+import { getMinCellSize } from "./analytics-privacy";
 
 export interface OptionTally {
   key: string;
@@ -22,9 +21,10 @@ export interface QuestionResult {
   options: OptionTally[];
 }
 
-async function getMinGroupSize(): Promise<number> {
-  return getSiteSetting("MIN_ANALYTICS_GROUP_SIZE", MIN_ANALYTICS_GROUP_SIZE_DEFAULT);
-}
+// Re-exported thin wrapper — analytics-privacy.ts is now the single source
+// of truth for the suppression threshold; kept as a local name so the rest
+// of this file (unchanged) doesn't need touching.
+const getMinGroupSize = getMinCellSize;
 
 async function tallyQuestion(surveyId: string, questionKey: string): Promise<QuestionResult | null> {
   const question = await prisma.surveyQuestion.findFirst({

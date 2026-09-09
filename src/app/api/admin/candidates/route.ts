@@ -5,10 +5,17 @@ import { getAdminSession, logAudit } from "@/lib/auth";
 import { syncCandidateChoiceOptions } from "@/lib/survey-sync";
 import { slugify } from "@/lib/slugify";
 import { getActiveElectionForConstituency } from "@/lib/data";
+import { assertElectionConstituencyMembership } from "@/lib/admin-guards";
 import { CANDIDATE_STATUSES, CONFIDENCE_SCORES } from "@/lib/enums";
 
 const createSchema = z.object({
   constituencyId: z.string().min(1),
+  // Optional — when the admin UI's cascading selectors supply an explicit
+  // election, it is validated (never trusted) against the real
+  // ElectionConstituency membership. When omitted (e.g. legacy callers),
+  // the constituency's current active election is derived server-side, as
+  // before.
+  electionId: z.string().min(1).optional(),
   name: z.string().min(2).max(120),
   partyId: z.string().optional().nullable(),
   status: z.enum(CANDIDATE_STATUSES),
@@ -54,7 +61,18 @@ export async function POST(req: NextRequest) {
   const constituency = await prisma.constituency.findUnique({ where: { id: data.constituencyId } });
   if (!constituency) return NextResponse.json({ error: "Constituency not found" }, { status: 404 });
 
-  const election = await getActiveElectionForConstituency(data.constituencyId);
+  let election;
+  if (data.electionId) {
+    // Never trust a client-supplied electionId at face value — verify it's
+    // actually a valid, active membership for this exact constituency.
+    const membershipBlocker = await assertElectionConstituencyMembership(prisma, data.electionId, data.constituencyId);
+    if (membershipBlocker) {
+      return NextResponse.json(membershipBlocker, { status: membershipBlocker.error.includes("not found") ? 404 : 400 });
+    }
+    election = await prisma.election.findUnique({ where: { id: data.electionId } });
+  } else {
+    election = await getActiveElectionForConstituency(data.constituencyId);
+  }
   if (!election) {
     return NextResponse.json({ error: "This constituency has no active election to attach the candidate to." }, { status: 400 });
   }

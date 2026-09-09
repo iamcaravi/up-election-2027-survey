@@ -73,6 +73,16 @@ export async function seedFixtures(prisma: PrismaClient) {
     data: { electionId: electionB.id, constituencyId: constituencyB.id },
   });
 
+  // A constituency whose ElectionConstituency mapping exists but is
+  // disabled (isActive: false) — used to prove a technically-existing but
+  // inactive mapping is still rejected, distinct from a missing one.
+  const constituencyADisabled = await prisma.constituency.create({
+    data: { stateId: stateA.id, districtId: districtA.id, number: 3, name: "Disabled Mapping", slug: "disabled-mapping" },
+  });
+  await prisma.electionConstituency.create({
+    data: { electionId: electionA.id, constituencyId: constituencyADisabled.id, isActive: false },
+  });
+
   // A SECOND election for state A, reusing the SAME constituency (a
   // constituency can legitimately contest more than one election over
   // time) — used to prove syncCandidateChoiceOptions never mixes one
@@ -162,6 +172,7 @@ export async function seedFixtures(prisma: PrismaClient) {
     constituencyA,
     constituencyB,
     constituencyAUnlinked,
+    constituencyADisabled,
     electionA,
     electionB,
     ecA,

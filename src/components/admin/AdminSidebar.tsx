@@ -13,10 +13,28 @@ import {
   LogOut,
   Flag,
   ExternalLink,
+  Globe,
+  Vote,
+  Map,
+  Building2,
+  Link2,
+  ClipboardList,
 } from "lucide-react";
 
 const NAV = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
+];
+
+const HIERARCHY_NAV = [
+  { href: "/admin/states", label: "States", icon: Globe },
+  { href: "/admin/elections", label: "Elections", icon: Vote },
+  { href: "/admin/districts", label: "Districts", icon: Map },
+  { href: "/admin/constituencies", label: "Constituencies", icon: Building2 },
+  { href: "/admin/election-constituencies", label: "Election ↔ Constituency", icon: Link2 },
+  { href: "/admin/surveys", label: "Surveys", icon: ClipboardList },
+];
+
+const CONTENT_NAV = [
   { href: "/admin/candidates", label: "Candidates", icon: Users },
   { href: "/admin/images", label: "Image Review", icon: ImageIcon },
   { href: "/admin/imports", label: "Imports", icon: Upload },
@@ -42,23 +60,31 @@ export function AdminSidebar({ userName, userRole }: { userName: string; userRol
         <p className="text-xs text-muted">India Election Survey</p>
       </div>
 
-      <nav className="flex-1 space-y-1">
-        {NAV.map((item) => {
-          const active = pathname === item.href || (item.href !== "/admin" && pathname?.startsWith(item.href));
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                active ? "bg-ink text-white" : "text-foreground/70 hover:bg-surface-2 hover:text-foreground"
-              )}
-            >
-              <item.icon size={16} />
-              {item.label}
-            </Link>
-          );
-        })}
+      <nav className="flex-1 space-y-4 overflow-y-auto">
+        <div className="space-y-1">
+          {NAV.map((item) => (
+            <NavLink key={item.href} item={item} pathname={pathname} />
+          ))}
+        </div>
+
+        <div>
+          <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wide text-muted">India → States → Elections</p>
+          <div className="space-y-1">
+            {HIERARCHY_NAV.map((item) => (
+              <NavLink key={item.href} item={item} pathname={pathname} />
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wide text-muted">Content &amp; moderation</p>
+          <div className="space-y-1">
+            {CONTENT_NAV.map((item) => (
+              <NavLink key={item.href} item={item} pathname={pathname} />
+            ))}
+          </div>
+        </div>
+
         <Link
           href="/"
           className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-foreground/70 hover:bg-surface-2 hover:text-foreground"
@@ -78,5 +104,27 @@ export function AdminSidebar({ userName, userRole }: { userName: string; userRol
         </button>
       </div>
     </aside>
+  );
+}
+
+function NavLink({
+  item,
+  pathname,
+}: {
+  item: { href: string; label: string; icon: React.ComponentType<{ size?: number }> };
+  pathname: string | null;
+}) {
+  const active = pathname === item.href || (item.href !== "/admin" && pathname?.startsWith(item.href));
+  return (
+    <Link
+      href={item.href}
+      className={cn(
+        "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+        active ? "bg-ink text-white" : "text-foreground/70 hover:bg-surface-2 hover:text-foreground"
+      )}
+    >
+      <item.icon size={16} />
+      {item.label}
+    </Link>
   );
 }
