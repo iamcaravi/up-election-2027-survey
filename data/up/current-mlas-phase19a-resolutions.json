@@ -1,0 +1,1935 @@
+[
+  {
+    "constituencyNumber": 15,
+    "constituencyName": "Khatauli",
+    "originalProblem": "DUPLICATE_SEAT: member 25623 was listed as 15-Khatauli; member 25607 was listed as 15-Khatauli",
+    "sourceRecords": [
+      {
+        "memberId": "25623",
+        "name": "Shri Madan Bhaiya",
+        "constituencyNumberOnSource": 15,
+        "constituencyNameOnSource": "Khatauli",
+        "partyRaw": "Rashtriya Lok Dal",
+        "profileFinding": "Bi Elected: Yes",
+        "profileUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25623"
+      },
+      {
+        "memberId": "25607",
+        "name": "Shri Vikram Singh",
+        "constituencyNumberOnSource": 15,
+        "constituencyNameOnSource": "Khatauli",
+        "partyRaw": "Bharatiya Janta Party",
+        "profileFinding": "Resigned: Yes",
+        "profileUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25607"
+      }
+    ],
+    "evidenceChecked": [
+      "Official Uttar Pradesh Legislative Assembly individual member profile(s)",
+      "Official Uttar Pradesh Legislative Assembly member listing, treated only as a discovery source because it contains stale/duplicate/incorrect rows",
+      "Election Commission of India 2022 statistical reports for authoritative constituency number/name mapping where the assembly source number or spelling conflicted"
+    ],
+    "resolvedCandidate": {
+      "name": "Madan Bhaiya",
+      "partyShortName": "RLD",
+      "status": "INCUMBENT",
+      "memberId": "25623",
+      "sourceUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25623",
+      "verified": false
+    },
+    "resolutionReason": "Madan Bhaiya is the current member. His official profile says Bi Elected: Yes; Vikram Singh's official profile says Resigned: Yes.",
+    "confidence": "HIGH",
+    "sourceUrls": [
+      "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25623",
+      "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25607",
+      "https://www.upvidhansabhaproceedings.gov.in/en/member-s-information",
+      "https://www.eci.gov.in/eci-backend/public/api/download?url=LMAhAK6sOPBp%2FNFF0iRfXbEB1EVSLT41NNLRjYNJJP1KivrUxbfqkDatmHy12e%2FzVx8fLfn2ReU7TfrqYobgItW4eTUyTFD%2BDUyB1G1fBKOuW00SdZqELiEOB05oPhRO74%2F4p%2BuSikD0u7%2BVrCmQyhaJANaxWi%2FXMLUEuMmRVRLJ2%2BdBIBswoUnKE3KB7EMq"
+    ]
+  },
+  {
+    "constituencyNumber": 34,
+    "constituencyName": "Suar",
+    "originalProblem": "DUPLICATE_SEAT: member 24924 was listed as 34-Suar; member 25546 was listed as 34-Suar",
+    "sourceRecords": [
+      {
+        "memberId": "24924",
+        "name": "Shri Shafiq Ahmad Ansari",
+        "constituencyNumberOnSource": 34,
+        "constituencyNameOnSource": "Suar",
+        "partyRaw": "Apna Dal (Sonelal)",
+        "profileFinding": "Active member profile for Suar",
+        "profileUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=24924"
+      },
+      {
+        "memberId": "25546",
+        "name": "Shri Moh. Abdullah Azam Khan",
+        "constituencyNumberOnSource": 34,
+        "constituencyNameOnSource": "Suar",
+        "partyRaw": "Samajwadi Party",
+        "profileFinding": "Resigned: Yes; reason: Disqualified",
+        "profileUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25546"
+      }
+    ],
+    "evidenceChecked": [
+      "Official Uttar Pradesh Legislative Assembly individual member profile(s)",
+      "Official Uttar Pradesh Legislative Assembly member listing, treated only as a discovery source because it contains stale/duplicate/incorrect rows",
+      "Election Commission of India 2022 statistical reports for authoritative constituency number/name mapping where the assembly source number or spelling conflicted"
+    ],
+    "resolvedCandidate": {
+      "name": "Shafiq Ahmad Ansari",
+      "partyShortName": "Apna Dal",
+      "status": "INCUMBENT",
+      "memberId": "24924",
+      "sourceUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=24924",
+      "verified": false
+    },
+    "resolutionReason": "Shafiq Ahmad Ansari is the current member. Abdullah Azam Khan's official profile says Resigned: Yes and gives disqualification as the reason.",
+    "confidence": "HIGH",
+    "sourceUrls": [
+      "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=24924",
+      "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25546",
+      "https://www.upvidhansabhaproceedings.gov.in/en/member-s-information",
+      "https://www.eci.gov.in/eci-backend/public/api/download?url=LMAhAK6sOPBp%2FNFF0iRfXbEB1EVSLT41NNLRjYNJJP1KivrUxbfqkDatmHy12e%2FzVx8fLfn2ReU7TfrqYobgItW4eTUyTFD%2BDUyB1G1fBKOuW00SdZqELiEOB05oPhRO74%2F4p%2BuSikD0u7%2BVrCmQyhaJANaxWi%2FXMLUEuMmRVRLJ2%2BdBIBswoUnKE3KB7EMq"
+    ]
+  },
+  {
+    "constituencyNumber": 36,
+    "constituencyName": "Bilaspur",
+    "originalProblem": "NAME_CONFLICT: member 25648 was listed as 38-Bilaspur",
+    "sourceRecords": [
+      {
+        "memberId": "25648",
+        "name": "Shri Baldev Singh Aulakh",
+        "constituencyNumberOnSource": 38,
+        "constituencyNameOnSource": "Bilaspur",
+        "partyRaw": "Bharatiya Janta Party",
+        "profileFinding": "Official profile identifies this member, constituency, and party; profile is not marked resigned or deceased.",
+        "profileUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25648"
+      }
+    ],
+    "evidenceChecked": [
+      "Official Uttar Pradesh Legislative Assembly individual member profile(s)",
+      "Official Uttar Pradesh Legislative Assembly member listing, treated only as a discovery source because it contains stale/duplicate/incorrect rows",
+      "Election Commission of India 2022 statistical reports for authoritative constituency number/name mapping where the assembly source number or spelling conflicted"
+    ],
+    "resolvedCandidate": {
+      "name": "Baldev Singh Aulakh",
+      "partyShortName": "BJP",
+      "status": "INCUMBENT",
+      "memberId": "25648",
+      "sourceUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25648",
+      "verified": false
+    },
+    "resolutionReason": "The source listing attached Baldev Singh Aulakh's Bilaspur row to AC 38. His official profile identifies Bilaspur; the canonical/ECI mapping is AC 36 Bilaspur. This is a source-side number error, not a master-table error.",
+    "confidence": "HIGH",
+    "sourceUrls": [
+      "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25648",
+      "https://www.upvidhansabhaproceedings.gov.in/en/member-s-information",
+      "https://www.eci.gov.in/eci-backend/public/api/download?url=LMAhAK6sOPBp%2FNFF0iRfXbEB1EVSLT41NNLRjYNJJP1KivrUxbfqkDatmHy12e%2FzVx8fLfn2ReU7TfrqYobgItW4eTUyTFD%2BDUyB1G1fBKOuW00SdZqELiEOB05oPhRO74%2F4p%2BuSikD0u7%2BVrCmQyhaJANaxWi%2FXMLUEuMmRVRLJ2%2BdBIBswoUnKE3KB7EMq"
+    ]
+  },
+  {
+    "constituencyNumber": 37,
+    "constituencyName": "Rampur",
+    "originalProblem": "DUPLICATE_SEAT: member 25323 was listed as 37-Rampur; member 25605 was listed as 37-Rampur",
+    "sourceRecords": [
+      {
+        "memberId": "25323",
+        "name": "Shri Akash Saxsena (Hani)",
+        "constituencyNumberOnSource": 37,
+        "constituencyNameOnSource": "Rampur",
+        "partyRaw": "Bharatiya Janta Party",
+        "profileFinding": "Bi Elected: Yes",
+        "profileUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25323"
+      },
+      {
+        "memberId": "25605",
+        "name": "Shri Moh. Azam Khan",
+        "constituencyNumberOnSource": 37,
+        "constituencyNameOnSource": "Rampur",
+        "partyRaw": "Samajwadi Party",
+        "profileFinding": "Resigned: Yes; reason: Disqualified",
+        "profileUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25605"
+      }
+    ],
+    "evidenceChecked": [
+      "Official Uttar Pradesh Legislative Assembly individual member profile(s)",
+      "Official Uttar Pradesh Legislative Assembly member listing, treated only as a discovery source because it contains stale/duplicate/incorrect rows",
+      "Election Commission of India 2022 statistical reports for authoritative constituency number/name mapping where the assembly source number or spelling conflicted"
+    ],
+    "resolvedCandidate": {
+      "name": "Akash Saxsena (Hani)",
+      "partyShortName": "BJP",
+      "status": "INCUMBENT",
+      "memberId": "25323",
+      "sourceUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25323",
+      "verified": false
+    },
+    "resolutionReason": "Akash Saxena is the current member. His official profile says Bi Elected: Yes; Mohammad Azam Khan's profile says Resigned: Yes and gives disqualification as the reason.",
+    "confidence": "HIGH",
+    "sourceUrls": [
+      "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25323",
+      "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25605",
+      "https://www.upvidhansabhaproceedings.gov.in/en/member-s-information",
+      "https://www.eci.gov.in/eci-backend/public/api/download?url=LMAhAK6sOPBp%2FNFF0iRfXbEB1EVSLT41NNLRjYNJJP1KivrUxbfqkDatmHy12e%2FzVx8fLfn2ReU7TfrqYobgItW4eTUyTFD%2BDUyB1G1fBKOuW00SdZqELiEOB05oPhRO74%2F4p%2BuSikD0u7%2BVrCmQyhaJANaxWi%2FXMLUEuMmRVRLJ2%2BdBIBswoUnKE3KB7EMq"
+    ]
+  },
+  {
+    "constituencyNumber": 38,
+    "constituencyName": "Milak",
+    "originalProblem": "DUPLICATE_SEAT: member 25242 was listed as 38-Milak",
+    "sourceRecords": [
+      {
+        "memberId": "25242",
+        "name": "Shrimati Rajbala Singh",
+        "constituencyNumberOnSource": 38,
+        "constituencyNameOnSource": "Milak",
+        "partyRaw": "Bharatiya Janta Party",
+        "profileFinding": "Official profile identifies this member, constituency, and party; profile is not marked resigned or deceased.",
+        "profileUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25242"
+      }
+    ],
+    "evidenceChecked": [
+      "Official Uttar Pradesh Legislative Assembly individual member profile(s)",
+      "Official Uttar Pradesh Legislative Assembly member listing, treated only as a discovery source because it contains stale/duplicate/incorrect rows",
+      "Election Commission of India 2022 statistical reports for authoritative constituency number/name mapping where the assembly source number or spelling conflicted"
+    ],
+    "resolvedCandidate": {
+      "name": "Rajbala Singh",
+      "partyShortName": "BJP",
+      "status": "INCUMBENT",
+      "memberId": "25242",
+      "sourceUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25242",
+      "verified": false
+    },
+    "resolutionReason": "Rajbala Singh's official profile identifies Milak. The apparent duplicate arose only because the Bilaspur source row was incorrectly numbered 38; canonical/ECI mapping places Bilaspur at 36 and Milak at 38.",
+    "confidence": "HIGH",
+    "sourceUrls": [
+      "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25242",
+      "https://www.upvidhansabhaproceedings.gov.in/en/member-s-information",
+      "https://www.eci.gov.in/eci-backend/public/api/download?url=LMAhAK6sOPBp%2FNFF0iRfXbEB1EVSLT41NNLRjYNJJP1KivrUxbfqkDatmHy12e%2FzVx8fLfn2ReU7TfrqYobgItW4eTUyTFD%2BDUyB1G1fBKOuW00SdZqELiEOB05oPhRO74%2F4p%2BuSikD0u7%2BVrCmQyhaJANaxWi%2FXMLUEuMmRVRLJ2%2BdBIBswoUnKE3KB7EMq"
+    ]
+  },
+  {
+    "constituencyNumber": 47,
+    "constituencyName": "Meerut Cantt.",
+    "originalProblem": "NAME_CONFLICT: member 25301 was listed as 48-Meerut Cantt",
+    "sourceRecords": [
+      {
+        "memberId": "25301",
+        "name": "Shri Amit Agrawal",
+        "constituencyNumberOnSource": 48,
+        "constituencyNameOnSource": "Meerut Cantt",
+        "partyRaw": "Bharatiya Janta Party",
+        "profileFinding": "Official profile identifies this member, constituency, and party; profile is not marked resigned or deceased.",
+        "profileUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25301"
+      }
+    ],
+    "evidenceChecked": [
+      "Official Uttar Pradesh Legislative Assembly individual member profile(s)",
+      "Official Uttar Pradesh Legislative Assembly member listing, treated only as a discovery source because it contains stale/duplicate/incorrect rows",
+      "Election Commission of India 2022 statistical reports for authoritative constituency number/name mapping where the assembly source number or spelling conflicted"
+    ],
+    "resolvedCandidate": {
+      "name": "Amit Agrawal",
+      "partyShortName": "BJP",
+      "status": "INCUMBENT",
+      "memberId": "25301",
+      "sourceUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25301",
+      "verified": false
+    },
+    "resolutionReason": "Amit Agrawal's official profile identifies Meerut Cantt. Canonical/ECI mapping places Meerut Cantt. at AC 47; the source listing's AC 48 is a source-side numbering error.",
+    "confidence": "HIGH",
+    "sourceUrls": [
+      "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25301",
+      "https://www.upvidhansabhaproceedings.gov.in/en/member-s-information",
+      "https://www.eci.gov.in/eci-backend/public/api/download?url=LMAhAK6sOPBp%2FNFF0iRfXbEB1EVSLT41NNLRjYNJJP1KivrUxbfqkDatmHy12e%2FzVx8fLfn2ReU7TfrqYobgItW4eTUyTFD%2BDUyB1G1fBKOuW00SdZqELiEOB05oPhRO74%2F4p%2BuSikD0u7%2BVrCmQyhaJANaxWi%2FXMLUEuMmRVRLJ2%2BdBIBswoUnKE3KB7EMq"
+    ]
+  },
+  {
+    "constituencyNumber": 48,
+    "constituencyName": "Meerut",
+    "originalProblem": "NAME_CONFLICT: member 25689 was listed as 49-Meerut",
+    "sourceRecords": [
+      {
+        "memberId": "25689",
+        "name": "Shri Rafiq Ansari",
+        "constituencyNumberOnSource": 49,
+        "constituencyNameOnSource": "Meerut",
+        "partyRaw": "Samajwadi Party",
+        "profileFinding": "Official profile identifies this member, constituency, and party; profile is not marked resigned or deceased.",
+        "profileUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25689"
+      }
+    ],
+    "evidenceChecked": [
+      "Official Uttar Pradesh Legislative Assembly individual member profile(s)",
+      "Official Uttar Pradesh Legislative Assembly member listing, treated only as a discovery source because it contains stale/duplicate/incorrect rows",
+      "Election Commission of India 2022 statistical reports for authoritative constituency number/name mapping where the assembly source number or spelling conflicted"
+    ],
+    "resolvedCandidate": {
+      "name": "Rafiq Ansari",
+      "partyShortName": "SP",
+      "status": "INCUMBENT",
+      "memberId": "25689",
+      "sourceUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25689",
+      "verified": false
+    },
+    "resolutionReason": "Rafiq Ansari's official profile identifies Meerut. Canonical/ECI mapping places Meerut at AC 48; the source listing's AC 49 is a source-side numbering error.",
+    "confidence": "HIGH",
+    "sourceUrls": [
+      "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25689",
+      "https://www.upvidhansabhaproceedings.gov.in/en/member-s-information",
+      "https://www.eci.gov.in/eci-backend/public/api/download?url=LMAhAK6sOPBp%2FNFF0iRfXbEB1EVSLT41NNLRjYNJJP1KivrUxbfqkDatmHy12e%2FzVx8fLfn2ReU7TfrqYobgItW4eTUyTFD%2BDUyB1G1fBKOuW00SdZqELiEOB05oPhRO74%2F4p%2BuSikD0u7%2BVrCmQyhaJANaxWi%2FXMLUEuMmRVRLJ2%2BdBIBswoUnKE3KB7EMq"
+    ]
+  },
+  {
+    "constituencyNumber": 49,
+    "constituencyName": "Meerut South",
+    "originalProblem": "NAME_CONFLICT: member 25491 was listed as 47-Meerut South",
+    "sourceRecords": [
+      {
+        "memberId": "25491",
+        "name": "Dr Somendra Singh Tomar",
+        "constituencyNumberOnSource": 47,
+        "constituencyNameOnSource": "Meerut South",
+        "partyRaw": "Bharatiya Janta Party",
+        "profileFinding": "Official profile identifies this member, constituency, and party; profile is not marked resigned or deceased.",
+        "profileUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25491"
+      }
+    ],
+    "evidenceChecked": [
+      "Official Uttar Pradesh Legislative Assembly individual member profile(s)",
+      "Official Uttar Pradesh Legislative Assembly member listing, treated only as a discovery source because it contains stale/duplicate/incorrect rows",
+      "Election Commission of India 2022 statistical reports for authoritative constituency number/name mapping where the assembly source number or spelling conflicted"
+    ],
+    "resolvedCandidate": {
+      "name": "Somendra Singh Tomar",
+      "partyShortName": "BJP",
+      "status": "INCUMBENT",
+      "memberId": "25491",
+      "sourceUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25491",
+      "verified": false
+    },
+    "resolutionReason": "Somendra Singh Tomar's official profile identifies Meerut South. Canonical/ECI mapping places Meerut South at AC 49; the source listing's AC 47 is a source-side numbering error.",
+    "confidence": "HIGH",
+    "sourceUrls": [
+      "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25491",
+      "https://www.upvidhansabhaproceedings.gov.in/en/member-s-information",
+      "https://www.eci.gov.in/eci-backend/public/api/download?url=LMAhAK6sOPBp%2FNFF0iRfXbEB1EVSLT41NNLRjYNJJP1KivrUxbfqkDatmHy12e%2FzVx8fLfn2ReU7TfrqYobgItW4eTUyTFD%2BDUyB1G1fBKOuW00SdZqELiEOB05oPhRO74%2F4p%2BuSikD0u7%2BVrCmQyhaJANaxWi%2FXMLUEuMmRVRLJ2%2BdBIBswoUnKE3KB7EMq"
+    ]
+  },
+  {
+    "constituencyNumber": 52,
+    "constituencyName": "Bagpat",
+    "originalProblem": "NAME_CONFLICT: member 25813 was listed as 52-Baghpat",
+    "sourceRecords": [
+      {
+        "memberId": "25813",
+        "name": "Shri Yogesh Dhama",
+        "constituencyNumberOnSource": 52,
+        "constituencyNameOnSource": "Baghpat",
+        "partyRaw": "Bharatiya Janta Party",
+        "profileFinding": "Official profile identifies this member, constituency, and party; profile is not marked resigned or deceased.",
+        "profileUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25813"
+      }
+    ],
+    "evidenceChecked": [
+      "Official Uttar Pradesh Legislative Assembly individual member profile(s)",
+      "Official Uttar Pradesh Legislative Assembly member listing, treated only as a discovery source because it contains stale/duplicate/incorrect rows",
+      "Election Commission of India 2022 statistical reports for authoritative constituency number/name mapping where the assembly source number or spelling conflicted"
+    ],
+    "resolvedCandidate": {
+      "name": "Yogesh Dhama",
+      "partyShortName": "BJP",
+      "status": "INCUMBENT",
+      "memberId": "25813",
+      "sourceUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25813",
+      "verified": false
+    },
+    "resolutionReason": "The official profile identifies Yogesh Dhama with Baghpat. Baghpat/Bagpat is a transliteration/display-name difference; the canonical AC number 52 is unchanged.",
+    "confidence": "HIGH",
+    "sourceUrls": [
+      "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25813",
+      "https://www.upvidhansabhaproceedings.gov.in/en/member-s-information",
+      "https://www.eci.gov.in/eci-backend/public/api/download?url=LMAhAK6sOPBp%2FNFF0iRfXbEB1EVSLT41NNLRjYNJJP1KivrUxbfqkDatmHy12e%2FzVx8fLfn2ReU7TfrqYobgItW4eTUyTFD%2BDUyB1G1fBKOuW00SdZqELiEOB05oPhRO74%2F4p%2BuSikD0u7%2BVrCmQyhaJANaxWi%2FXMLUEuMmRVRLJ2%2BdBIBswoUnKE3KB7EMq"
+    ]
+  },
+  {
+    "constituencyNumber": 56,
+    "constituencyName": "Ghaziabad",
+    "originalProblem": "DUPLICATE_SEAT: member 25770 was listed as 56-Ghaziabad; member 25527 was listed as 56-Ghaziabad",
+    "sourceRecords": [
+      {
+        "memberId": "25770",
+        "name": "Shri Sanjeev Sharma",
+        "constituencyNumberOnSource": 56,
+        "constituencyNameOnSource": "Ghaziabad",
+        "partyRaw": "Bharatiya Janta Party",
+        "profileFinding": "Active member profile for Ghaziabad",
+        "profileUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25770"
+      },
+      {
+        "memberId": "25527",
+        "name": "Shri Atul Garg",
+        "constituencyNumberOnSource": 56,
+        "constituencyNameOnSource": "Ghaziabad",
+        "partyRaw": "Bharatiya Janta Party",
+        "profileFinding": "Resigned: Yes; resignation date 14 June 2024",
+        "profileUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25527"
+      }
+    ],
+    "evidenceChecked": [
+      "Official Uttar Pradesh Legislative Assembly individual member profile(s)",
+      "Official Uttar Pradesh Legislative Assembly member listing, treated only as a discovery source because it contains stale/duplicate/incorrect rows",
+      "Election Commission of India 2022 statistical reports for authoritative constituency number/name mapping where the assembly source number or spelling conflicted"
+    ],
+    "resolvedCandidate": {
+      "name": "Sanjeev Sharma",
+      "partyShortName": "BJP",
+      "status": "INCUMBENT",
+      "memberId": "25770",
+      "sourceUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25770",
+      "verified": false
+    },
+    "resolutionReason": "Sanjeev Sharma is the current member on the official profile. Atul Garg's official profile says Resigned: Yes (14 June 2024).",
+    "confidence": "HIGH",
+    "sourceUrls": [
+      "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25770",
+      "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25527",
+      "https://www.upvidhansabhaproceedings.gov.in/en/member-s-information",
+      "https://www.eci.gov.in/eci-backend/public/api/download?url=LMAhAK6sOPBp%2FNFF0iRfXbEB1EVSLT41NNLRjYNJJP1KivrUxbfqkDatmHy12e%2FzVx8fLfn2ReU7TfrqYobgItW4eTUyTFD%2BDUyB1G1fBKOuW00SdZqELiEOB05oPhRO74%2F4p%2BuSikD0u7%2BVrCmQyhaJANaxWi%2FXMLUEuMmRVRLJ2%2BdBIBswoUnKE3KB7EMq"
+    ]
+  },
+  {
+    "constituencyNumber": 65,
+    "constituencyName": "Bulandshahr",
+    "originalProblem": "DUPLICATE_SEAT: member 25589 was listed as 65-Bulandshahr",
+    "sourceRecords": [
+      {
+        "memberId": "25589",
+        "name": "Shri Pradeep Kumar Chaudhary",
+        "constituencyNumberOnSource": 65,
+        "constituencyNameOnSource": "Bulandshahr",
+        "partyRaw": "Bharatiya Janta Party",
+        "profileFinding": "Official profile identifies this member, constituency, and party; profile is not marked resigned or deceased.",
+        "profileUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25589"
+      }
+    ],
+    "evidenceChecked": [
+      "Official Uttar Pradesh Legislative Assembly individual member profile(s)",
+      "Official Uttar Pradesh Legislative Assembly member listing, treated only as a discovery source because it contains stale/duplicate/incorrect rows",
+      "Election Commission of India 2022 statistical reports for authoritative constituency number/name mapping where the assembly source number or spelling conflicted"
+    ],
+    "resolvedCandidate": {
+      "name": "Pradeep Kumar Chaudhary",
+      "partyShortName": "BJP",
+      "status": "INCUMBENT",
+      "memberId": "25589",
+      "sourceUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25589",
+      "verified": false
+    },
+    "resolutionReason": "Pradeep Kumar Chaudhary's official profile identifies Bulandshahr. The extra rows grouped under AC 65 are Dadraul members whose source numbers are wrong; they belong to AC 136.",
+    "confidence": "HIGH",
+    "sourceUrls": [
+      "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25589",
+      "https://www.upvidhansabhaproceedings.gov.in/en/member-s-information",
+      "https://www.eci.gov.in/eci-backend/public/api/download?url=LMAhAK6sOPBp%2FNFF0iRfXbEB1EVSLT41NNLRjYNJJP1KivrUxbfqkDatmHy12e%2FzVx8fLfn2ReU7TfrqYobgItW4eTUyTFD%2BDUyB1G1fBKOuW00SdZqELiEOB05oPhRO74%2F4p%2BuSikD0u7%2BVrCmQyhaJANaxWi%2FXMLUEuMmRVRLJ2%2BdBIBswoUnKE3KB7EMq"
+    ]
+  },
+  {
+    "constituencyNumber": 66,
+    "constituencyName": "Syana",
+    "originalProblem": "NAME_CONFLICT: member 25513 was listed as 66-Siana",
+    "sourceRecords": [
+      {
+        "memberId": "25513",
+        "name": "Shri Devendra Singh Lodhi",
+        "constituencyNumberOnSource": 66,
+        "constituencyNameOnSource": "Siana",
+        "partyRaw": "Bharatiya Janta Party",
+        "profileFinding": "Official profile identifies this member, constituency, and party; profile is not marked resigned or deceased.",
+        "profileUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25513"
+      }
+    ],
+    "evidenceChecked": [
+      "Official Uttar Pradesh Legislative Assembly individual member profile(s)",
+      "Official Uttar Pradesh Legislative Assembly member listing, treated only as a discovery source because it contains stale/duplicate/incorrect rows",
+      "Election Commission of India 2022 statistical reports for authoritative constituency number/name mapping where the assembly source number or spelling conflicted"
+    ],
+    "resolvedCandidate": {
+      "name": "Devendra Singh Lodhi",
+      "partyShortName": "BJP",
+      "status": "INCUMBENT",
+      "memberId": "25513",
+      "sourceUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25513",
+      "verified": false
+    },
+    "resolutionReason": "The official profile identifies Devendra Singh Lodhi with Siana. Siana/Syana is a spelling variation; the canonical AC number 66 is unchanged.",
+    "confidence": "HIGH",
+    "sourceUrls": [
+      "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25513",
+      "https://www.upvidhansabhaproceedings.gov.in/en/member-s-information",
+      "https://www.eci.gov.in/eci-backend/public/api/download?url=LMAhAK6sOPBp%2FNFF0iRfXbEB1EVSLT41NNLRjYNJJP1KivrUxbfqkDatmHy12e%2FzVx8fLfn2ReU7TfrqYobgItW4eTUyTFD%2BDUyB1G1fBKOuW00SdZqELiEOB05oPhRO74%2F4p%2BuSikD0u7%2BVrCmQyhaJANaxWi%2FXMLUEuMmRVRLJ2%2BdBIBswoUnKE3KB7EMq"
+    ]
+  },
+  {
+    "constituencyNumber": 71,
+    "constituencyName": "Khair",
+    "originalProblem": "DUPLICATE_SEAT: member 25785 was listed as 71-Khair; member 25914 was listed as 71-Khair",
+    "sourceRecords": [
+      {
+        "memberId": "25785",
+        "name": "Shri Surendra diler",
+        "constituencyNumberOnSource": 71,
+        "constituencyNameOnSource": "Khair",
+        "partyRaw": "Bharatiya Janta Party",
+        "profileFinding": "Active member profile for Khair",
+        "profileUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25785"
+      },
+      {
+        "memberId": "25914",
+        "name": "Shri Anoop Singh lias Anoop Pradhan Valmiki",
+        "constituencyNumberOnSource": 71,
+        "constituencyNameOnSource": "Khair",
+        "partyRaw": "Bharatiya Janta Party",
+        "profileFinding": "Resigned: Yes; resignation date 14 June 2024",
+        "profileUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25914"
+      }
+    ],
+    "evidenceChecked": [
+      "Official Uttar Pradesh Legislative Assembly individual member profile(s)",
+      "Official Uttar Pradesh Legislative Assembly member listing, treated only as a discovery source because it contains stale/duplicate/incorrect rows",
+      "Election Commission of India 2022 statistical reports for authoritative constituency number/name mapping where the assembly source number or spelling conflicted"
+    ],
+    "resolvedCandidate": {
+      "name": "Surendra diler",
+      "partyShortName": "BJP",
+      "status": "INCUMBENT",
+      "memberId": "25785",
+      "sourceUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25785",
+      "verified": false
+    },
+    "resolutionReason": "Surendra Diler is the current member. Anoop Pradhan Valmiki's official profile says Resigned: Yes (14 June 2024).",
+    "confidence": "HIGH",
+    "sourceUrls": [
+      "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25785",
+      "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25914",
+      "https://www.upvidhansabhaproceedings.gov.in/en/member-s-information",
+      "https://www.eci.gov.in/eci-backend/public/api/download?url=LMAhAK6sOPBp%2FNFF0iRfXbEB1EVSLT41NNLRjYNJJP1KivrUxbfqkDatmHy12e%2FzVx8fLfn2ReU7TfrqYobgItW4eTUyTFD%2BDUyB1G1fBKOuW00SdZqELiEOB05oPhRO74%2F4p%2BuSikD0u7%2BVrCmQyhaJANaxWi%2FXMLUEuMmRVRLJ2%2BdBIBswoUnKE3KB7EMq"
+    ]
+  },
+  {
+    "constituencyNumber": 75,
+    "constituencyName": "Koil",
+    "originalProblem": "NUMBER_0: member 25295 was listed as 0-Kol",
+    "sourceRecords": [
+      {
+        "memberId": "25295",
+        "name": "Shri Anil Parashar",
+        "constituencyNumberOnSource": 0,
+        "constituencyNameOnSource": "Kol",
+        "partyRaw": "Bharatiya Janta Party",
+        "profileFinding": "Official profile identifies this member, constituency, and party; profile is not marked resigned or deceased.",
+        "profileUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25295"
+      }
+    ],
+    "evidenceChecked": [
+      "Official Uttar Pradesh Legislative Assembly individual member profile(s)",
+      "Official Uttar Pradesh Legislative Assembly member listing, treated only as a discovery source because it contains stale/duplicate/incorrect rows",
+      "Election Commission of India 2022 statistical reports for authoritative constituency number/name mapping where the assembly source number or spelling conflicted"
+    ],
+    "resolvedCandidate": {
+      "name": "Anil Parashar",
+      "partyShortName": "BJP",
+      "status": "INCUMBENT",
+      "memberId": "25295",
+      "sourceUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25295",
+      "verified": false
+    },
+    "resolutionReason": "Anil Parashar's official profile identifies Kol. The ECI/canonical constituency is AC 75 Koil; the source number 0 and Kol/Koil spelling are source-side data issues.",
+    "confidence": "HIGH",
+    "sourceUrls": [
+      "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25295",
+      "https://www.upvidhansabhaproceedings.gov.in/en/member-s-information",
+      "https://www.eci.gov.in/eci-backend/public/api/download?url=LMAhAK6sOPBp%2FNFF0iRfXbEB1EVSLT41NNLRjYNJJP1KivrUxbfqkDatmHy12e%2FzVx8fLfn2ReU7TfrqYobgItW4eTUyTFD%2BDUyB1G1fBKOuW00SdZqELiEOB05oPhRO74%2F4p%2BuSikD0u7%2BVrCmQyhaJANaxWi%2FXMLUEuMmRVRLJ2%2BdBIBswoUnKE3KB7EMq"
+    ]
+  },
+  {
+    "constituencyNumber": 91,
+    "constituencyName": "Fatehpur Sikri",
+    "originalProblem": "NAME_CONFLICT: member 25452 was listed as 240-Fatehpur Sikri",
+    "sourceRecords": [
+      {
+        "memberId": "25452",
+        "name": "Shri Babulal",
+        "constituencyNumberOnSource": 240,
+        "constituencyNameOnSource": "Fatehpur Sikri",
+        "partyRaw": "Bharatiya Janta Party",
+        "profileFinding": "Official profile identifies this member, constituency, and party; profile is not marked resigned or deceased.",
+        "profileUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25452"
+      }
+    ],
+    "evidenceChecked": [
+      "Official Uttar Pradesh Legislative Assembly individual member profile(s)",
+      "Official Uttar Pradesh Legislative Assembly member listing, treated only as a discovery source because it contains stale/duplicate/incorrect rows",
+      "Election Commission of India 2022 statistical reports for authoritative constituency number/name mapping where the assembly source number or spelling conflicted"
+    ],
+    "resolvedCandidate": {
+      "name": "Babulal",
+      "partyShortName": "BJP",
+      "status": "INCUMBENT",
+      "memberId": "25452",
+      "sourceUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25452",
+      "verified": false
+    },
+    "resolutionReason": "Babulal's official profile identifies Fatehpur Sikri. Canonical/ECI mapping places it at AC 91; the source listing's AC 240 is swapped with Fatehpur.",
+    "confidence": "HIGH",
+    "sourceUrls": [
+      "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25452",
+      "https://www.upvidhansabhaproceedings.gov.in/en/member-s-information",
+      "https://www.eci.gov.in/eci-backend/public/api/download?url=LMAhAK6sOPBp%2FNFF0iRfXbEB1EVSLT41NNLRjYNJJP1KivrUxbfqkDatmHy12e%2FzVx8fLfn2ReU7TfrqYobgItW4eTUyTFD%2BDUyB1G1fBKOuW00SdZqELiEOB05oPhRO74%2F4p%2BuSikD0u7%2BVrCmQyhaJANaxWi%2FXMLUEuMmRVRLJ2%2BdBIBswoUnKE3KB7EMq"
+    ]
+  },
+  {
+    "constituencyNumber": 101,
+    "constituencyName": "Amanpur",
+    "originalProblem": "NAME_CONFLICT: member 25515 was listed as 101-Amapur",
+    "sourceRecords": [
+      {
+        "memberId": "25515",
+        "name": "Shri Hariom",
+        "constituencyNumberOnSource": 101,
+        "constituencyNameOnSource": "Amapur",
+        "partyRaw": "Bharatiya Janta Party",
+        "profileFinding": "Official profile identifies this member, constituency, and party; profile is not marked resigned or deceased.",
+        "profileUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25515"
+      }
+    ],
+    "evidenceChecked": [
+      "Official Uttar Pradesh Legislative Assembly individual member profile(s)",
+      "Official Uttar Pradesh Legislative Assembly member listing, treated only as a discovery source because it contains stale/duplicate/incorrect rows",
+      "Election Commission of India 2022 statistical reports for authoritative constituency number/name mapping where the assembly source number or spelling conflicted"
+    ],
+    "resolvedCandidate": {
+      "name": "Hariom",
+      "partyShortName": "BJP",
+      "status": "INCUMBENT",
+      "memberId": "25515",
+      "sourceUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25515",
+      "verified": false
+    },
+    "resolutionReason": "The official profile identifies Hariom with Amapur. Amapur/Amanpur is a source spelling difference; the canonical AC number 101 is unchanged.",
+    "confidence": "HIGH",
+    "sourceUrls": [
+      "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25515",
+      "https://www.upvidhansabhaproceedings.gov.in/en/member-s-information",
+      "https://www.eci.gov.in/eci-backend/public/api/download?url=LMAhAK6sOPBp%2FNFF0iRfXbEB1EVSLT41NNLRjYNJJP1KivrUxbfqkDatmHy12e%2FzVx8fLfn2ReU7TfrqYobgItW4eTUyTFD%2BDUyB1G1fBKOuW00SdZqELiEOB05oPhRO74%2F4p%2BuSikD0u7%2BVrCmQyhaJANaxWi%2FXMLUEuMmRVRLJ2%2BdBIBswoUnKE3KB7EMq"
+    ]
+  },
+  {
+    "constituencyNumber": 110,
+    "constituencyName": "Karhal",
+    "originalProblem": "DUPLICATE_SEAT: member 25617 was listed as 110-Karhal; member 25531 was listed as 110-Karhal",
+    "sourceRecords": [
+      {
+        "memberId": "25617",
+        "name": "Shri Tej Pratap Singh",
+        "constituencyNumberOnSource": 110,
+        "constituencyNameOnSource": "Karhal",
+        "partyRaw": "Samajwadi Party",
+        "profileFinding": "Bi Elected: Yes",
+        "profileUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25617"
+      },
+      {
+        "memberId": "25531",
+        "name": "Shri Akhilesh Yadav",
+        "constituencyNumberOnSource": 110,
+        "constituencyNameOnSource": "Karhal",
+        "partyRaw": "Samajwadi Party",
+        "profileFinding": "Resigned: Yes; resignation date 13 June 2024",
+        "profileUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25531"
+      }
+    ],
+    "evidenceChecked": [
+      "Official Uttar Pradesh Legislative Assembly individual member profile(s)",
+      "Official Uttar Pradesh Legislative Assembly member listing, treated only as a discovery source because it contains stale/duplicate/incorrect rows",
+      "Election Commission of India 2022 statistical reports for authoritative constituency number/name mapping where the assembly source number or spelling conflicted"
+    ],
+    "resolvedCandidate": {
+      "name": "Tej Pratap Singh",
+      "partyShortName": "SP",
+      "status": "INCUMBENT",
+      "memberId": "25617",
+      "sourceUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25617",
+      "verified": false
+    },
+    "resolutionReason": "Tej Pratap Singh is the current member. His official profile says Bi Elected: Yes; Akhilesh Yadav's profile says Resigned: Yes (13 June 2024).",
+    "confidence": "HIGH",
+    "sourceUrls": [
+      "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25617",
+      "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25531",
+      "https://www.upvidhansabhaproceedings.gov.in/en/member-s-information",
+      "https://www.eci.gov.in/eci-backend/public/api/download?url=LMAhAK6sOPBp%2FNFF0iRfXbEB1EVSLT41NNLRjYNJJP1KivrUxbfqkDatmHy12e%2FzVx8fLfn2ReU7TfrqYobgItW4eTUyTFD%2BDUyB1G1fBKOuW00SdZqELiEOB05oPhRO74%2F4p%2BuSikD0u7%2BVrCmQyhaJANaxWi%2FXMLUEuMmRVRLJ2%2BdBIBswoUnKE3KB7EMq"
+    ]
+  },
+  {
+    "constituencyNumber": 115,
+    "constituencyName": "Badaun",
+    "originalProblem": "NAME_CONFLICT: member 25674 was listed as 115-Budaun",
+    "sourceRecords": [
+      {
+        "memberId": "25674",
+        "name": "Shri Mahesh Chandra Gupta",
+        "constituencyNumberOnSource": 115,
+        "constituencyNameOnSource": "Budaun",
+        "partyRaw": "Bharatiya Janta Party",
+        "profileFinding": "Official profile identifies this member, constituency, and party; profile is not marked resigned or deceased.",
+        "profileUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25674"
+      }
+    ],
+    "evidenceChecked": [
+      "Official Uttar Pradesh Legislative Assembly individual member profile(s)",
+      "Official Uttar Pradesh Legislative Assembly member listing, treated only as a discovery source because it contains stale/duplicate/incorrect rows",
+      "Election Commission of India 2022 statistical reports for authoritative constituency number/name mapping where the assembly source number or spelling conflicted"
+    ],
+    "resolvedCandidate": {
+      "name": "Mahesh Chandra Gupta",
+      "partyShortName": "BJP",
+      "status": "INCUMBENT",
+      "memberId": "25674",
+      "sourceUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25674",
+      "verified": false
+    },
+    "resolutionReason": "The official profile identifies Mahesh Chandra Gupta with Budaun. Budaun/Badaun is a transliteration difference; the canonical AC number 115 is unchanged.",
+    "confidence": "HIGH",
+    "sourceUrls": [
+      "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25674",
+      "https://www.upvidhansabhaproceedings.gov.in/en/member-s-information",
+      "https://www.eci.gov.in/eci-backend/public/api/download?url=LMAhAK6sOPBp%2FNFF0iRfXbEB1EVSLT41NNLRjYNJJP1KivrUxbfqkDatmHy12e%2FzVx8fLfn2ReU7TfrqYobgItW4eTUyTFD%2BDUyB1G1fBKOuW00SdZqELiEOB05oPhRO74%2F4p%2BuSikD0u7%2BVrCmQyhaJANaxWi%2FXMLUEuMmRVRLJ2%2BdBIBswoUnKE3KB7EMq"
+    ]
+  },
+  {
+    "constituencyNumber": 131,
+    "constituencyName": "Katra",
+    "originalProblem": "NAME_CONFLICT: member 25747 was listed as 297-Katra",
+    "sourceRecords": [
+      {
+        "memberId": "25747",
+        "name": "Shri Veer Vikram Singh",
+        "constituencyNumberOnSource": 297,
+        "constituencyNameOnSource": "Katra",
+        "partyRaw": "Bharatiya Janta Party",
+        "profileFinding": "Official profile identifies this member, constituency, and party; profile is not marked resigned or deceased.",
+        "profileUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25747"
+      }
+    ],
+    "evidenceChecked": [
+      "Official Uttar Pradesh Legislative Assembly individual member profile(s)",
+      "Official Uttar Pradesh Legislative Assembly member listing, treated only as a discovery source because it contains stale/duplicate/incorrect rows",
+      "Election Commission of India 2022 statistical reports for authoritative constituency number/name mapping where the assembly source number or spelling conflicted"
+    ],
+    "resolvedCandidate": {
+      "name": "Veer Vikram Singh",
+      "partyShortName": "BJP",
+      "status": "INCUMBENT",
+      "memberId": "25747",
+      "sourceUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25747",
+      "verified": false
+    },
+    "resolutionReason": "Veer Vikram Singh's official profile identifies Katra. Canonical/ECI mapping places Katra at AC 131; the source listing's AC 297 is swapped with Katra Bazar.",
+    "confidence": "HIGH",
+    "sourceUrls": [
+      "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25747",
+      "https://www.upvidhansabhaproceedings.gov.in/en/member-s-information",
+      "https://www.eci.gov.in/eci-backend/public/api/download?url=LMAhAK6sOPBp%2FNFF0iRfXbEB1EVSLT41NNLRjYNJJP1KivrUxbfqkDatmHy12e%2FzVx8fLfn2ReU7TfrqYobgItW4eTUyTFD%2BDUyB1G1fBKOuW00SdZqELiEOB05oPhRO74%2F4p%2BuSikD0u7%2BVrCmQyhaJANaxWi%2FXMLUEuMmRVRLJ2%2BdBIBswoUnKE3KB7EMq"
+    ]
+  },
+  {
+    "constituencyNumber": 136,
+    "constituencyName": "Dadraul",
+    "originalProblem": "DUPLICATE_SEAT: member 25615 was listed as 65-Dadraul; member 25562 was listed as 65-Dadraul",
+    "sourceRecords": [
+      {
+        "memberId": "25615",
+        "name": "Shri Arvind Kumar Singh",
+        "constituencyNumberOnSource": 65,
+        "constituencyNameOnSource": "Dadraul",
+        "partyRaw": "Bharatiya Janta Party",
+        "profileFinding": "Bi Elected: Yes",
+        "profileUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25615"
+      },
+      {
+        "memberId": "25562",
+        "name": "Shri Manvendra Singh",
+        "constituencyNumberOnSource": 65,
+        "constituencyNameOnSource": "Dadraul",
+        "partyRaw": "Bharatiya Janta Party",
+        "profileFinding": "Dead: Yes",
+        "profileUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25562"
+      }
+    ],
+    "evidenceChecked": [
+      "Official Uttar Pradesh Legislative Assembly individual member profile(s)",
+      "Official Uttar Pradesh Legislative Assembly member listing, treated only as a discovery source because it contains stale/duplicate/incorrect rows",
+      "Election Commission of India 2022 statistical reports for authoritative constituency number/name mapping where the assembly source number or spelling conflicted"
+    ],
+    "resolvedCandidate": {
+      "name": "Arvind Kumar Singh",
+      "partyShortName": "BJP",
+      "status": "INCUMBENT",
+      "memberId": "25615",
+      "sourceUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25615",
+      "verified": false
+    },
+    "resolutionReason": "Arvind Kumar Singh is the current Dadraul member. His official profile says Bi Elected: Yes; Manvendra Singh's profile says Dead: Yes. Both source rows were incorrectly numbered 65; canonical/ECI mapping places Dadraul at AC 136.",
+    "confidence": "HIGH",
+    "sourceUrls": [
+      "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25615",
+      "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25562",
+      "https://www.upvidhansabhaproceedings.gov.in/en/member-s-information",
+      "https://www.eci.gov.in/eci-backend/public/api/download?url=LMAhAK6sOPBp%2FNFF0iRfXbEB1EVSLT41NNLRjYNJJP1KivrUxbfqkDatmHy12e%2FzVx8fLfn2ReU7TfrqYobgItW4eTUyTFD%2BDUyB1G1fBKOuW00SdZqELiEOB05oPhRO74%2F4p%2BuSikD0u7%2BVrCmQyhaJANaxWi%2FXMLUEuMmRVRLJ2%2BdBIBswoUnKE3KB7EMq"
+    ]
+  },
+  {
+    "constituencyNumber": 140,
+    "constituencyName": "Sri Nagar",
+    "originalProblem": "NAME_CONFLICT: member 25656 was listed as 140-Srinagar",
+    "sourceRecords": [
+      {
+        "memberId": "25656",
+        "name": "Shrimati Manju Tyagi",
+        "constituencyNumberOnSource": 140,
+        "constituencyNameOnSource": "Srinagar",
+        "partyRaw": "Bharatiya Janta Party",
+        "profileFinding": "Official profile identifies this member, constituency, and party; profile is not marked resigned or deceased.",
+        "profileUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25656"
+      }
+    ],
+    "evidenceChecked": [
+      "Official Uttar Pradesh Legislative Assembly individual member profile(s)",
+      "Official Uttar Pradesh Legislative Assembly member listing, treated only as a discovery source because it contains stale/duplicate/incorrect rows",
+      "Election Commission of India 2022 statistical reports for authoritative constituency number/name mapping where the assembly source number or spelling conflicted"
+    ],
+    "resolvedCandidate": {
+      "name": "Manju Tyagi",
+      "partyShortName": "BJP",
+      "status": "INCUMBENT",
+      "memberId": "25656",
+      "sourceUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25656",
+      "verified": false
+    },
+    "resolutionReason": "The official profile identifies Manju Tyagi with Srinagar. Srinagar/Sri Nagar is a spacing difference; the canonical AC number 140 is unchanged.",
+    "confidence": "HIGH",
+    "sourceUrls": [
+      "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25656",
+      "https://www.upvidhansabhaproceedings.gov.in/en/member-s-information",
+      "https://www.eci.gov.in/eci-backend/public/api/download?url=LMAhAK6sOPBp%2FNFF0iRfXbEB1EVSLT41NNLRjYNJJP1KivrUxbfqkDatmHy12e%2FzVx8fLfn2ReU7TfrqYobgItW4eTUyTFD%2BDUyB1G1fBKOuW00SdZqELiEOB05oPhRO74%2F4p%2BuSikD0u7%2BVrCmQyhaJANaxWi%2FXMLUEuMmRVRLJ2%2BdBIBswoUnKE3KB7EMq"
+    ]
+  },
+  {
+    "constituencyNumber": 144,
+    "constituencyName": "Mohammdi",
+    "originalProblem": "NAME_CONFLICT: member 25730 was listed as 144-Mohammadi",
+    "sourceRecords": [
+      {
+        "memberId": "25730",
+        "name": "Shri Lokendra Pratap Singh",
+        "constituencyNumberOnSource": 144,
+        "constituencyNameOnSource": "Mohammadi",
+        "partyRaw": "Bharatiya Janta Party",
+        "profileFinding": "Official profile identifies this member, constituency, and party; profile is not marked resigned or deceased.",
+        "profileUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25730"
+      }
+    ],
+    "evidenceChecked": [
+      "Official Uttar Pradesh Legislative Assembly individual member profile(s)",
+      "Official Uttar Pradesh Legislative Assembly member listing, treated only as a discovery source because it contains stale/duplicate/incorrect rows",
+      "Election Commission of India 2022 statistical reports for authoritative constituency number/name mapping where the assembly source number or spelling conflicted"
+    ],
+    "resolvedCandidate": {
+      "name": "Lokendra Pratap Singh",
+      "partyShortName": "BJP",
+      "status": "INCUMBENT",
+      "memberId": "25730",
+      "sourceUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25730",
+      "verified": false
+    },
+    "resolutionReason": "The official profile identifies Lokendra Pratap Singh with Mohammadi. Mohammadi/Mohammdi is a spelling difference; the canonical AC number 144 is unchanged.",
+    "confidence": "HIGH",
+    "sourceUrls": [
+      "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25730",
+      "https://www.upvidhansabhaproceedings.gov.in/en/member-s-information",
+      "https://www.eci.gov.in/eci-backend/public/api/download?url=LMAhAK6sOPBp%2FNFF0iRfXbEB1EVSLT41NNLRjYNJJP1KivrUxbfqkDatmHy12e%2FzVx8fLfn2ReU7TfrqYobgItW4eTUyTFD%2BDUyB1G1fBKOuW00SdZqELiEOB05oPhRO74%2F4p%2BuSikD0u7%2BVrCmQyhaJANaxWi%2FXMLUEuMmRVRLJ2%2BdBIBswoUnKE3KB7EMq"
+    ]
+  },
+  {
+    "constituencyNumber": 147,
+    "constituencyName": "Hargaon",
+    "originalProblem": "NAME_CONFLICT: member 25791 was listed as 147-Hargoan",
+    "sourceRecords": [
+      {
+        "memberId": "25791",
+        "name": "Shri Suresh Rahi",
+        "constituencyNumberOnSource": 147,
+        "constituencyNameOnSource": "Hargoan",
+        "partyRaw": "Bharatiya Janta Party",
+        "profileFinding": "Official profile identifies this member, constituency, and party; profile is not marked resigned or deceased.",
+        "profileUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25791"
+      }
+    ],
+    "evidenceChecked": [
+      "Official Uttar Pradesh Legislative Assembly individual member profile(s)",
+      "Official Uttar Pradesh Legislative Assembly member listing, treated only as a discovery source because it contains stale/duplicate/incorrect rows",
+      "Election Commission of India 2022 statistical reports for authoritative constituency number/name mapping where the assembly source number or spelling conflicted"
+    ],
+    "resolvedCandidate": {
+      "name": "Suresh Rahi",
+      "partyShortName": "BJP",
+      "status": "INCUMBENT",
+      "memberId": "25791",
+      "sourceUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25791",
+      "verified": false
+    },
+    "resolutionReason": "The official profile identifies Suresh Rahi with Hargoan. Hargoan/Hargaon is a source spelling difference; the canonical AC number 147 is unchanged.",
+    "confidence": "HIGH",
+    "sourceUrls": [
+      "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25791",
+      "https://www.upvidhansabhaproceedings.gov.in/en/member-s-information",
+      "https://www.eci.gov.in/eci-backend/public/api/download?url=LMAhAK6sOPBp%2FNFF0iRfXbEB1EVSLT41NNLRjYNJJP1KivrUxbfqkDatmHy12e%2FzVx8fLfn2ReU7TfrqYobgItW4eTUyTFD%2BDUyB1G1fBKOuW00SdZqELiEOB05oPhRO74%2F4p%2BuSikD0u7%2BVrCmQyhaJANaxWi%2FXMLUEuMmRVRLJ2%2BdBIBswoUnKE3KB7EMq"
+    ]
+  },
+  {
+    "constituencyNumber": 154,
+    "constituencyName": "Sawayazpur",
+    "originalProblem": "NAME_CONFLICT: member 25677 was listed as 154-Sawaijpur",
+    "sourceRecords": [
+      {
+        "memberId": "25677",
+        "name": "Shri Madhavendra Pratap Singh",
+        "constituencyNumberOnSource": 154,
+        "constituencyNameOnSource": "Sawaijpur",
+        "partyRaw": "Bharatiya Janta Party",
+        "profileFinding": "Official profile identifies this member, constituency, and party; profile is not marked resigned or deceased.",
+        "profileUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25677"
+      }
+    ],
+    "evidenceChecked": [
+      "Official Uttar Pradesh Legislative Assembly individual member profile(s)",
+      "Official Uttar Pradesh Legislative Assembly member listing, treated only as a discovery source because it contains stale/duplicate/incorrect rows",
+      "Election Commission of India 2022 statistical reports for authoritative constituency number/name mapping where the assembly source number or spelling conflicted"
+    ],
+    "resolvedCandidate": {
+      "name": "Madhavendra Pratap Singh",
+      "partyShortName": "BJP",
+      "status": "INCUMBENT",
+      "memberId": "25677",
+      "sourceUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25677",
+      "verified": false
+    },
+    "resolutionReason": "The official profile identifies Madhavendra Pratap Singh with Sawaijpur. Sawaijpur/Sawayazpur is a transliteration difference; the canonical AC number 154 is unchanged.",
+    "confidence": "HIGH",
+    "sourceUrls": [
+      "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25677",
+      "https://www.upvidhansabhaproceedings.gov.in/en/member-s-information",
+      "https://www.eci.gov.in/eci-backend/public/api/download?url=LMAhAK6sOPBp%2FNFF0iRfXbEB1EVSLT41NNLRjYNJJP1KivrUxbfqkDatmHy12e%2FzVx8fLfn2ReU7TfrqYobgItW4eTUyTFD%2BDUyB1G1fBKOuW00SdZqELiEOB05oPhRO74%2F4p%2BuSikD0u7%2BVrCmQyhaJANaxWi%2FXMLUEuMmRVRLJ2%2BdBIBswoUnKE3KB7EMq"
+    ]
+  },
+  {
+    "constituencyNumber": 166,
+    "constituencyName": "Bhagwantnagar",
+    "originalProblem": "NAME_CONFLICT: member 25330 was listed as 166-Bhagwant Nagar",
+    "sourceRecords": [
+      {
+        "memberId": "25330",
+        "name": "Shri Ashutosh Shukla",
+        "constituencyNumberOnSource": 166,
+        "constituencyNameOnSource": "Bhagwant Nagar",
+        "partyRaw": "Bharatiya Janta Party",
+        "profileFinding": "Official profile identifies this member, constituency, and party; profile is not marked resigned or deceased.",
+        "profileUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25330"
+      }
+    ],
+    "evidenceChecked": [
+      "Official Uttar Pradesh Legislative Assembly individual member profile(s)",
+      "Official Uttar Pradesh Legislative Assembly member listing, treated only as a discovery source because it contains stale/duplicate/incorrect rows",
+      "Election Commission of India 2022 statistical reports for authoritative constituency number/name mapping where the assembly source number or spelling conflicted"
+    ],
+    "resolvedCandidate": {
+      "name": "Ashutosh Shukla",
+      "partyShortName": "BJP",
+      "status": "INCUMBENT",
+      "memberId": "25330",
+      "sourceUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25330",
+      "verified": false
+    },
+    "resolutionReason": "The official profile identifies Ashutosh Shukla with Bhagwant Nagar. This is a spacing difference; the canonical AC number 166 is unchanged.",
+    "confidence": "HIGH",
+    "sourceUrls": [
+      "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25330",
+      "https://www.upvidhansabhaproceedings.gov.in/en/member-s-information",
+      "https://www.eci.gov.in/eci-backend/public/api/download?url=LMAhAK6sOPBp%2FNFF0iRfXbEB1EVSLT41NNLRjYNJJP1KivrUxbfqkDatmHy12e%2FzVx8fLfn2ReU7TfrqYobgItW4eTUyTFD%2BDUyB1G1fBKOuW00SdZqELiEOB05oPhRO74%2F4p%2BuSikD0u7%2BVrCmQyhaJANaxWi%2FXMLUEuMmRVRLJ2%2BdBIBswoUnKE3KB7EMq"
+    ]
+  },
+  {
+    "constituencyNumber": 167,
+    "constituencyName": "Purwa",
+    "originalProblem": "NUMBER_0: member 25293 was listed as 0-Purwa",
+    "sourceRecords": [
+      {
+        "memberId": "25293",
+        "name": "Shri Anil Kumar Singh",
+        "constituencyNumberOnSource": 0,
+        "constituencyNameOnSource": "Purwa",
+        "partyRaw": "Bharatiya Janta Party",
+        "profileFinding": "Official profile identifies this member, constituency, and party; profile is not marked resigned or deceased.",
+        "profileUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25293"
+      }
+    ],
+    "evidenceChecked": [
+      "Official Uttar Pradesh Legislative Assembly individual member profile(s)",
+      "Official Uttar Pradesh Legislative Assembly member listing, treated only as a discovery source because it contains stale/duplicate/incorrect rows",
+      "Election Commission of India 2022 statistical reports for authoritative constituency number/name mapping where the assembly source number or spelling conflicted"
+    ],
+    "resolvedCandidate": {
+      "name": "Anil Kumar Singh",
+      "partyShortName": "BJP",
+      "status": "INCUMBENT",
+      "memberId": "25293",
+      "sourceUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25293",
+      "verified": false
+    },
+    "resolutionReason": "Anil Kumar Singh's official profile identifies Purwa; canonical/ECI mapping uniquely places Purwa at AC 167. The source number 0 is a source-side data error.",
+    "confidence": "HIGH",
+    "sourceUrls": [
+      "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25293",
+      "https://www.upvidhansabhaproceedings.gov.in/en/member-s-information",
+      "https://www.eci.gov.in/eci-backend/public/api/download?url=LMAhAK6sOPBp%2FNFF0iRfXbEB1EVSLT41NNLRjYNJJP1KivrUxbfqkDatmHy12e%2FzVx8fLfn2ReU7TfrqYobgItW4eTUyTFD%2BDUyB1G1fBKOuW00SdZqELiEOB05oPhRO74%2F4p%2BuSikD0u7%2BVrCmQyhaJANaxWi%2FXMLUEuMmRVRLJ2%2BdBIBswoUnKE3KB7EMq"
+    ]
+  },
+  {
+    "constituencyNumber": 173,
+    "constituencyName": "Lucknow East",
+    "originalProblem": "DUPLICATE_SEAT: member 25616 was listed as 173-Lucknow East; member 25601 was listed as 173-Lucknow East",
+    "sourceRecords": [
+      {
+        "memberId": "25616",
+        "name": "Shri O.P. Srivastava",
+        "constituencyNumberOnSource": 173,
+        "constituencyNameOnSource": "Lucknow East",
+        "partyRaw": "Bharatiya Janta Party",
+        "profileFinding": "Bi Elected: Yes",
+        "profileUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25616"
+      },
+      {
+        "memberId": "25601",
+        "name": "Shri Ashutosh Tandon 'Gopal Ji'",
+        "constituencyNumberOnSource": 173,
+        "constituencyNameOnSource": "Lucknow East",
+        "partyRaw": "Bharatiya Janta Party",
+        "profileFinding": "Dead: Yes",
+        "profileUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25601"
+      }
+    ],
+    "evidenceChecked": [
+      "Official Uttar Pradesh Legislative Assembly individual member profile(s)",
+      "Official Uttar Pradesh Legislative Assembly member listing, treated only as a discovery source because it contains stale/duplicate/incorrect rows",
+      "Election Commission of India 2022 statistical reports for authoritative constituency number/name mapping where the assembly source number or spelling conflicted"
+    ],
+    "resolvedCandidate": {
+      "name": "O.P. Srivastava",
+      "partyShortName": "BJP",
+      "status": "INCUMBENT",
+      "memberId": "25616",
+      "sourceUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25616",
+      "verified": false
+    },
+    "resolutionReason": "O.P. Srivastava is the current member. His official profile says Bi Elected: Yes; Ashutosh Tandon's profile says Dead: Yes.",
+    "confidence": "HIGH",
+    "sourceUrls": [
+      "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25616",
+      "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25601",
+      "https://www.upvidhansabhaproceedings.gov.in/en/member-s-information",
+      "https://www.eci.gov.in/eci-backend/public/api/download?url=LMAhAK6sOPBp%2FNFF0iRfXbEB1EVSLT41NNLRjYNJJP1KivrUxbfqkDatmHy12e%2FzVx8fLfn2ReU7TfrqYobgItW4eTUyTFD%2BDUyB1G1fBKOuW00SdZqELiEOB05oPhRO74%2F4p%2BuSikD0u7%2BVrCmQyhaJANaxWi%2FXMLUEuMmRVRLJ2%2BdBIBswoUnKE3KB7EMq"
+    ]
+  },
+  {
+    "constituencyNumber": 227,
+    "constituencyName": "Mehroni",
+    "originalProblem": "NUMBER_0: member 25666 was listed as 0-Mehroni",
+    "sourceRecords": [
+      {
+        "memberId": "25666",
+        "name": "Shri Manohar Lal",
+        "constituencyNumberOnSource": 0,
+        "constituencyNameOnSource": "Mehroni",
+        "partyRaw": "Bharatiya Janta Party",
+        "profileFinding": "Official profile identifies this member, constituency, and party; profile is not marked resigned or deceased.",
+        "profileUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25666"
+      }
+    ],
+    "evidenceChecked": [
+      "Official Uttar Pradesh Legislative Assembly individual member profile(s)",
+      "Official Uttar Pradesh Legislative Assembly member listing, treated only as a discovery source because it contains stale/duplicate/incorrect rows",
+      "Election Commission of India 2022 statistical reports for authoritative constituency number/name mapping where the assembly source number or spelling conflicted"
+    ],
+    "resolvedCandidate": {
+      "name": "Manohar Lal",
+      "partyShortName": "BJP",
+      "status": "INCUMBENT",
+      "memberId": "25666",
+      "sourceUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25666",
+      "verified": false
+    },
+    "resolutionReason": "Manohar Lal's official profile identifies Mehroni; canonical/ECI mapping uniquely places Mehroni at AC 227. The source number 0 is a source-side data error.",
+    "confidence": "HIGH",
+    "sourceUrls": [
+      "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25666",
+      "https://www.upvidhansabhaproceedings.gov.in/en/member-s-information",
+      "https://www.eci.gov.in/eci-backend/public/api/download?url=LMAhAK6sOPBp%2FNFF0iRfXbEB1EVSLT41NNLRjYNJJP1KivrUxbfqkDatmHy12e%2FzVx8fLfn2ReU7TfrqYobgItW4eTUyTFD%2BDUyB1G1fBKOuW00SdZqELiEOB05oPhRO74%2F4p%2BuSikD0u7%2BVrCmQyhaJANaxWi%2FXMLUEuMmRVRLJ2%2BdBIBswoUnKE3KB7EMq"
+    ]
+  },
+  {
+    "constituencyNumber": 240,
+    "constituencyName": "Fatehpur",
+    "originalProblem": "NAME_CONFLICT: member 25358 was listed as 91-Fatehpur",
+    "sourceRecords": [
+      {
+        "memberId": "25358",
+        "name": "Shri Chandra Prakash",
+        "constituencyNumberOnSource": 91,
+        "constituencyNameOnSource": "Fatehpur",
+        "partyRaw": "Samajwadi Party",
+        "profileFinding": "Official profile identifies this member, constituency, and party; profile is not marked resigned or deceased.",
+        "profileUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25358"
+      }
+    ],
+    "evidenceChecked": [
+      "Official Uttar Pradesh Legislative Assembly individual member profile(s)",
+      "Official Uttar Pradesh Legislative Assembly member listing, treated only as a discovery source because it contains stale/duplicate/incorrect rows",
+      "Election Commission of India 2022 statistical reports for authoritative constituency number/name mapping where the assembly source number or spelling conflicted"
+    ],
+    "resolvedCandidate": {
+      "name": "Chandra Prakash",
+      "partyShortName": "SP",
+      "status": "INCUMBENT",
+      "memberId": "25358",
+      "sourceUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25358",
+      "verified": false
+    },
+    "resolutionReason": "Chandra Prakash's official profile identifies Fatehpur. Canonical/ECI mapping places it at AC 240; the source listing's AC 91 is swapped with Fatehpur Sikri.",
+    "confidence": "HIGH",
+    "sourceUrls": [
+      "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25358",
+      "https://www.upvidhansabhaproceedings.gov.in/en/member-s-information",
+      "https://www.eci.gov.in/eci-backend/public/api/download?url=LMAhAK6sOPBp%2FNFF0iRfXbEB1EVSLT41NNLRjYNJJP1KivrUxbfqkDatmHy12e%2FzVx8fLfn2ReU7TfrqYobgItW4eTUyTFD%2BDUyB1G1fBKOuW00SdZqELiEOB05oPhRO74%2F4p%2BuSikD0u7%2BVrCmQyhaJANaxWi%2FXMLUEuMmRVRLJ2%2BdBIBswoUnKE3KB7EMq"
+    ]
+  },
+  {
+    "constituencyNumber": 245,
+    "constituencyName": "Babaganj",
+    "originalProblem": "PARTY_MISMATCH: member 25741 was listed as 245-Babaganj",
+    "sourceRecords": [
+      {
+        "memberId": "25741",
+        "name": "Shri Vinod Saroj",
+        "constituencyNumberOnSource": 245,
+        "constituencyNameOnSource": "Babaganj",
+        "partyRaw": "Jansatta Dal Loktantrik Party",
+        "profileFinding": "Official profile identifies this member, constituency, and party; profile is not marked resigned or deceased.",
+        "profileUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25741"
+      }
+    ],
+    "evidenceChecked": [
+      "Official Uttar Pradesh Legislative Assembly individual member profile(s)",
+      "Official Uttar Pradesh Legislative Assembly member listing, treated only as a discovery source because it contains stale/duplicate/incorrect rows",
+      "Election Commission of India 2022 statistical reports for authoritative constituency number/name mapping where the assembly source number or spelling conflicted"
+    ],
+    "resolvedCandidate": {
+      "name": "Vinod Saroj",
+      "partyShortName": "Jansatta Dal Loktantrik Party",
+      "status": "INCUMBENT",
+      "memberId": "25741",
+      "sourceUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25741",
+      "verified": false
+    },
+    "resolutionReason": "The official profile identifies Vinod Saroj as the current Babaganj member for Jansatta Dal Loktantrik Party. The user approved creating exactly one canonical Party record for this genuinely separate party, so the previously party-blocked MLA record is now importable.",
+    "confidence": "HIGH",
+    "sourceUrls": [
+      "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25741",
+      "https://www.upvidhansabhaproceedings.gov.in/en/member-s-information",
+      "https://www.eci.gov.in/eci-backend/public/api/download?url=LMAhAK6sOPBp%2FNFF0iRfXbEB1EVSLT41NNLRjYNJJP1KivrUxbfqkDatmHy12e%2FzVx8fLfn2ReU7TfrqYobgItW4eTUyTFD%2BDUyB1G1fBKOuW00SdZqELiEOB05oPhRO74%2F4p%2BuSikD0u7%2BVrCmQyhaJANaxWi%2FXMLUEuMmRVRLJ2%2BdBIBswoUnKE3KB7EMq"
+    ]
+  },
+  {
+    "constituencyNumber": 246,
+    "constituencyName": "Kunda",
+    "originalProblem": "PARTY_MISMATCH: member 25687 was listed as 246-Kunda",
+    "sourceRecords": [
+      {
+        "memberId": "25687",
+        "name": "Shri Raghuraj Pratap Singh",
+        "constituencyNumberOnSource": 246,
+        "constituencyNameOnSource": "Kunda",
+        "partyRaw": "Jansatta Dal Loktantrik Party",
+        "profileFinding": "Official profile identifies this member, constituency, and party; profile is not marked resigned or deceased.",
+        "profileUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25687"
+      }
+    ],
+    "evidenceChecked": [
+      "Official Uttar Pradesh Legislative Assembly individual member profile(s)",
+      "Official Uttar Pradesh Legislative Assembly member listing, treated only as a discovery source because it contains stale/duplicate/incorrect rows",
+      "Election Commission of India 2022 statistical reports for authoritative constituency number/name mapping where the assembly source number or spelling conflicted"
+    ],
+    "resolvedCandidate": {
+      "name": "Raghuraj Pratap Singh",
+      "partyShortName": "Jansatta Dal Loktantrik Party",
+      "status": "INCUMBENT",
+      "memberId": "25687",
+      "sourceUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25687",
+      "verified": false
+    },
+    "resolutionReason": "The official profile identifies Raghuraj Pratap Singh as the current Kunda member for Jansatta Dal Loktantrik Party. The user approved creating exactly one canonical Party record for this genuinely separate party, so the previously party-blocked MLA record is now importable.",
+    "confidence": "HIGH",
+    "sourceUrls": [
+      "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25687",
+      "https://www.upvidhansabhaproceedings.gov.in/en/member-s-information",
+      "https://www.eci.gov.in/eci-backend/public/api/download?url=LMAhAK6sOPBp%2FNFF0iRfXbEB1EVSLT41NNLRjYNJJP1KivrUxbfqkDatmHy12e%2FzVx8fLfn2ReU7TfrqYobgItW4eTUyTFD%2BDUyB1G1fBKOuW00SdZqELiEOB05oPhRO74%2F4p%2BuSikD0u7%2BVrCmQyhaJANaxWi%2FXMLUEuMmRVRLJ2%2BdBIBswoUnKE3KB7EMq"
+    ]
+  },
+  {
+    "constituencyNumber": 255,
+    "constituencyName": "Soraon",
+    "originalProblem": "NUMBER_0: member 25356 was listed as 0-Soranv",
+    "sourceRecords": [
+      {
+        "memberId": "25356",
+        "name": "Shrimati Geeta Shastri (Pasi)",
+        "constituencyNumberOnSource": 0,
+        "constituencyNameOnSource": "Soranv",
+        "partyRaw": "Samajwadi Party",
+        "profileFinding": "Official profile identifies this member, constituency, and party; profile is not marked resigned or deceased.",
+        "profileUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25356"
+      }
+    ],
+    "evidenceChecked": [
+      "Official Uttar Pradesh Legislative Assembly individual member profile(s)",
+      "Official Uttar Pradesh Legislative Assembly member listing, treated only as a discovery source because it contains stale/duplicate/incorrect rows",
+      "Election Commission of India 2022 statistical reports for authoritative constituency number/name mapping where the assembly source number or spelling conflicted"
+    ],
+    "resolvedCandidate": {
+      "name": "Geeta Shastri (Pasi)",
+      "partyShortName": "SP",
+      "status": "INCUMBENT",
+      "memberId": "25356",
+      "sourceUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25356",
+      "verified": false
+    },
+    "resolutionReason": "Geeta Shastri (Pasi)'s official profile identifies Soranv. Canonical/ECI mapping uniquely places Soraon at AC 255; the source number 0 and spelling difference are source-side data issues.",
+    "confidence": "HIGH",
+    "sourceUrls": [
+      "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25356",
+      "https://www.upvidhansabhaproceedings.gov.in/en/member-s-information",
+      "https://www.eci.gov.in/eci-backend/public/api/download?url=LMAhAK6sOPBp%2FNFF0iRfXbEB1EVSLT41NNLRjYNJJP1KivrUxbfqkDatmHy12e%2FzVx8fLfn2ReU7TfrqYobgItW4eTUyTFD%2BDUyB1G1fBKOuW00SdZqELiEOB05oPhRO74%2F4p%2BuSikD0u7%2BVrCmQyhaJANaxWi%2FXMLUEuMmRVRLJ2%2BdBIBswoUnKE3KB7EMq"
+    ]
+  },
+  {
+    "constituencyNumber": 256,
+    "constituencyName": "Phulpur",
+    "originalProblem": "DUPLICATE_SEAT: member 25618 was listed as 256-Phulpur; member 25920 was listed as 256-Phulpur",
+    "sourceRecords": [
+      {
+        "memberId": "25618",
+        "name": "Shri Deepak Patel",
+        "constituencyNumberOnSource": 256,
+        "constituencyNameOnSource": "Phulpur",
+        "partyRaw": "Bharatiya Janta Party",
+        "profileFinding": "Bi Elected: Yes",
+        "profileUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25618"
+      },
+      {
+        "memberId": "25920",
+        "name": "Shri Praveen Patel",
+        "constituencyNumberOnSource": 256,
+        "constituencyNameOnSource": "Phulpur",
+        "partyRaw": "Bharatiya Janta Party",
+        "profileFinding": "Resigned: Yes; resignation date 15 June 2024",
+        "profileUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25920"
+      }
+    ],
+    "evidenceChecked": [
+      "Official Uttar Pradesh Legislative Assembly individual member profile(s)",
+      "Official Uttar Pradesh Legislative Assembly member listing, treated only as a discovery source because it contains stale/duplicate/incorrect rows",
+      "Election Commission of India 2022 statistical reports for authoritative constituency number/name mapping where the assembly source number or spelling conflicted"
+    ],
+    "resolvedCandidate": {
+      "name": "Deepak Patel",
+      "partyShortName": "BJP",
+      "status": "INCUMBENT",
+      "memberId": "25618",
+      "sourceUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25618",
+      "verified": false
+    },
+    "resolutionReason": "Deepak Patel is the current member. His official profile says Bi Elected: Yes; Praveen Patel's profile says Resigned: Yes (15 June 2024).",
+    "confidence": "HIGH",
+    "sourceUrls": [
+      "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25618",
+      "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25920",
+      "https://www.upvidhansabhaproceedings.gov.in/en/member-s-information",
+      "https://www.eci.gov.in/eci-backend/public/api/download?url=LMAhAK6sOPBp%2FNFF0iRfXbEB1EVSLT41NNLRjYNJJP1KivrUxbfqkDatmHy12e%2FzVx8fLfn2ReU7TfrqYobgItW4eTUyTFD%2BDUyB1G1fBKOuW00SdZqELiEOB05oPhRO74%2F4p%2BuSikD0u7%2BVrCmQyhaJANaxWi%2FXMLUEuMmRVRLJ2%2BdBIBswoUnKE3KB7EMq"
+    ]
+  },
+  {
+    "constituencyNumber": 261,
+    "constituencyName": "Prayagraj West",
+    "originalProblem": "NAME_CONFLICT: member 25915 was listed as 261-Allahabad West",
+    "sourceRecords": [
+      {
+        "memberId": "25915",
+        "name": "Shri Siddhartha Nath Singh",
+        "constituencyNumberOnSource": 261,
+        "constituencyNameOnSource": "Allahabad West",
+        "partyRaw": "Bharatiya Janta Party",
+        "profileFinding": "Official profile identifies this member, constituency, and party; profile is not marked resigned or deceased.",
+        "profileUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25915"
+      }
+    ],
+    "evidenceChecked": [
+      "Official Uttar Pradesh Legislative Assembly individual member profile(s)",
+      "Official Uttar Pradesh Legislative Assembly member listing, treated only as a discovery source because it contains stale/duplicate/incorrect rows",
+      "Election Commission of India 2022 statistical reports for authoritative constituency number/name mapping where the assembly source number or spelling conflicted"
+    ],
+    "resolvedCandidate": {
+      "name": "Siddhartha Nath Singh",
+      "partyShortName": "BJP",
+      "status": "INCUMBENT",
+      "memberId": "25915",
+      "sourceUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25915",
+      "verified": false
+    },
+    "resolutionReason": "The official profile identifies Siddhartha Nath Singh with Allahabad West. Allahabad was renamed Prayagraj; the canonical AC number 261 is unchanged.",
+    "confidence": "HIGH",
+    "sourceUrls": [
+      "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25915",
+      "https://www.upvidhansabhaproceedings.gov.in/en/member-s-information",
+      "https://www.eci.gov.in/eci-backend/public/api/download?url=LMAhAK6sOPBp%2FNFF0iRfXbEB1EVSLT41NNLRjYNJJP1KivrUxbfqkDatmHy12e%2FzVx8fLfn2ReU7TfrqYobgItW4eTUyTFD%2BDUyB1G1fBKOuW00SdZqELiEOB05oPhRO74%2F4p%2BuSikD0u7%2BVrCmQyhaJANaxWi%2FXMLUEuMmRVRLJ2%2BdBIBswoUnKE3KB7EMq"
+    ]
+  },
+  {
+    "constituencyNumber": 262,
+    "constituencyName": "Prayagraj North",
+    "originalProblem": "NAME_CONFLICT: member 25522 was listed as 262-Allahabad North",
+    "sourceRecords": [
+      {
+        "memberId": "25522",
+        "name": "Shri Harsh Vardhan Bajpai",
+        "constituencyNumberOnSource": 262,
+        "constituencyNameOnSource": "Allahabad North",
+        "partyRaw": "Bharatiya Janta Party",
+        "profileFinding": "Official profile identifies this member, constituency, and party; profile is not marked resigned or deceased.",
+        "profileUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25522"
+      }
+    ],
+    "evidenceChecked": [
+      "Official Uttar Pradesh Legislative Assembly individual member profile(s)",
+      "Official Uttar Pradesh Legislative Assembly member listing, treated only as a discovery source because it contains stale/duplicate/incorrect rows",
+      "Election Commission of India 2022 statistical reports for authoritative constituency number/name mapping where the assembly source number or spelling conflicted"
+    ],
+    "resolvedCandidate": {
+      "name": "Harsh Vardhan Bajpai",
+      "partyShortName": "BJP",
+      "status": "INCUMBENT",
+      "memberId": "25522",
+      "sourceUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25522",
+      "verified": false
+    },
+    "resolutionReason": "The official profile identifies Harsh Vardhan Bajpai with Allahabad North. Allahabad was renamed Prayagraj; the canonical AC number 262 is unchanged.",
+    "confidence": "HIGH",
+    "sourceUrls": [
+      "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25522",
+      "https://www.upvidhansabhaproceedings.gov.in/en/member-s-information",
+      "https://www.eci.gov.in/eci-backend/public/api/download?url=LMAhAK6sOPBp%2FNFF0iRfXbEB1EVSLT41NNLRjYNJJP1KivrUxbfqkDatmHy12e%2FzVx8fLfn2ReU7TfrqYobgItW4eTUyTFD%2BDUyB1G1fBKOuW00SdZqELiEOB05oPhRO74%2F4p%2BuSikD0u7%2BVrCmQyhaJANaxWi%2FXMLUEuMmRVRLJ2%2BdBIBswoUnKE3KB7EMq"
+    ]
+  },
+  {
+    "constituencyNumber": 263,
+    "constituencyName": "Prayagraj South",
+    "originalProblem": "NAME_CONFLICT: member 25541 was listed as 263-Allahabad South",
+    "sourceRecords": [
+      {
+        "memberId": "25541",
+        "name": "Shri Nand Gopal Gupta \"Nandi\"",
+        "constituencyNumberOnSource": 263,
+        "constituencyNameOnSource": "Allahabad South",
+        "partyRaw": "Bharatiya Janta Party",
+        "profileFinding": "Official profile identifies this member, constituency, and party; profile is not marked resigned or deceased.",
+        "profileUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25541"
+      }
+    ],
+    "evidenceChecked": [
+      "Official Uttar Pradesh Legislative Assembly individual member profile(s)",
+      "Official Uttar Pradesh Legislative Assembly member listing, treated only as a discovery source because it contains stale/duplicate/incorrect rows",
+      "Election Commission of India 2022 statistical reports for authoritative constituency number/name mapping where the assembly source number or spelling conflicted"
+    ],
+    "resolvedCandidate": {
+      "name": "Nand Gopal Gupta \"Nandi\"",
+      "partyShortName": "BJP",
+      "status": "INCUMBENT",
+      "memberId": "25541",
+      "sourceUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25541",
+      "verified": false
+    },
+    "resolutionReason": "The official profile identifies Nand Gopal Gupta 'Nandi' with Allahabad South. Allahabad was renamed Prayagraj; the canonical AC number 263 is unchanged.",
+    "confidence": "HIGH",
+    "sourceUrls": [
+      "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25541",
+      "https://www.upvidhansabhaproceedings.gov.in/en/member-s-information",
+      "https://www.eci.gov.in/eci-backend/public/api/download?url=LMAhAK6sOPBp%2FNFF0iRfXbEB1EVSLT41NNLRjYNJJP1KivrUxbfqkDatmHy12e%2FzVx8fLfn2ReU7TfrqYobgItW4eTUyTFD%2BDUyB1G1fBKOuW00SdZqELiEOB05oPhRO74%2F4p%2BuSikD0u7%2BVrCmQyhaJANaxWi%2FXMLUEuMmRVRLJ2%2BdBIBswoUnKE3KB7EMq"
+    ]
+  },
+  {
+    "constituencyNumber": 264,
+    "constituencyName": "Bara",
+    "originalProblem": "PARTY_MISMATCH: member 25732 was listed as 264-Bara",
+    "sourceRecords": [
+      {
+        "memberId": "25732",
+        "name": "Shri Vachaspati",
+        "constituencyNumberOnSource": 264,
+        "constituencyNameOnSource": "Bara",
+        "partyRaw": "Apna Dal",
+        "profileFinding": "Official profile identifies this member, constituency, and party; profile is not marked resigned or deceased.",
+        "profileUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25732"
+      }
+    ],
+    "evidenceChecked": [
+      "Official Uttar Pradesh Legislative Assembly individual member profile(s)",
+      "Official Uttar Pradesh Legislative Assembly member listing, treated only as a discovery source because it contains stale/duplicate/incorrect rows",
+      "Election Commission of India 2022 statistical reports for authoritative constituency number/name mapping where the assembly source number or spelling conflicted"
+    ],
+    "resolvedCandidate": {
+      "name": "Vachaspati",
+      "partyShortName": "Apna Dal",
+      "status": "INCUMBENT",
+      "memberId": "25732",
+      "sourceUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25732",
+      "verified": false
+    },
+    "resolutionReason": "The official profile identifies Vachaspati with Bara and labels the party 'Apna Dal'. The existing canonical party is Apna Dal (Soneylal), short name 'Apna Dal'; this is a clear source-label alias, not a new party.",
+    "confidence": "HIGH",
+    "sourceUrls": [
+      "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25732",
+      "https://www.upvidhansabhaproceedings.gov.in/en/member-s-information",
+      "https://www.eci.gov.in/eci-backend/public/api/download?url=LMAhAK6sOPBp%2FNFF0iRfXbEB1EVSLT41NNLRjYNJJP1KivrUxbfqkDatmHy12e%2FzVx8fLfn2ReU7TfrqYobgItW4eTUyTFD%2BDUyB1G1fBKOuW00SdZqELiEOB05oPhRO74%2F4p%2BuSikD0u7%2BVrCmQyhaJANaxWi%2FXMLUEuMmRVRLJ2%2BdBIBswoUnKE3KB7EMq"
+    ]
+  },
+  {
+    "constituencyNumber": 267,
+    "constituencyName": "Ram Nagar",
+    "originalProblem": "NAME_CONFLICT: member 25634 was listed as 267-Ramnagar",
+    "sourceRecords": [
+      {
+        "memberId": "25634",
+        "name": "Shri Fareed Mahfooz Kidwai",
+        "constituencyNumberOnSource": 267,
+        "constituencyNameOnSource": "Ramnagar",
+        "partyRaw": "Samajwadi Party",
+        "profileFinding": "Official profile identifies this member, constituency, and party; profile is not marked resigned or deceased.",
+        "profileUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25634"
+      }
+    ],
+    "evidenceChecked": [
+      "Official Uttar Pradesh Legislative Assembly individual member profile(s)",
+      "Official Uttar Pradesh Legislative Assembly member listing, treated only as a discovery source because it contains stale/duplicate/incorrect rows",
+      "Election Commission of India 2022 statistical reports for authoritative constituency number/name mapping where the assembly source number or spelling conflicted"
+    ],
+    "resolvedCandidate": {
+      "name": "Fareed Mahfooz Kidwai",
+      "partyShortName": "SP",
+      "status": "INCUMBENT",
+      "memberId": "25634",
+      "sourceUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25634",
+      "verified": false
+    },
+    "resolutionReason": "The official profile identifies Fareed Mahfooz Kidwai with Ramnagar. Ramnagar/Ram Nagar is a spacing difference; the canonical AC number 267 is unchanged.",
+    "confidence": "HIGH",
+    "sourceUrls": [
+      "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25634",
+      "https://www.upvidhansabhaproceedings.gov.in/en/member-s-information",
+      "https://www.eci.gov.in/eci-backend/public/api/download?url=LMAhAK6sOPBp%2FNFF0iRfXbEB1EVSLT41NNLRjYNJJP1KivrUxbfqkDatmHy12e%2FzVx8fLfn2ReU7TfrqYobgItW4eTUyTFD%2BDUyB1G1fBKOuW00SdZqELiEOB05oPhRO74%2F4p%2BuSikD0u7%2BVrCmQyhaJANaxWi%2FXMLUEuMmRVRLJ2%2BdBIBswoUnKE3KB7EMq"
+    ]
+  },
+  {
+    "constituencyNumber": 277,
+    "constituencyName": "Katehari",
+    "originalProblem": "DUPLICATE_SEAT: member 25619 was listed as 277-Katehari; member 25596 was listed as 277-Katehari",
+    "sourceRecords": [
+      {
+        "memberId": "25619",
+        "name": "Shri Dharamraj Nishad",
+        "constituencyNumberOnSource": 277,
+        "constituencyNameOnSource": "Katehari",
+        "partyRaw": "Samajwadi Party",
+        "profileFinding": "Bi Elected: Yes",
+        "profileUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25619"
+      },
+      {
+        "memberId": "25596",
+        "name": "Shri Lalji Verma",
+        "constituencyNumberOnSource": 277,
+        "constituencyNameOnSource": "Katehari",
+        "partyRaw": "Samajwadi Party",
+        "profileFinding": "Resigned: Yes; resignation date 7 June 2024",
+        "profileUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25596"
+      }
+    ],
+    "evidenceChecked": [
+      "Official Uttar Pradesh Legislative Assembly individual member profile(s)",
+      "Official Uttar Pradesh Legislative Assembly member listing, treated only as a discovery source because it contains stale/duplicate/incorrect rows",
+      "Election Commission of India 2022 statistical reports for authoritative constituency number/name mapping where the assembly source number or spelling conflicted"
+    ],
+    "resolvedCandidate": {
+      "name": "Dharamraj Nishad",
+      "partyShortName": "SP",
+      "status": "INCUMBENT",
+      "memberId": "25619",
+      "sourceUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25619",
+      "verified": false
+    },
+    "resolutionReason": "Dharamraj Nishad is the current member. His official profile says Bi Elected: Yes; Lalji Verma's profile says Resigned: Yes (7 June 2024).",
+    "confidence": "HIGH",
+    "sourceUrls": [
+      "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25619",
+      "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25596",
+      "https://www.upvidhansabhaproceedings.gov.in/en/member-s-information",
+      "https://www.eci.gov.in/eci-backend/public/api/download?url=LMAhAK6sOPBp%2FNFF0iRfXbEB1EVSLT41NNLRjYNJJP1KivrUxbfqkDatmHy12e%2FzVx8fLfn2ReU7TfrqYobgItW4eTUyTFD%2BDUyB1G1fBKOuW00SdZqELiEOB05oPhRO74%2F4p%2BuSikD0u7%2BVrCmQyhaJANaxWi%2FXMLUEuMmRVRLJ2%2BdBIBswoUnKE3KB7EMq"
+    ]
+  },
+  {
+    "constituencyNumber": 279,
+    "constituencyName": "Alapur",
+    "originalProblem": "NAME_CONFLICT: member 25498 was listed as 279-Aalapur",
+    "sourceRecords": [
+      {
+        "memberId": "25498",
+        "name": "Shri Tribhuwan Dutt",
+        "constituencyNumberOnSource": 279,
+        "constituencyNameOnSource": "Aalapur",
+        "partyRaw": "Samajwadi Party",
+        "profileFinding": "Official profile identifies this member, constituency, and party; profile is not marked resigned or deceased.",
+        "profileUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25498"
+      }
+    ],
+    "evidenceChecked": [
+      "Official Uttar Pradesh Legislative Assembly individual member profile(s)",
+      "Official Uttar Pradesh Legislative Assembly member listing, treated only as a discovery source because it contains stale/duplicate/incorrect rows",
+      "Election Commission of India 2022 statistical reports for authoritative constituency number/name mapping where the assembly source number or spelling conflicted"
+    ],
+    "resolvedCandidate": {
+      "name": "Tribhuwan Dutt",
+      "partyShortName": "SP",
+      "status": "INCUMBENT",
+      "memberId": "25498",
+      "sourceUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25498",
+      "verified": false
+    },
+    "resolutionReason": "The official profile identifies Tribhuwan Dutt with Aalapur. Aalapur/Alapur is a spelling difference; the canonical AC number 279 is unchanged.",
+    "confidence": "HIGH",
+    "sourceUrls": [
+      "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25498",
+      "https://www.upvidhansabhaproceedings.gov.in/en/member-s-information",
+      "https://www.eci.gov.in/eci-backend/public/api/download?url=LMAhAK6sOPBp%2FNFF0iRfXbEB1EVSLT41NNLRjYNJJP1KivrUxbfqkDatmHy12e%2FzVx8fLfn2ReU7TfrqYobgItW4eTUyTFD%2BDUyB1G1fBKOuW00SdZqELiEOB05oPhRO74%2F4p%2BuSikD0u7%2BVrCmQyhaJANaxWi%2FXMLUEuMmRVRLJ2%2BdBIBswoUnKE3KB7EMq"
+    ]
+  },
+  {
+    "constituencyNumber": 292,
+    "constituencyName": "Gainsari",
+    "originalProblem": "DUPLICATE_SEAT: member 25201 was listed as 292-Gainsari; member 25602 was listed as 292-Gainsari",
+    "sourceRecords": [
+      {
+        "memberId": "25201",
+        "name": "Shri Shiv Pratap Kumar Yadav",
+        "constituencyNumberOnSource": 292,
+        "constituencyNameOnSource": "Gainsari",
+        "partyRaw": "Samajwadi Party",
+        "profileFinding": "Active member profile for Gainsari",
+        "profileUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25201"
+      },
+      {
+        "memberId": "25602",
+        "name": "Dr Shiv Pratap Yadav",
+        "constituencyNumberOnSource": 292,
+        "constituencyNameOnSource": "Gainsari",
+        "partyRaw": "Samajwadi Party",
+        "profileFinding": "Dead: Yes",
+        "profileUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25602"
+      }
+    ],
+    "evidenceChecked": [
+      "Official Uttar Pradesh Legislative Assembly individual member profile(s)",
+      "Official Uttar Pradesh Legislative Assembly member listing, treated only as a discovery source because it contains stale/duplicate/incorrect rows",
+      "Election Commission of India 2022 statistical reports for authoritative constituency number/name mapping where the assembly source number or spelling conflicted"
+    ],
+    "resolvedCandidate": {
+      "name": "Shiv Pratap Kumar Yadav",
+      "partyShortName": "SP",
+      "status": "INCUMBENT",
+      "memberId": "25201",
+      "sourceUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25201",
+      "verified": false
+    },
+    "resolutionReason": "Shiv Pratap Kumar Yadav is the current member. The other official profile, for predecessor Shiv Pratap Yadav, says Dead: Yes.",
+    "confidence": "HIGH",
+    "sourceUrls": [
+      "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25201",
+      "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25602",
+      "https://www.upvidhansabhaproceedings.gov.in/en/member-s-information",
+      "https://www.eci.gov.in/eci-backend/public/api/download?url=LMAhAK6sOPBp%2FNFF0iRfXbEB1EVSLT41NNLRjYNJJP1KivrUxbfqkDatmHy12e%2FzVx8fLfn2ReU7TfrqYobgItW4eTUyTFD%2BDUyB1G1fBKOuW00SdZqELiEOB05oPhRO74%2F4p%2BuSikD0u7%2BVrCmQyhaJANaxWi%2FXMLUEuMmRVRLJ2%2BdBIBswoUnKE3KB7EMq"
+    ]
+  },
+  {
+    "constituencyNumber": 297,
+    "constituencyName": "Katra Bazar",
+    "originalProblem": "NAME_CONFLICT: member 25649 was listed as 131-Katra Bazar",
+    "sourceRecords": [
+      {
+        "memberId": "25649",
+        "name": "Shri Bawan Singh",
+        "constituencyNumberOnSource": 131,
+        "constituencyNameOnSource": "Katra Bazar",
+        "partyRaw": "Bharatiya Janta Party",
+        "profileFinding": "Official profile identifies this member, constituency, and party; profile is not marked resigned or deceased.",
+        "profileUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25649"
+      }
+    ],
+    "evidenceChecked": [
+      "Official Uttar Pradesh Legislative Assembly individual member profile(s)",
+      "Official Uttar Pradesh Legislative Assembly member listing, treated only as a discovery source because it contains stale/duplicate/incorrect rows",
+      "Election Commission of India 2022 statistical reports for authoritative constituency number/name mapping where the assembly source number or spelling conflicted"
+    ],
+    "resolvedCandidate": {
+      "name": "Bawan Singh",
+      "partyShortName": "BJP",
+      "status": "INCUMBENT",
+      "memberId": "25649",
+      "sourceUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25649",
+      "verified": false
+    },
+    "resolutionReason": "Bawan Singh's official profile identifies Katra Bazar. Canonical/ECI mapping places Katra Bazar at AC 297; the source listing's AC 131 is swapped with Katra.",
+    "confidence": "HIGH",
+    "sourceUrls": [
+      "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25649",
+      "https://www.upvidhansabhaproceedings.gov.in/en/member-s-information",
+      "https://www.eci.gov.in/eci-backend/public/api/download?url=LMAhAK6sOPBp%2FNFF0iRfXbEB1EVSLT41NNLRjYNJJP1KivrUxbfqkDatmHy12e%2FzVx8fLfn2ReU7TfrqYobgItW4eTUyTFD%2BDUyB1G1fBKOuW00SdZqELiEOB05oPhRO74%2F4p%2BuSikD0u7%2BVrCmQyhaJANaxWi%2FXMLUEuMmRVRLJ2%2BdBIBswoUnKE3KB7EMq"
+    ]
+  },
+  {
+    "constituencyNumber": 306,
+    "constituencyName": "Domariyaganj",
+    "originalProblem": "NAME_CONFLICT: member 25559 was listed as 306-Domariaganj",
+    "sourceRecords": [
+      {
+        "memberId": "25559",
+        "name": "Shrimati Syeda Khatoon",
+        "constituencyNumberOnSource": 306,
+        "constituencyNameOnSource": "Domariaganj",
+        "partyRaw": "Samajwadi Party",
+        "profileFinding": "Official profile identifies this member, constituency, and party; profile is not marked resigned or deceased.",
+        "profileUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25559"
+      }
+    ],
+    "evidenceChecked": [
+      "Official Uttar Pradesh Legislative Assembly individual member profile(s)",
+      "Official Uttar Pradesh Legislative Assembly member listing, treated only as a discovery source because it contains stale/duplicate/incorrect rows",
+      "Election Commission of India 2022 statistical reports for authoritative constituency number/name mapping where the assembly source number or spelling conflicted"
+    ],
+    "resolvedCandidate": {
+      "name": "Syeda Khatoon",
+      "partyShortName": "SP",
+      "status": "INCUMBENT",
+      "memberId": "25559",
+      "sourceUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25559",
+      "verified": false
+    },
+    "resolutionReason": "The official profile identifies Syeda Khatoon with Domariaganj. Domariaganj/Domariyaganj is a spelling difference; the canonical AC number 306 is unchanged.",
+    "confidence": "HIGH",
+    "sourceUrls": [
+      "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25559",
+      "https://www.upvidhansabhaproceedings.gov.in/en/member-s-information",
+      "https://www.eci.gov.in/eci-backend/public/api/download?url=LMAhAK6sOPBp%2FNFF0iRfXbEB1EVSLT41NNLRjYNJJP1KivrUxbfqkDatmHy12e%2FzVx8fLfn2ReU7TfrqYobgItW4eTUyTFD%2BDUyB1G1fBKOuW00SdZqELiEOB05oPhRO74%2F4p%2BuSikD0u7%2BVrCmQyhaJANaxWi%2FXMLUEuMmRVRLJ2%2BdBIBswoUnKE3KB7EMq"
+    ]
+  },
+  {
+    "constituencyNumber": 313,
+    "constituencyName": "Khalilabad",
+    "originalProblem": "DUPLICATE_SEAT: member 25226 was listed as 313-Khalilabad; member 25432 was listed as 313-Khalilabad",
+    "sourceRecords": [
+      {
+        "memberId": "25226",
+        "name": "Shri Ankur Tiwari",
+        "constituencyNumberOnSource": 313,
+        "constituencyNameOnSource": "Khalilabad",
+        "partyRaw": "Bharatiya Janta Party",
+        "profileFinding": "Ankur Tiwari, Khalilabad, BJP",
+        "profileUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25226"
+      },
+      {
+        "memberId": "25432",
+        "name": "Shri Ankur Tiwari",
+        "constituencyNumberOnSource": 313,
+        "constituencyNameOnSource": "Khalilabad",
+        "partyRaw": "Bharatiya Janta Party",
+        "profileFinding": "Duplicate official profile for Ankur Tiwari, Khalilabad, BJP",
+        "profileUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25432"
+      }
+    ],
+    "evidenceChecked": [
+      "Official Uttar Pradesh Legislative Assembly individual member profile(s)",
+      "Official Uttar Pradesh Legislative Assembly member listing, treated only as a discovery source because it contains stale/duplicate/incorrect rows",
+      "Election Commission of India 2022 statistical reports for authoritative constituency number/name mapping where the assembly source number or spelling conflicted"
+    ],
+    "resolvedCandidate": {
+      "name": "Ankur Tiwari",
+      "partyShortName": "BJP",
+      "status": "INCUMBENT",
+      "memberId": "25226",
+      "sourceUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25226",
+      "verified": false
+    },
+    "resolutionReason": "Both official rows and profiles identify the same person, Ankur Tiwari, for the same constituency and party. This is a duplicate profile-record issue, not two competing members; resolve to one candidate identity and retain both profile URLs as provenance.",
+    "confidence": "HIGH",
+    "sourceUrls": [
+      "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25226",
+      "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25432",
+      "https://www.upvidhansabhaproceedings.gov.in/en/member-s-information",
+      "https://www.eci.gov.in/eci-backend/public/api/download?url=LMAhAK6sOPBp%2FNFF0iRfXbEB1EVSLT41NNLRjYNJJP1KivrUxbfqkDatmHy12e%2FzVx8fLfn2ReU7TfrqYobgItW4eTUyTFD%2BDUyB1G1fBKOuW00SdZqELiEOB05oPhRO74%2F4p%2BuSikD0u7%2BVrCmQyhaJANaxWi%2FXMLUEuMmRVRLJ2%2BdBIBswoUnKE3KB7EMq"
+    ]
+  },
+  {
+    "constituencyNumber": 314,
+    "constituencyName": "Dhanghata",
+    "originalProblem": "NAME_CONFLICT: member 25351 was listed as 314-Ghanghata",
+    "sourceRecords": [
+      {
+        "memberId": "25351",
+        "name": "Shri Ganesh Chandra",
+        "constituencyNumberOnSource": 314,
+        "constituencyNameOnSource": "Ghanghata",
+        "partyRaw": "Bharatiya Janta Party",
+        "profileFinding": "Official profile identifies this member, constituency, and party; profile is not marked resigned or deceased.",
+        "profileUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25351"
+      }
+    ],
+    "evidenceChecked": [
+      "Official Uttar Pradesh Legislative Assembly individual member profile(s)",
+      "Official Uttar Pradesh Legislative Assembly member listing, treated only as a discovery source because it contains stale/duplicate/incorrect rows",
+      "Election Commission of India 2022 statistical reports for authoritative constituency number/name mapping where the assembly source number or spelling conflicted"
+    ],
+    "resolvedCandidate": {
+      "name": "Ganesh Chandra",
+      "partyShortName": "BJP",
+      "status": "INCUMBENT",
+      "memberId": "25351",
+      "sourceUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25351",
+      "verified": false
+    },
+    "resolutionReason": "The official profile identifies Ganesh Chandra with Ghanghata. Ghanghata/Dhanghata is a source spelling difference; the canonical AC number 314 is unchanged.",
+    "confidence": "HIGH",
+    "sourceUrls": [
+      "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25351",
+      "https://www.upvidhansabhaproceedings.gov.in/en/member-s-information",
+      "https://www.eci.gov.in/eci-backend/public/api/download?url=LMAhAK6sOPBp%2FNFF0iRfXbEB1EVSLT41NNLRjYNJJP1KivrUxbfqkDatmHy12e%2FzVx8fLfn2ReU7TfrqYobgItW4eTUyTFD%2BDUyB1G1fBKOuW00SdZqELiEOB05oPhRO74%2F4p%2BuSikD0u7%2BVrCmQyhaJANaxWi%2FXMLUEuMmRVRLJ2%2BdBIBswoUnKE3KB7EMq"
+    ]
+  },
+  {
+    "constituencyNumber": 320,
+    "constituencyName": "Campierganj",
+    "originalProblem": "NAME_CONFLICT: member 25633 was listed as 320-Caimpiyarganj",
+    "sourceRecords": [
+      {
+        "memberId": "25633",
+        "name": "Shri Fateh Bahadur",
+        "constituencyNumberOnSource": 320,
+        "constituencyNameOnSource": "Caimpiyarganj",
+        "partyRaw": "Bharatiya Janta Party",
+        "profileFinding": "Official profile identifies this member, constituency, and party; profile is not marked resigned or deceased.",
+        "profileUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25633"
+      }
+    ],
+    "evidenceChecked": [
+      "Official Uttar Pradesh Legislative Assembly individual member profile(s)",
+      "Official Uttar Pradesh Legislative Assembly member listing, treated only as a discovery source because it contains stale/duplicate/incorrect rows",
+      "Election Commission of India 2022 statistical reports for authoritative constituency number/name mapping where the assembly source number or spelling conflicted"
+    ],
+    "resolvedCandidate": {
+      "name": "Fateh Bahadur",
+      "partyShortName": "BJP",
+      "status": "INCUMBENT",
+      "memberId": "25633",
+      "sourceUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25633",
+      "verified": false
+    },
+    "resolutionReason": "The official profile identifies Fateh Bahadur with Caimpiyarganj and gives a Campierganj address. This is a transliteration difference; the canonical AC number 320 is unchanged.",
+    "confidence": "HIGH",
+    "sourceUrls": [
+      "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25633",
+      "https://www.upvidhansabhaproceedings.gov.in/en/member-s-information",
+      "https://www.eci.gov.in/eci-backend/public/api/download?url=LMAhAK6sOPBp%2FNFF0iRfXbEB1EVSLT41NNLRjYNJJP1KivrUxbfqkDatmHy12e%2FzVx8fLfn2ReU7TfrqYobgItW4eTUyTFD%2BDUyB1G1fBKOuW00SdZqELiEOB05oPhRO74%2F4p%2BuSikD0u7%2BVrCmQyhaJANaxWi%2FXMLUEuMmRVRLJ2%2BdBIBswoUnKE3KB7EMq"
+    ]
+  },
+  {
+    "constituencyNumber": 343,
+    "constituencyName": "Atrauliya",
+    "originalProblem": "NAME_CONFLICT: member 25761 was listed as 343-Atraulia",
+    "sourceRecords": [
+      {
+        "memberId": "25761",
+        "name": "Dr Sangram Yadav",
+        "constituencyNumberOnSource": 343,
+        "constituencyNameOnSource": "Atraulia",
+        "partyRaw": "Samajwadi Party",
+        "profileFinding": "Official profile identifies this member, constituency, and party; profile is not marked resigned or deceased.",
+        "profileUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25761"
+      }
+    ],
+    "evidenceChecked": [
+      "Official Uttar Pradesh Legislative Assembly individual member profile(s)",
+      "Official Uttar Pradesh Legislative Assembly member listing, treated only as a discovery source because it contains stale/duplicate/incorrect rows",
+      "Election Commission of India 2022 statistical reports for authoritative constituency number/name mapping where the assembly source number or spelling conflicted"
+    ],
+    "resolvedCandidate": {
+      "name": "Sangram Yadav",
+      "partyShortName": "SP",
+      "status": "INCUMBENT",
+      "memberId": "25761",
+      "sourceUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25761",
+      "verified": false
+    },
+    "resolutionReason": "The official profile identifies Sangram Yadav with Atraulia. Atraulia/Atrauliya is a transliteration difference; the canonical AC number 343 is unchanged.",
+    "confidence": "HIGH",
+    "sourceUrls": [
+      "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25761",
+      "https://www.upvidhansabhaproceedings.gov.in/en/member-s-information",
+      "https://www.eci.gov.in/eci-backend/public/api/download?url=LMAhAK6sOPBp%2FNFF0iRfXbEB1EVSLT41NNLRjYNJJP1KivrUxbfqkDatmHy12e%2FzVx8fLfn2ReU7TfrqYobgItW4eTUyTFD%2BDUyB1G1fBKOuW00SdZqELiEOB05oPhRO74%2F4p%2BuSikD0u7%2BVrCmQyhaJANaxWi%2FXMLUEuMmRVRLJ2%2BdBIBswoUnKE3KB7EMq"
+    ]
+  },
+  {
+    "constituencyNumber": 354,
+    "constituencyName": "Ghosi",
+    "originalProblem": "DUPLICATE_SEAT: member 25603 was listed as 354-Ghosi; member 25597 was listed as 354-Ghosi",
+    "sourceRecords": [
+      {
+        "memberId": "25603",
+        "name": "Shri Sudhakar Singh",
+        "constituencyNumberOnSource": 354,
+        "constituencyNameOnSource": "Ghosi",
+        "partyRaw": "Samajwadi Party",
+        "profileFinding": "Dead: Yes",
+        "profileUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25603"
+      },
+      {
+        "memberId": "25597",
+        "name": "Shri Dara Singh Chauhan",
+        "constituencyNumberOnSource": 354,
+        "constituencyNameOnSource": "Ghosi",
+        "partyRaw": "Samajwadi Party",
+        "profileFinding": "Resigned: Yes; resignation date 17 July 2023",
+        "profileUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25597"
+      }
+    ],
+    "evidenceChecked": [
+      "Official Uttar Pradesh Legislative Assembly individual member profile(s)",
+      "Official Uttar Pradesh Legislative Assembly member listing, treated only as a discovery source because it contains stale/duplicate/incorrect rows",
+      "Election Commission of India 2022 statistical reports for authoritative constituency number/name mapping where the assembly source number or spelling conflicted"
+    ],
+    "resolvedCandidate": null,
+    "resolutionReason": "No current sitting MLA can be imported. Dara Singh Chauhan's official profile says Resigned: Yes; his by-election successor Sudhakar Singh's official profile says Dead: Yes. No authoritative replacement record was found, so the seat is treated as vacant/unresolved.",
+    "confidence": "UNRESOLVED",
+    "sourceUrls": [
+      "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25603",
+      "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25597",
+      "https://www.upvidhansabhaproceedings.gov.in/en/member-s-information",
+      "https://www.eci.gov.in/eci-backend/public/api/download?url=LMAhAK6sOPBp%2FNFF0iRfXbEB1EVSLT41NNLRjYNJJP1KivrUxbfqkDatmHy12e%2FzVx8fLfn2ReU7TfrqYobgItW4eTUyTFD%2BDUyB1G1fBKOuW00SdZqELiEOB05oPhRO74%2F4p%2BuSikD0u7%2BVrCmQyhaJANaxWi%2FXMLUEuMmRVRLJ2%2BdBIBswoUnKE3KB7EMq"
+    ]
+  },
+  {
+    "constituencyNumber": 375,
+    "constituencyName": "Ghazipur Sadar",
+    "originalProblem": "NAME_CONFLICT: member 25416 was listed as 375-Ghazipur",
+    "sourceRecords": [
+      {
+        "memberId": "25416",
+        "name": "Shri Jai Kishan Sahu",
+        "constituencyNumberOnSource": 375,
+        "constituencyNameOnSource": "Ghazipur",
+        "partyRaw": "Samajwadi Party",
+        "profileFinding": "Official profile identifies this member, constituency, and party; profile is not marked resigned or deceased.",
+        "profileUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25416"
+      }
+    ],
+    "evidenceChecked": [
+      "Official Uttar Pradesh Legislative Assembly individual member profile(s)",
+      "Official Uttar Pradesh Legislative Assembly member listing, treated only as a discovery source because it contains stale/duplicate/incorrect rows",
+      "Election Commission of India 2022 statistical reports for authoritative constituency number/name mapping where the assembly source number or spelling conflicted"
+    ],
+    "resolvedCandidate": {
+      "name": "Jai Kishan Sahu",
+      "partyShortName": "SP",
+      "status": "INCUMBENT",
+      "memberId": "25416",
+      "sourceUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25416",
+      "verified": false
+    },
+    "resolutionReason": "The official profile identifies Jai Kishan Sahu with Ghazipur. Ghazipur/Ghazipur Sadar is a canonical display-name difference; the AC number 375 is unchanged.",
+    "confidence": "HIGH",
+    "sourceUrls": [
+      "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25416",
+      "https://www.upvidhansabhaproceedings.gov.in/en/member-s-information",
+      "https://www.eci.gov.in/eci-backend/public/api/download?url=LMAhAK6sOPBp%2FNFF0iRfXbEB1EVSLT41NNLRjYNJJP1KivrUxbfqkDatmHy12e%2FzVx8fLfn2ReU7TfrqYobgItW4eTUyTFD%2BDUyB1G1fBKOuW00SdZqELiEOB05oPhRO74%2F4p%2BuSikD0u7%2BVrCmQyhaJANaxWi%2FXMLUEuMmRVRLJ2%2BdBIBswoUnKE3KB7EMq"
+    ]
+  },
+  {
+    "constituencyNumber": 397,
+    "constituencyName": "Majhawan",
+    "originalProblem": "DUPLICATE_SEAT: member 24722 was listed as 397-Majhawan; member 25598 was listed as 397-Majhawan",
+    "sourceRecords": [
+      {
+        "memberId": "24722",
+        "name": "Shrimati Shuchismita Maurya",
+        "constituencyNumberOnSource": 397,
+        "constituencyNameOnSource": "Majhawan",
+        "partyRaw": "Bharatiya Janta Party",
+        "profileFinding": "Active member profile for Majhawan",
+        "profileUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=24722"
+      },
+      {
+        "memberId": "25598",
+        "name": "Dr Vinod Kumar Bind",
+        "constituencyNumberOnSource": 397,
+        "constituencyNameOnSource": "Majhawan",
+        "partyRaw": "Nirbal Indian Shoshit Hamara Aam Dal",
+        "profileFinding": "Resigned: Yes",
+        "profileUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25598"
+      }
+    ],
+    "evidenceChecked": [
+      "Official Uttar Pradesh Legislative Assembly individual member profile(s)",
+      "Official Uttar Pradesh Legislative Assembly member listing, treated only as a discovery source because it contains stale/duplicate/incorrect rows",
+      "Election Commission of India 2022 statistical reports for authoritative constituency number/name mapping where the assembly source number or spelling conflicted"
+    ],
+    "resolvedCandidate": {
+      "name": "Shuchismita Maurya",
+      "partyShortName": "BJP",
+      "status": "INCUMBENT",
+      "memberId": "24722",
+      "sourceUrl": "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=24722",
+      "verified": false
+    },
+    "resolutionReason": "Shuchismita Maurya is the current member on the official profile. Vinod Kumar Bind's official profile says Resigned: Yes.",
+    "confidence": "HIGH",
+    "sourceUrls": [
+      "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=24722",
+      "https://www.upvidhansabhaproceedings.gov.in/web/guest/member?memberId=25598",
+      "https://www.upvidhansabhaproceedings.gov.in/en/member-s-information",
+      "https://www.eci.gov.in/eci-backend/public/api/download?url=LMAhAK6sOPBp%2FNFF0iRfXbEB1EVSLT41NNLRjYNJJP1KivrUxbfqkDatmHy12e%2FzVx8fLfn2ReU7TfrqYobgItW4eTUyTFD%2BDUyB1G1fBKOuW00SdZqELiEOB05oPhRO74%2F4p%2BuSikD0u7%2BVrCmQyhaJANaxWi%2FXMLUEuMmRVRLJ2%2BdBIBswoUnKE3KB7EMq"
+    ]
+  }
+]
