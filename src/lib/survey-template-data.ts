@@ -1,5 +1,62 @@
 import type { PrismaClient } from "@prisma/client";
-import { DEFAULT_PARTIES, DEFAULT_ISSUES, AGE_GROUPS, GENDERS, SOCIAL_CATEGORIES, RELIGIONS } from "./enums";
+import { DEFAULT_ISSUES, AGE_GROUPS, GENDERS, SOCIAL_CATEGORIES, RELIGIONS } from "./enums";
+
+const SPECIAL_PARTY_SLUG_ORDER = new Map([
+  ["other", 0],
+  ["undecided", 1],
+]);
+
+type SurveyParty = {
+  id: string;
+  name: string;
+  shortName: string;
+  slug: string;
+  displayOrder: number;
+  isActive: boolean;
+};
+
+export function orderPartiesForSurvey(parties: SurveyParty[]): SurveyParty[] {
+  const active = parties.filter((party) => party.isActive);
+  const ordinary = active
+    .filter((party) => !SPECIAL_PARTY_SLUG_ORDER.has(party.slug))
+    .sort((a, b) => a.displayOrder - b.displayOrder || a.shortName.localeCompare(b.shortName));
+  const special = active
+    .filter((party) => SPECIAL_PARTY_SLUG_ORDER.has(party.slug))
+    .sort((a, b) => SPECIAL_PARTY_SLUG_ORDER.get(a.slug)! - SPECIAL_PARTY_SLUG_ORDER.get(b.slug)!);
+
+  if (!special.some((party) => party.slug === "other") || !special.some((party) => party.slug === "undecided")) {
+    throw new Error('Active canonical Party records with slugs "other" and "undecided" are required.');
+  }
+  return [...ordinary, ...special];
+}
+
+export async function syncPartyPreferenceOptions(prisma: PrismaClient, questionId: string) {
+  const parties = orderPartiesForSurvey(
+    await prisma.party.findMany({ where: { isActive: true }, orderBy: [{ displayOrder: "asc" }, { shortName: "asc" }] })
+  );
+  const existing = await prisma.surveyOption.findMany({ where: { questionId } });
+  const unused = new Map(existing.map((option) => [option.id, option]));
+
+  for (let order = 0; order < parties.length; order++) {
+    const party = parties[order];
+    const option = existing.find((candidate) => candidate.partyId === party.id) ?? existing.find((candidate) => candidate.key === party.slug);
+    if (option) {
+      await prisma.surveyOption.update({
+        where: { id: option.id },
+        data: { key: party.slug, label: party.shortName, partyId: party.id, order, isActive: true },
+      });
+      unused.delete(option.id);
+    } else {
+      await prisma.surveyOption.create({
+        data: { questionId, key: party.slug, label: party.shortName, partyId: party.id, order },
+      });
+    }
+  }
+
+  for (const stale of unused.values()) {
+    await prisma.surveyOption.update({ where: { id: stale.id }, data: { isActive: false } });
+  }
+}
 
 // Creates the platform's standard survey question set on an already-created
 // Survey row: candidate choice, party preference, top issue, and the four
@@ -18,44 +75,31 @@ export async function createDefaultSurveyQuestions(
   surveyId: string,
   opts?: { candidateQuestionLabel?: string; partyQuestionLabel?: string; issueQuestionLabel?: string }
 ) {
-  const partiesByShortName = new Map(
-    (await prisma.party.findMany({ where: { isActive: true }, orderBy: { displayOrder: "asc" } })).map((p) => [
-      p.shortName,
-      p,
-    ])
-  );
-
-  const candidateQ = await prisma.surveyQuestion.create({
+  const partyQ = await prisma.surveyQuestion.create({
     data: {
       surveyId,
-      key: "candidate_choice",
-      label: opts?.candidateQuestionLabel ?? "2027 में आप अपने क्षेत्र से किसे विधायक देखना चाहते हैं?",
+      key: "party_preference",
+      label: opts?.partyQuestionLabel ?? "अगर आज विधानसभा चुनाव हों, तो आप किस पार्टी को वोट देना पसंद करेंगे?",
       required: true,
       allowSkip: false,
       order: 1,
     },
   });
-  await prisma.surveyOption.create({
-    data: { questionId: candidateQ.id, key: "other", label: "Other", order: 999 },
-  });
+  await syncPartyPreferenceOptions(prisma, partyQ.id);
 
-  const partyQ = await prisma.surveyQuestion.create({
+  const candidateQ = await prisma.surveyQuestion.create({
     data: {
       surveyId,
-      key: "party_preference",
-      label: opts?.partyQuestionLabel ?? "अगर आज विधानसभा चुनाव हों तो आप किस पार्टी को वोट देना पसंद करेंगे?",
+      key: "candidate_choice",
+      label: opts?.candidateQuestionLabel ?? "आपकी चुनी हुई पार्टी की ओर से उम्मीदवार के रूप में आप किसे पसंद करेंगे?",
       required: false,
       allowSkip: true,
       order: 2,
     },
   });
-  for (let i = 0; i < DEFAULT_PARTIES.length; i++) {
-    const p = DEFAULT_PARTIES[i];
-    const party = partiesByShortName.get(p.shortName);
-    await prisma.surveyOption.create({
-      data: { questionId: partyQ.id, key: p.slug, label: p.shortName, order: i, partyId: party?.id },
-    });
-  }
+  await prisma.surveyOption.create({
+    data: { questionId: candidateQ.id, key: "other", label: "Other", order: 999 },
+  });
 
   const issueQ = await prisma.surveyQuestion.create({
     data: {

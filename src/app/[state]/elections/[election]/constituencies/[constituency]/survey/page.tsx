@@ -4,6 +4,7 @@ import { getStateAndElection, getConstituencyBySlug, getFullSurveyForConstituenc
 import { SurveyFlow } from "@/components/survey/SurveyFlow";
 import { Container } from "@/components/ui/Container";
 import { electionPath } from "@/lib/routes";
+import { isCandidateEligibleForSurveyParty, isSpecialPartyPreferenceKey } from "@/lib/survey-eligibility";
 import { SURVEY_ELIGIBLE_CANDIDATE_STATUSES } from "@/lib/enums";
 
 export const metadata: Metadata = { title: "Take the Survey" };
@@ -24,6 +25,43 @@ export default async function SurveyPage({
   const survey = await getFullSurveyForConstituency(constituency.id, election.id);
   if (!survey) notFound();
 
+  const candidateQuestion = survey.questions.find((question) => question.key === "candidate_choice");
+  const candidateOptionsByRef = new Map(
+    candidateQuestion?.options
+      .filter((option) => option.candidateRef)
+      .map((option) => [option.candidateRef as string, option]) ?? []
+  );
+
+  // The browser receives only candidates that satisfy the shared Phase 20A
+  // eligibility rule (SURVEY_ELIGIBLE_CANDIDATE_STATUSES) and have an active
+  // option in this exact survey.
+  const eligibleCandidates = constituency.candidates
+    .filter((candidate) => (SURVEY_ELIGIBLE_CANDIDATE_STATUSES as readonly string[]).includes(candidate.status))
+    .flatMap((candidate) => {
+      if (!candidate.partyId || !candidate.party?.isActive) return [];
+      const option = candidateOptionsByRef.get(candidate.id);
+      if (
+        !option ||
+        option.partyId !== candidate.partyId ||
+        !isCandidateEligibleForSurveyParty(election.id, constituency.id, candidate.partyId, candidate)
+      ) {
+        return [];
+      }
+    return [{
+      id: candidate.id,
+      slug: option.key,
+      name: candidate.name,
+      status: candidate.status,
+      confidenceScore: candidate.confidenceScore,
+      photoUrl: candidate.photoUrl,
+      partyId: candidate.partyId,
+      party: {
+        shortName: candidate.party.shortName,
+        colorHex: candidate.party.colorHex,
+      },
+    }];
+  });
+
   return (
     <Container className="max-w-2xl py-10 sm:py-16">
       <SurveyFlow
@@ -31,31 +69,21 @@ export default async function SurveyPage({
         constituencyName={constituency.name}
         basePath={electionPath(state.slug, election.slug)}
         constituencySlug={slug}
-        candidates={constituency.candidates
-          // Only DECLARED/LIKELY/POSSIBLE candidates may be a selectable
-          // choice in a live survey — being the current sitting MLA
-          // (INCUMBENT) never by itself means contesting in 2027, and
-          // HISTORICAL/OTHER records must never leak into a live survey.
-          // constituency.candidates itself intentionally stays unfiltered
-          // (the constituency detail page shows every status informationally).
-          .filter((c) => (SURVEY_ELIGIBLE_CANDIDATE_STATUSES as readonly string[]).includes(c.status))
-          .map((c) => ({
-            id: c.id,
-            slug: c.slug,
-            name: c.name,
-            status: c.status,
-            confidenceScore: c.confidenceScore,
-            photoUrl: c.photoUrl,
-            party: c.party ? { shortName: c.party.shortName, colorHex: c.party.colorHex } : null,
-          }))}
+        candidates={eligibleCandidates}
         questions={survey.questions.map((q) => ({
           key: q.key,
           label: q.label,
           required: q.required,
           allowSkip: q.allowSkip,
           options: q.options
-            .filter((o) => q.key !== "candidate_choice" || o.key === "other")
-            .map((o) => ({ key: o.key, label: o.label })),
+            .filter((option) => q.key !== "candidate_choice" || !option.candidateRef)
+            .map((option) => ({
+              key: option.key,
+              label: option.label,
+              partyId: option.partyId,
+              isSpecialParty: q.key === "party_preference" && isSpecialPartyPreferenceKey(option.key),
+              colorHex: option.party?.colorHex ?? null,
+            })),
         }))}
       />
     </Container>

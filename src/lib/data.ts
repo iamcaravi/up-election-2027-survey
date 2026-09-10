@@ -236,7 +236,13 @@ export async function getFullSurveyForConstituency(constituencyId: string, elect
     include: {
       questions: {
         orderBy: { order: "asc" },
-        include: { options: { where: { isActive: true }, orderBy: { order: "asc" } } },
+        include: {
+          options: {
+            where: { isActive: true },
+            orderBy: { order: "asc" },
+            include: { party: true },
+          },
+        },
       },
     },
   });

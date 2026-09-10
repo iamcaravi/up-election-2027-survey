@@ -124,6 +124,22 @@ test("12&13. candidate options are scoped to election+constituency; a candidate 
   await surveyTemplate.createDefaultSurveyQuestions(prisma, survey.id);
   await surveySync.syncCandidateChoiceOptions(fx.constituencyA.id, fx.electionA.id);
 
+  const questions = await prisma.surveyQuestion.findMany({
+    where: { surveyId: survey.id },
+    orderBy: { order: "asc" },
+    include: { options: { orderBy: { order: "asc" } } },
+  });
+  assert.equal(questions.length, 7);
+  assert.equal(questions[0].key, "party_preference");
+  assert.equal(questions[0].required, true);
+  assert.equal(questions[0].allowSkip, false);
+  assert.equal(questions[1].key, "candidate_choice");
+  assert.equal(questions[1].required, false);
+  assert.equal(questions[1].allowSkip, true);
+  assert.ok(questions[0].options.some((option) => option.partyId === fx.partyJansatta.id));
+  assert.equal(questions[0].options.at(-2)?.key, "other");
+  assert.equal(questions[0].options.at(-1)?.key, "undecided");
+
   const question = await prisma.surveyQuestion.findFirst({ where: { surveyId: survey.id, key: "candidate_choice" } });
   const options = await prisma.surveyOption.findMany({ where: { questionId: question!.id } });
 

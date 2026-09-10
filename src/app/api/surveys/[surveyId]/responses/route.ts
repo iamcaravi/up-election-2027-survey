@@ -3,6 +3,10 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { saltedHash, getClientIp } from "@/lib/hash";
 import { isRateLimited } from "@/lib/rate-limit";
+import {
+  SurveySubmissionValidationError,
+  validateSurveySubmission,
+} from "@/lib/survey-response-validation";
 
 const answerSchema = z.object({
   questionKey: z.string().min(1),
@@ -20,10 +24,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ sur
 
   const survey = await prisma.survey.findUnique({
     where: { id: surveyId },
-    include: { questions: { include: { options: true } } },
+    include: { questions: { include: { options: { include: { party: { select: { id: true, isActive: true } } } } } } },
   });
-  if (!survey || !survey.isActive) {
-    return NextResponse.json({ error: "Survey not found or inactive." }, { status: 404 });
+  if (!survey) {
+    return NextResponse.json({ error: "Survey not found." }, { status: 404 });
   }
 
   const parsed = bodySchema.safeParse(await req.json().catch(() => null));
@@ -44,30 +48,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ sur
     return NextResponse.json({ error: "Too many requests. Please slow down." }, { status: 429 });
   }
 
-  // --- Validate question/option references ---------------------------------------
-  const questionsByKey = new Map(survey.questions.map((q) => [q.key, q]));
-  for (const q of survey.questions) {
-    if (q.required && !answers.some((a) => a.questionKey === q.key)) {
-      return NextResponse.json({ error: `Missing required answer: ${q.key}` }, { status: 400 });
+  let resolvedAnswers;
+  try {
+    resolvedAnswers = await validateSurveySubmission(prisma, survey, answers);
+  } catch (error) {
+    if (error instanceof SurveySubmissionValidationError) {
+      return NextResponse.json({ error: error.message }, { status: error.statusCode });
     }
-  }
-
-  const resolvedAnswers: { questionId: string; optionId?: string; valueText?: string }[] = [];
-  for (const a of answers) {
-    const question = questionsByKey.get(a.questionKey);
-    if (!question) continue; // ignore unknown keys rather than failing the whole submission
-    if (a.optionKey) {
-      const option = question.options.find((o) => o.key === a.optionKey && o.isActive);
-      if (!option) {
-        return NextResponse.json({ error: `Invalid option for ${a.questionKey}` }, { status: 400 });
-      }
-      resolvedAnswers.push({ questionId: question.id, optionId: option.id });
-    } else if (a.valueText) {
-      resolvedAnswers.push({ questionId: question.id, valueText: a.valueText.slice(0, 500) });
-    }
-  }
-  if (resolvedAnswers.length === 0) {
-    return NextResponse.json({ error: "No valid answers." }, { status: 400 });
+    throw error;
   }
 
   // --- Duplicate detection: one response per fingerprint per survey per 24h ------
@@ -91,27 +79,30 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ sur
     flagReason = "Unusually high submission volume from this network in a short window.";
   }
 
-  const response = await prisma.surveyResponse.create({
-    data: {
-      surveyId,
-      constituencyId: survey.constituencyId!,
-      status,
-      ipHash,
-      fingerprint: fingerprintHash,
-      flagReason: flagReason ?? undefined,
-      answers: { create: resolvedAnswers },
-    },
-  });
-
-  if (status !== "VALID") {
-    await prisma.moderationFlag.create({
+  await prisma.$transaction(async (tx) => {
+    const created = await tx.surveyResponse.create({
       data: {
-        responseId: response.id,
-        reason: flagReason ?? "Flagged by automated checks.",
-        severity: status === "REJECTED" ? "HIGH" : "MEDIUM",
+        surveyId,
+        constituencyId: survey.constituencyId!,
+        status,
+        ipHash,
+        fingerprint: fingerprintHash,
+        flagReason: flagReason ?? undefined,
+        answers: { create: resolvedAnswers },
       },
     });
-  }
+
+    if (status !== "VALID") {
+      await tx.moderationFlag.create({
+        data: {
+          responseId: created.id,
+          reason: flagReason ?? "Flagged by automated checks.",
+          severity: status === "REJECTED" ? "HIGH" : "MEDIUM",
+        },
+      });
+    }
+    return created;
+  });
 
   return NextResponse.json({
     ok: status === "VALID",

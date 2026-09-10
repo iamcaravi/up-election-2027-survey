@@ -97,6 +97,20 @@ export async function seedFixtures(prisma: PrismaClient) {
   const party = await prisma.party.create({
     data: { name: "Test Party", shortName: "TP", slug: "test-party" },
   });
+  const partyJansatta = await prisma.party.create({
+    data: {
+      name: "Jansatta Dal Loktantrik Party",
+      shortName: "Jansatta Dal Loktantrik Party",
+      slug: "jansatta-dal-loktantrik-party",
+      displayOrder: 8,
+    },
+  });
+  const partyOther = await prisma.party.create({
+    data: { name: "Other / Independent", shortName: "Other", slug: "other", displayOrder: 98 },
+  });
+  const partyUndecided = await prisma.party.create({
+    data: { name: "Undecided", shortName: "Undecided", slug: "undecided", displayOrder: 99 },
+  });
 
   const candidateA = await prisma.candidate.create({
     data: {
@@ -178,6 +192,9 @@ export async function seedFixtures(prisma: PrismaClient) {
     ecA,
     ecB,
     party,
+    partyJansatta,
+    partyOther,
+    partyUndecided,
     candidateA,
     candidateB,
     candidateA2,

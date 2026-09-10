@@ -25,12 +25,18 @@ export function CandidateCard({
   selectable = false,
   selected = false,
   onSelect,
+  radioName = "candidate_choice",
+  radioValue,
+  required = false,
 }: {
   candidate: CandidateCardData;
   index?: number;
   selectable?: boolean;
   selected?: boolean;
   onSelect?: () => void;
+  radioName?: string;
+  radioValue?: string;
+  required?: boolean;
 }) {
   const status = (candidate.status in CANDIDATE_STATUS_LABELS ? candidate.status : "POSSIBLE") as CandidateStatus;
 
@@ -70,21 +76,41 @@ export function CandidateCard({
   );
 
   const baseClasses = cn(
-    "card-surface relative rounded-2xl p-5 transition-all duration-200",
+    "card-surface relative rounded-2xl p-5 transition-[transform,border-color,box-shadow] duration-200",
     selectable && "cursor-pointer hover:-translate-y-0.5",
     selectable && selected && "border-ink ring-2 ring-ink/25"
   );
 
+  const motionProps = {
+    initial: { opacity: 0, y: 16 },
+    whileInView: { opacity: 1, y: 0 },
+    viewport: { once: true, margin: "-30px" },
+    transition: { duration: 0.35, delay: (index % 12) * 0.05 },
+  };
+
+  if (selectable) {
+    return (
+      <motion.label
+        {...motionProps}
+        whileTap={{ scale: 0.98 }}
+        className={cn(baseClasses, "block focus-within:ring-2 focus-within:ring-ink/40")}
+      >
+        <input
+          type="radio"
+          name={radioName}
+          value={radioValue}
+          checked={selected}
+          required={required}
+          onChange={onSelect}
+          className="sr-only"
+        />
+        {content}
+      </motion.label>
+    );
+  }
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-30px" }}
-      transition={{ duration: 0.35, delay: (index % 12) * 0.05 }}
-      whileTap={selectable ? { scale: 0.98 } : undefined}
-      onClick={onSelect}
-      className={baseClasses}
-    >
+    <motion.div {...motionProps} className={baseClasses}>
       {content}
     </motion.div>
   );

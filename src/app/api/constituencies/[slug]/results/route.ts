@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getConstituencyResults } from "@/lib/analytics";
+import { getPublicSurveyResults } from "@/lib/public-survey-results";
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -26,8 +26,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
   });
   if (!constituency) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  const results = await getConstituencyResults(constituency.id, election.id);
+  const results = await getPublicSurveyResults(election.id, constituency.id);
   if (!results) return NextResponse.json({ error: "No active survey" }, { status: 404 });
 
-  return NextResponse.json(results);
+  return NextResponse.json(results, { headers: { "Cache-Control": "no-store" } });
 }

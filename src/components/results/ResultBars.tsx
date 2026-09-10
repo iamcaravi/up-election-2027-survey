@@ -1,46 +1,45 @@
 "use client";
 
 import { motion } from "framer-motion";
-import type { OptionTally } from "@/lib/analytics";
+import type { PublicAnalyticsBucket } from "@/lib/public-analytics-core";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
-export function ResultBars({ options, showLeaderNote }: { options: OptionTally[]; showLeaderNote?: boolean }) {
-  const leader = options[0];
+export function ResultBars({ options }: { options: PublicAnalyticsBucket[] }) {
+  const { locale, t } = useLocale();
+  const numberFormatter = new Intl.NumberFormat(locale === "hi" ? "hi-IN" : "en-IN");
+
   return (
-    <div>
-      {showLeaderNote && leader && leader.count > 0 && (
-        <div className="mb-5 flex items-center gap-3 rounded-xl border border-accent/30 bg-accent/10 px-4 py-3">
-          <span className="rounded-full bg-accent px-2 py-0.5 text-[10px] font-bold uppercase text-[#241a04]">
-            Survey Leader
-          </span>
-          <p className="text-sm">
-            <strong>{leader.label}</strong> currently leads among survey respondents.
-          </p>
-        </div>
-      )}
-      <ul className="space-y-4">
-        {options.map((o, i) => (
-          <li key={o.key}>
-            <div className="mb-1.5 flex items-center justify-between text-sm">
-              <span className="flex items-center gap-2 font-medium">
-                {o.colorHex && <span className="h-2 w-2 rounded-full" style={{ background: o.colorHex }} />}
-                {o.label}
+    <ul className="space-y-4">
+      {options.map((option, index) => (
+        <li key={option.key}>
+          <div className="mb-1.5 flex min-w-0 items-center justify-between gap-3 text-sm">
+            <span className="flex min-w-0 items-center gap-2 font-medium">
+              {option.colorHex && (
+                <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: option.colorHex }} />
+              )}
+              <span className="truncate">{locale === "hi" && option.nameHindi ? option.nameHindi : option.label}</span>
+            </span>
+            {option.state === "suppressed" ? (
+              <span className="shrink-0 text-xs font-medium text-muted">{t.results.suppressed}</span>
+            ) : (
+              <span className="shrink-0 tabular-nums text-muted">
+                {option.percentage}% · {numberFormatter.format(option.count)}
               </span>
-              <span className="tabular-nums text-muted">
-                {o.pct}% · {o.count}
-              </span>
-            </div>
+            )}
+          </div>
+          {option.state === "available" && (
             <div className="h-2.5 overflow-hidden rounded-full bg-surface-2">
               <motion.div
                 initial={{ width: 0 }}
-                animate={{ width: `${o.pct}%` }}
-                transition={{ duration: 0.9, delay: i * 0.06, ease: "easeOut" }}
+                animate={{ width: `${option.percentage}%` }}
+                transition={{ duration: 0.65, delay: index * 0.04, ease: "easeOut" }}
                 className="h-full rounded-full"
-                style={{ background: o.colorHex ?? "var(--ink)" }}
+                style={{ background: option.colorHex ?? "var(--ink)" }}
               />
             </div>
-          </li>
-        ))}
-      </ul>
-    </div>
+          )}
+        </li>
+      ))}
+    </ul>
   );
 }

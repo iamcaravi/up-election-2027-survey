@@ -1,6 +1,8 @@
 import "server-only";
 import { getSiteSetting } from "./data";
-import { MIN_ANALYTICS_GROUP_SIZE_DEFAULT } from "./enums";
+import { ELIGIBLE_RESPONSE_STATUS, MINIMUM_ANALYTICS_CELL_SIZE } from "./enums";
+
+export { ELIGIBLE_RESPONSE_STATUS } from "./enums";
 
 // ---------------------------------------------------------------------------
 // The ONE central definition of this platform's minimum-cell privacy
@@ -18,7 +20,7 @@ import { MIN_ANALYTICS_GROUP_SIZE_DEFAULT } from "./enums";
 // ---------------------------------------------------------------------------
 
 export async function getMinCellSize(): Promise<number> {
-  return getSiteSetting("MIN_ANALYTICS_GROUP_SIZE", MIN_ANALYTICS_GROUP_SIZE_DEFAULT);
+  return getSiteSetting("MIN_ANALYTICS_GROUP_SIZE", MINIMUM_ANALYTICS_CELL_SIZE);
 }
 
 export function isSuppressed(count: number, minRequired: number): boolean {
@@ -37,4 +39,3 @@ export function roundPct(count: number, total: number): number {
 // Only status this platform treats as eligible for any analytics
 // calculation — matches the definition already used throughout
 // src/lib/analytics.ts (FLAGGED/REJECTED responses are excluded everywhere).
-export const ELIGIBLE_RESPONSE_STATUS = "VALID" as const;

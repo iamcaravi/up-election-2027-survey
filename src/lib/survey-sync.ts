@@ -1,6 +1,7 @@
 import "server-only";
 import { prisma } from "./prisma";
 import { SURVEY_ELIGIBLE_CANDIDATE_STATUSES } from "./enums";
+import { isCandidateEligibleForSurveyParty } from "./survey-eligibility";
 
 // Keeps the "candidate_choice" survey question's options in sync with a
 // constituency's candidate roster whenever candidates are added, edited,
@@ -25,9 +26,19 @@ export async function syncCandidateChoiceOptions(constituencyId: string, electio
   // live survey option — see SURVEY_ELIGIBLE_CANDIDATE_STATUSES. Being the
   // current sitting MLA (INCUMBENT) never by itself means contesting in
   // 2027, and HISTORICAL/OTHER records must never leak into a live survey.
-  const candidates = await prisma.candidate.findMany({
-    where: { constituencyId, electionId, isActive: true, status: { in: [...SURVEY_ELIGIBLE_CANDIDATE_STATUSES] } },
-  });
+  const candidates = (
+    await prisma.candidate.findMany({
+      where: {
+        constituencyId,
+        electionId,
+        partyId: { not: null },
+        isActive: true,
+        status: { in: [...SURVEY_ELIGIBLE_CANDIDATE_STATUSES] },
+      },
+    })
+  ).filter((candidate) =>
+    isCandidateEligibleForSurveyParty(electionId, constituencyId, candidate.partyId!, candidate)
+  );
 
   const existingByCandidate = new Map(
     question.options.filter((o) => o.candidateRef).map((o) => [o.candidateRef as string, o])

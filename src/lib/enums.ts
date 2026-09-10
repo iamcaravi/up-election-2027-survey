@@ -39,6 +39,7 @@ export type ReservedStatus = (typeof RESERVED_STATUSES)[number];
 
 export const RESPONSE_STATUSES = ["VALID", "FLAGGED", "REJECTED"] as const;
 export type ResponseStatus = (typeof RESPONSE_STATUSES)[number];
+export const ELIGIBLE_RESPONSE_STATUS = "VALID" as const;
 
 export const IMAGE_REVIEW_STATUSES = [
   "PENDING",
@@ -112,8 +113,15 @@ export const DEFAULT_PARTIES: Array<{
   { name: "Suheldev Bharatiya Samaj Party", shortName: "SBSP", slug: "sbsp", colorHex: "#7B3F00" },
   { name: "Apna Dal (Soneylal)", shortName: "Apna Dal", slug: "apna-dal", colorHex: "#FFC107" },
   { name: "Nishad Party", shortName: "Nishad Party", slug: "nishad-party", colorHex: "#1565C0" },
+  {
+    name: "Jansatta Dal Loktantrik Party",
+    shortName: "Jansatta Dal Loktantrik Party",
+    slug: "jansatta-dal-loktantrik-party",
+    colorHex: "#6b7280",
+  },
   { name: "Other / Independent", shortName: "Other", slug: "other", colorHex: "#6B7280" },
   { name: "Undecided", shortName: "Undecided", slug: "undecided", colorHex: "#9CA3AF" },
 ];
 
-export const MIN_ANALYTICS_GROUP_SIZE_DEFAULT = 30;
+export const MINIMUM_ANALYTICS_CELL_SIZE = 30;
+export const MIN_ANALYTICS_GROUP_SIZE_DEFAULT = MINIMUM_ANALYTICS_CELL_SIZE;
