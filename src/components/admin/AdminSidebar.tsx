@@ -9,6 +9,7 @@ import {
   Image as ImageIcon,
   Upload,
   Settings,
+  Type,
   ScrollText,
   LogOut,
   Flag,
@@ -19,6 +20,7 @@ import {
   Building2,
   Link2,
   ClipboardList,
+  UserCog,
 } from "lucide-react";
 
 const NAV = [
@@ -35,12 +37,14 @@ const HIERARCHY_NAV = [
 ];
 
 const CONTENT_NAV = [
+  { href: "/admin/hero", label: "Hero Editor", icon: Type },
   { href: "/admin/candidates", label: "Candidates", icon: Users },
   { href: "/admin/images", label: "Image Review", icon: ImageIcon },
   { href: "/admin/imports", label: "Imports", icon: Upload },
   { href: "/admin/moderation", label: "Moderation", icon: Flag },
   { href: "/admin/audit-logs", label: "Audit Logs", icon: ScrollText },
   { href: "/admin/settings", label: "Settings", icon: Settings },
+  { href: "/admin/account", label: "Account Settings", icon: UserCog },
 ];
 
 export function AdminSidebar({ userName, userRole }: { userName: string; userRole: string }) {

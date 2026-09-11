@@ -2,14 +2,15 @@ import "server-only";
 import { prisma } from "./prisma";
 
 export async function getHomeStats() {
-  const [states, constituencies, districts, responses, activeSurveys] = await Promise.all([
+  const [states, constituencies, districts, responses, activeSurveys, parties] = await Promise.all([
     prisma.state.count({ where: { isActive: true } }),
     prisma.constituency.count(),
     prisma.district.count(),
     prisma.surveyResponse.count({ where: { status: "VALID" } }),
     prisma.survey.count({ where: { isActive: true } }),
+    prisma.party.count({ where: { isActive: true } }),
   ]);
-  return { states, constituencies, districts, responses, activeSurveys };
+  return { states, constituencies, districts, responses, activeSurveys, parties };
 }
 
 export async function getStates() {

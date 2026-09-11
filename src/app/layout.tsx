@@ -3,6 +3,8 @@ import { Inter, Manrope, Noto_Sans_Devanagari } from "next/font/google";
 import { Providers } from "./providers";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
+import { getStates } from "@/lib/data";
+import { statePath, electionPath } from "@/lib/routes";
 import "./globals.css";
 
 const inter = Inter({ variable: "--font-inter", subsets: ["latin"] });
@@ -44,7 +46,13 @@ export const viewport: Viewport = {
   ],
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const states = await getStates();
+  const primary = states[0] ?? null;
+  const primaryElection = primary?.elections[0] ?? null;
+  const stateHref = primary ? statePath(primary.slug) : "/states";
+  const resultsHref = primary && primaryElection ? electionPath(primary.slug, primaryElection.slug) : stateHref;
+
   return (
     <html
       lang="hi"
@@ -53,7 +61,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full flex flex-col">
         <Providers>
-          <SiteHeader />
+          <SiteHeader stateHref={stateHref} resultsHref={resultsHref} />
           <main className="flex-1">{children}</main>
           <SiteFooter />
         </Providers>

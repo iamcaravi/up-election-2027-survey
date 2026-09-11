@@ -1,8 +1,22 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useLocale } from "@/lib/i18n/LocaleProvider";
-import { SectionHeading } from "@/components/home/SectionHeading";
+import {
+  Briefcase,
+  TrendingUp,
+  Route,
+  Zap,
+  Droplet,
+  BookOpen,
+  HeartPulse,
+  Scale,
+  Wheat,
+  Bus,
+  Waves,
+  MoreHorizontal,
+  type LucideIcon,
+} from "lucide-react";
+import { DEFAULT_ISSUES } from "@/lib/enums";
 
 interface IssueTally {
   key: string;
@@ -11,6 +25,21 @@ interface IssueTally {
   pct: number;
 }
 
+const ISSUE_ICONS: Record<string, LucideIcon> = {
+  rojgar: Briefcase,
+  mahangai: TrendingUp,
+  sadak: Route,
+  bijli: Zap,
+  pani: Droplet,
+  shiksha: BookOpen,
+  swasthya: HeartPulse,
+  kanoon_vyavastha: Scale,
+  krishi: Wheat,
+  parivahan: Bus,
+  jal_nikasi: Waves,
+  other: MoreHorizontal,
+};
+
 export function IssuesSection({
   issues,
   sufficientSample,
@@ -18,38 +47,30 @@ export function IssuesSection({
   issues: IssueTally[];
   sufficientSample: boolean;
 }) {
-  const { t } = useLocale();
+  const pctByKey = new Map(issues.map((i) => [i.key, i.pct]));
 
   return (
-    <>
-      <SectionHeading eyebrow="Issues" title={t.home.issues.title} subtitle={t.home.issues.subtitle} />
-      {!sufficientSample || issues.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border bg-surface-2 p-8 text-center text-sm text-muted">
-          {t.home.issues.empty}
-        </div>
-      ) : (
-        <div className="card-surface rounded-2xl p-6">
-          <ul className="space-y-4">
-            {issues.map((issue, i) => (
-              <li key={issue.key}>
-                <div className="mb-1.5 flex items-center justify-between text-sm">
-                  <span className="font-medium">{issue.label}</span>
-                  <span className="text-muted">{issue.pct}%</span>
-                </div>
-                <div className="h-2 overflow-hidden rounded-full bg-surface-2">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    whileInView={{ width: `${issue.pct}%` }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.8, delay: i * 0.08, ease: "easeOut" }}
-                    className="h-full rounded-full bg-ink"
-                  />
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </>
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">
+      {DEFAULT_ISSUES.map((issue, i) => {
+        const Icon = ISSUE_ICONS[issue.key] ?? MoreHorizontal;
+        const pct = sufficientSample ? pctByKey.get(issue.key) : undefined;
+        return (
+          <motion.div
+            key={issue.key}
+            initial={{ opacity: 0, y: 12 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-40px" }}
+            transition={{ duration: 0.35, delay: i * 0.03 }}
+            className="card-surface flex flex-col items-center gap-2.5 rounded-2xl p-4 text-center transition-all hover:-translate-y-0.5 hover:shadow-[var(--shadow-soft)]"
+          >
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-ink/10 text-ink dark:bg-white/10 dark:text-white">
+              <Icon size={20} />
+            </div>
+            <p className="font-display text-sm font-bold text-foreground">{issue.label}</p>
+            {pct !== undefined && <p className="text-xs text-muted">{pct}% प्राथमिकता</p>}
+          </motion.div>
+        );
+      })}
+    </div>
   );
 }

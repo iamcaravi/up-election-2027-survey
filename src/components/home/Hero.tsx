@@ -1,168 +1,395 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { ArrowRight, MapPin, Landmark, Building2, BarChart3 } from "lucide-react";
-import { useLocale } from "@/lib/i18n/LocaleProvider";
-import { AnimatedCounter } from "@/components/ui/AnimatedCounter";
-import { LinkButton } from "@/components/ui/Button";
-import { displayStateName, formatNumber } from "@/lib/utils";
-import { electionPath, statePath } from "@/lib/routes";
+import Image from "next/image";
+import { useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
+import { Users, CheckCircle2, Shield } from "lucide-react";
+import {
+  DEFAULT_HERO_CONFIG,
+  heroFontFamilyCss,
+  type HeroBreakpoint,
+  type HeroConfig,
+  type HeroFeature,
+  type HeroPoint,
+  type HeroTextElement,
+} from "@/lib/hero-config";
+import { SurveyEntryCard, type SurveyEntryState } from "./SurveyEntryCard";
 
-export interface PrimaryStateInfo {
-  slug: string;
-  name: string;
-  districtCount: number;
-  constituencyCount: number;
-  surveyCount: number;
-  election: { slug: string; name: string; year: number; status: string } | null;
+const FEATURE_ICONS = [Users, CheckCircle2, Shield];
+
+// Public-site + admin-preview breakpoints (unchanged from before): <640 mobile,
+// 640-1023 tablet, >=1024 desktop. Implemented with CSS *container* queries
+// (keyed off the Hero <section>'s own width, see `container-type: inline-size`
+// below) rather than viewport @media queries, so the admin editor's preview —
+// which renders this exact component inside a canvas narrower than the
+// browser window — shows the true tablet/mobile layout instead of always
+// resolving to whatever the real browser viewport happens to be. On the
+// public site the Hero section spans the full viewport width anyway, so
+// container queries there produce identical results to @media queries.
+type HeroStyleTextElements = Record<
+  string,
+  { fontSize: HeroTextElement["fontSize"]; position?: HeroTextElement["position"] }
+>;
+
+function tierRules(
+  tier: HeroBreakpoint,
+  textElements: HeroStyleTextElements,
+  viewport: HeroConfig["viewport"],
+  fluidDesktop: boolean
+): string[] {
+  const rules: string[] = [];
+  for (const [key, el] of Object.entries(textElements)) {
+    const selector = `[data-hero-text="${key}"]`;
+    if (tier === "desktop" && fluidDesktop) {
+      // Fluidly interpolates from the tablet px size at 1024 container-width up to the
+      // desktop px size at 1440, instead of jumping straight to the desktop value — see
+      // buildResponsiveStyleCss's doc comment.
+      const { tablet: tabletPx, desktop: desktopPx } = el.fontSize;
+      const slope = (desktopPx - tabletPx) / (1440 - 1024);
+      const fluid = `calc(${tabletPx}px + (100cqw - 1024px) * ${slope.toFixed(6)})`;
+      const lo = Math.min(tabletPx, desktopPx);
+      const hi = Math.max(tabletPx, desktopPx);
+      rules.push(`${selector}{font-size:clamp(${lo}px, ${fluid}, ${hi}px);}`);
+    } else {
+      rules.push(`${selector}{font-size:${el.fontSize[tier]}px;}`);
+    }
+    if (el.position) {
+      rules.push(`${selector}{left:${el.position[tier].x}%;top:${el.position[tier].y}%;}`);
+    }
+  }
+
+  rules.push(`[data-hero-viewport]{height:${viewport[tier]}px;}`);
+
+  if (tier === "mobile") {
+    rules.push(
+      `[data-hero-card]{position:relative;margin-top:1.25rem;margin-left:auto;margin-right:auto;width:calc(100% - 2rem);}`
+    );
+    rules.push(`[data-hero-text="features"]{flex-direction:column;gap:0.5rem;max-width:44%;}`);
+  } else if (tier === "tablet") {
+    rules.push(`[data-hero-card]{position:relative;margin-top:1.5rem;margin-left:auto;margin-right:auto;width:calc(100% - 3rem);}`);
+    rules.push(`[data-hero-text="features"]{flex-direction:row;flex-wrap:nowrap;gap:0.25rem 1rem;max-width:54%;}`);
+    rules.push(`[data-hero-text="badge"]{max-width:44%;}`);
+    rules.push(`[data-hero-text="subtitle"]{max-width:40%;}`);
+    rules.push(`[data-hero-text="editorialLine1"],[data-hero-text="editorialLine2"]{max-width:38%;}`);
+  } else {
+    rules.push(
+      `[data-hero-card]{position:absolute;inset-inline:0;bottom:1rem;margin-top:0;width:80%;max-width:1120px;}`
+    );
+    rules.push(`[data-hero-text="features"]{flex-direction:row;flex-wrap:nowrap;gap:0.25rem 1.25rem;max-width:46%;}`);
+    rules.push(`[data-hero-text="badge"]{max-width:44%;}`);
+    rules.push(`[data-hero-text="subtitle"]{max-width:40%;}`);
+    rules.push(`[data-hero-text="editorialLine1"],[data-hero-text="editorialLine2"]{max-width:38%;}`);
+  }
+
+  return rules;
+}
+
+// Public-site breakpoints: <640 mobile, 640-1023 tablet, >=1024 desktop. Implemented with
+// CSS *container* queries (keyed off the Hero <section>'s own width, see
+// `container-type: inline-size` below) rather than viewport @media queries, so the same
+// stylesheet-building approach also works for the admin preview (see buildStaticStyleCss)
+// where the container is narrower than the browser window itself.
+function buildResponsiveStyleCss(textElements: HeroStyleTextElements, viewport: HeroConfig["viewport"]) {
+  const base = tierRules("mobile", textElements, viewport, false);
+  const tablet = tierRules("tablet", textElements, viewport, false);
+  const desktop = tierRules("desktop", textElements, viewport, true);
+  return `${base.join("")}@container (min-width:640px){${tablet.join("")}}@container (min-width:1024px){${desktop.join("")}}`;
+}
+
+// The admin preview renders inside a canvas that's deliberately NOT full viewport width
+// (e.g. the ~50%-wide left column of the two-panel editor layout — see HeroEditorForm),
+// so it can never physically reach the >=1024px container width the "desktop" tier's
+// `@container` query above requires, even when previewing the "Desktop" tier. Rather than
+// fight that with container-width tricks, the preview just renders the ONE selected
+// tier's values directly, unconditionally — exactly what "preview the desktop/tablet/
+// mobile tier" means anyway, independent of the physical pixels available to show it in.
+function buildStaticStyleCss(tier: HeroBreakpoint, textElements: HeroStyleTextElements, viewport: HeroConfig["viewport"]) {
+  return tierRules(tier, textElements, viewport, false).join("");
+}
+
+// A crisp photographic background gives no guaranteed contrast for arbitrary
+// text placement, so a minimal shadow (not a scrim/blur panel) keeps every
+// text element readable without dimming or cropping the artwork underneath.
+const SUBTLE_TEXT_SHADOW = "0 1px 2px rgba(0,0,0,0.3)";
+
+function textStyle(el: HeroTextElement | HeroFeature): CSSProperties {
+  return {
+    color: el.color,
+    fontFamily: heroFontFamilyCss(el.fontFamily),
+    fontWeight: el.fontWeight,
+    lineHeight: el.lineHeight,
+    letterSpacing: `${el.letterSpacing}px`,
+    textAlign: el.textAlign,
+    textShadow: SUBTLE_TEXT_SHADOW,
+  };
+}
+
+export type HeroElementKey =
+  | "background"
+  | "badge"
+  | "mainHeadingLine1"
+  | "mainHeadingLine2"
+  | "subtitle"
+  | "editorialLine1"
+  | "editorialLine2"
+  | "features";
+
+export interface HeroEditableProps {
+  /** Enables drag-to-reposition + selection outlines. Never set on the public site. */
+  editable?: boolean;
+  /** Which breakpoint's position values dragging/selection currently target. */
+  activeTier?: HeroBreakpoint;
+  selectedKey?: HeroElementKey | null;
+  onSelect?: (key: HeroElementKey | null) => void;
+  onDragText?: (key: Exclude<HeroElementKey, "background" | "features">, tier: HeroBreakpoint, point: HeroPoint) => void;
+  onDragFeatures?: (tier: HeroBreakpoint, point: HeroPoint) => void;
+  /** Incremental pan delta (percentage points), not an absolute position. */
+  onDragBackground?: (delta: { dx: number; dy: number }) => void;
 }
 
 export function Hero({
-  stats,
-  primaryState,
+  surveyStates,
+  config = DEFAULT_HERO_CONFIG,
+  editable = false,
+  activeTier = "desktop",
+  selectedKey = null,
+  onSelect,
+  onDragText,
+  onDragFeatures,
+  onDragBackground,
 }: {
-  stats: { states: number; constituencies: number; districts: number; responses: number; activeSurveys: number };
-  primaryState: PrimaryStateInfo | null;
-}) {
-  const { t, locale } = useLocale();
+  surveyStates: SurveyEntryState[];
+  config?: HeroConfig;
+} & HeroEditableProps) {
+  const bannerRef = useRef<HTMLDivElement>(null);
+  const [dragging, setDragging] = useState<HeroElementKey | null>(null);
+  const lastPointerRef = useRef<{ x: number; y: number } | null>(null);
+
+  const styleTextElements: HeroStyleTextElements = {
+    badge: config.badge,
+    mainHeadingLine1: config.mainHeadingLine1,
+    mainHeadingLine2: config.mainHeadingLine2,
+    subtitle: config.subtitle,
+    editorialLine1: config.editorialLine1,
+    editorialLine2: config.editorialLine2,
+    surveyHeading: config.surveyHeading,
+    "feature-0": config.features[0],
+    "feature-1": config.features[1],
+    "feature-2": config.features[2],
+    features: { fontSize: { desktop: 0, tablet: 0, mobile: 0 }, position: config.featuresPosition },
+  };
+  // The admin preview always shows exactly the selected tier's values (see
+  // buildStaticStyleCss's doc comment) since its physical width can't be relied on to
+  // match the public site's real breakpoints. The public site keeps the container-query
+  // version so it responds to the visitor's actual viewport width.
+  const responsiveStyleCss = editable
+    ? buildStaticStyleCss(activeTier, styleTextElements, config.viewport)
+    : buildResponsiveStyleCss(styleTextElements, config.viewport);
+
+  function pointFromEvent(e: ReactPointerEvent) {
+    const box = bannerRef.current?.getBoundingClientRect();
+    if (!box) return null;
+    const x = Math.min(100, Math.max(0, ((e.clientX - box.left) / box.width) * 100));
+    const y = Math.min(100, Math.max(0, ((e.clientY - box.top) / box.height) * 100));
+    return { x, y };
+  }
+
+  function startDrag(key: HeroElementKey, e: ReactPointerEvent) {
+    if (!editable) return;
+    e.preventDefault();
+    e.stopPropagation();
+    onSelect?.(key);
+    setDragging(key);
+    lastPointerRef.current = { x: e.clientX, y: e.clientY };
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+  }
+
+  function handleMove(e: ReactPointerEvent) {
+    if (!editable || !dragging) return;
+    if (dragging === "background") {
+      // Delta-based pan (grab-and-drag feel) rather than snapping to the
+      // cursor — dragging the photo right should reveal more of what's on
+      // its left, i.e. object-position-x should DECREASE, so the delta is
+      // inverted relative to pointer movement.
+      const box = bannerRef.current?.getBoundingClientRect();
+      const last = lastPointerRef.current;
+      if (!box || !last) return;
+      const dxPct = ((e.clientX - last.x) / box.width) * 100;
+      const dyPct = ((e.clientY - last.y) / box.height) * 100;
+      lastPointerRef.current = { x: e.clientX, y: e.clientY };
+      onDragBackground?.({ dx: -dxPct, dy: -dyPct });
+      return;
+    }
+    const point = pointFromEvent(e);
+    if (!point) return;
+    if (dragging === "features") {
+      onDragFeatures?.(activeTier, point);
+    } else {
+      onDragText?.(dragging as Exclude<HeroElementKey, "background" | "features">, activeTier, point);
+    }
+  }
+
+  function endDrag() {
+    setDragging(null);
+    lastPointerRef.current = null;
+  }
+
+  function selectionStyle(key: HeroElementKey): CSSProperties {
+    if (!editable) return {};
+    const isSelected = selectedKey === key;
+    return {
+      cursor: "grab",
+      outline: isSelected ? "2px solid #2563eb" : "2px dashed transparent",
+      outlineOffset: 2,
+      borderRadius: 4,
+    };
+  }
+
+  const bg = config.background;
 
   return (
-    <section className="relative overflow-hidden border-b border-border bg-surface">
+    <section
+      className="relative w-full"
+      style={{ containerType: "inline-size" }}
+      onClick={(e) => {
+        // Only deselect when the click lands on the section itself (empty
+        // space), not when it bubbles up from a child element's click —
+        // each element's own onPointerDown already handles selecting itself.
+        if (editable && e.target === e.currentTarget) onSelect?.(null);
+      }}
+    >
+      {/* numeric/hex values only, sourced from heroConfigSchema-validated config */}
+      <style dangerouslySetInnerHTML={{ __html: responsiveStyleCss }} />
+
       <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 -top-24 h-[28rem] bg-[radial-gradient(60%_60%_at_50%_0%,var(--map-glow),transparent)]"
-      />
-      {/* Abstract map/data motif — decorative only, no figurative imagery */}
-      <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden opacity-[0.3] dark:opacity-[0.2]">
-        <svg viewBox="0 0 800 500" className="absolute -right-16 -top-10 h-[32rem] w-[32rem]" preserveAspectRatio="xMidYMid slice">
-          {Array.from({ length: 7 }).map((_, row) =>
-            Array.from({ length: 10 }).map((_, col) => (
-              <circle
-                key={`${row}-${col}`}
-                cx={60 + col * 78}
-                cy={40 + row * 58}
-                r={2.2}
-                fill="var(--ink)"
-                opacity={0.15 + ((row + col) % 4) * 0.08}
-              />
-            ))
+        ref={bannerRef}
+        data-hero-viewport
+        className="relative w-full overflow-hidden bg-ink"
+        onPointerMove={handleMove}
+        onPointerUp={endDrag}
+        onPointerLeave={endDrag}
+      >
+        {/* Provided hero artwork (public/hero-bg.png) stays the fixed image file — never
+            edited/replaced/regenerated. Its crop/pan/zoom within the Hero viewport is
+            fully admin-controlled (see HeroConfig.background + /admin/hero), not baked
+            into the file. object-fit:cover + object-position give the pan, a CSS
+            transform:scale gives the zoom/stretch on top. */}
+        <div
+          className="absolute inset-0"
+          onPointerDown={(e) => startDrag("background", e)}
+          style={editable ? { cursor: dragging === "background" ? "grabbing" : "grab" } : undefined}
+        >
+          <Image
+            key={config.backgroundImageUrl}
+            src={config.backgroundImageUrl}
+            alt="भारत का सबसे बड़ा जनमत सर्वे प्लेटफॉर्म — राज्यों का चुनाव, जनता का मूड"
+            fill
+            priority
+            sizes="100vw"
+            draggable={false}
+            className="object-cover"
+            style={{
+              objectPosition: `${bg.x}% ${bg.y}%`,
+              transform: `scale(${bg.scale * bg.scaleX}, ${bg.scale * bg.scaleY})`,
+            }}
+          />
+          {editable && selectedKey === "background" && (
+            <div className="pointer-events-none absolute inset-0 outline outline-2 outline-blue-600" />
           )}
-        </svg>
-        <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-accent via-foreground/10 to-positive" />
-      </div>
+        </div>
 
-      <div className="relative mx-auto max-w-5xl px-4 py-14 text-center sm:px-6 sm:py-20 lg:px-8">
-        <motion.span
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="mb-5 inline-flex items-center gap-2 rounded-full border border-border bg-surface-2 px-3.5 py-1.5 text-xs font-semibold tracking-wide text-muted"
-        >
-          <span className="h-1.5 w-1.5 rounded-full bg-positive" />
-          {t.hero.brandEyebrow}
-        </motion.span>
-
-        <motion.h1
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.05 }}
-          className="font-display text-4xl font-extrabold leading-[1.08] tracking-tight sm:text-6xl"
-        >
-          {t.hero.title1}
-          <br />
-          <span className="text-ink">{t.hero.title2}</span>
-        </motion.h1>
-
-        <motion.p
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.12 }}
-          className="mx-auto mt-5 max-w-2xl text-balance text-base text-muted sm:text-lg"
-        >
-          {t.hero.subtitle}
-        </motion.p>
-
-        <motion.div
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.18 }}
-          className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row"
-        >
-          <LinkButton href="/#elections" size="lg" variant="primary">
-            {t.hero.ctaPrimary}
-          </LinkButton>
-          <LinkButton href="/#surveys" size="lg" variant="outline">
-            {t.hero.ctaSecondary}
-          </LinkButton>
-        </motion.div>
-
-        {/* Compact current-election context card — the UP-first gateway */}
-        {primaryState && (
-          <motion.div
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.24 }}
-            className="mx-auto mt-8 max-w-xl"
-          >
-            <div className="card-surface flex flex-col gap-4 rounded-2xl p-5 text-left sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center gap-3">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-ink/10 text-ink">
-                  <MapPin size={20} />
-                </span>
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-accent">
-                    {t.home.upFocus.eyebrow}
-                  </p>
-                  <p className="font-display text-base font-bold sm:text-lg">
-                    {displayStateName(primaryState.name, primaryState.slug, locale)} {t.home.upFocus.titlePrefix}
-                    {primaryState.election ? ` ${primaryState.election.year}` : ""}
-                  </p>
-                  <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted">
-                    <span className="inline-flex items-center gap-1">
-                      <Landmark size={11} /> {formatNumber(primaryState.districtCount)} {t.home.upFocus.districtsLabel}
-                    </span>
-                    <span className="inline-flex items-center gap-1">
-                      <Building2 size={11} /> {formatNumber(primaryState.constituencyCount)}{" "}
-                      {t.home.upFocus.constituenciesLabel}
-                    </span>
-                    <span className="inline-flex items-center gap-1">
-                      <BarChart3 size={11} /> {formatNumber(primaryState.surveyCount)} {t.home.upFocus.surveysLabel}
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <LinkButton
-                href={primaryState.election ? electionPath(primaryState.slug, primaryState.election.slug) : statePath(primaryState.slug)}
-                size="md"
-                variant="secondary"
-                className="w-full shrink-0 sm:w-auto"
+        {config.showHero && (
+          <>
+            {config.mainHeadingLine1.visible && (
+              <h1
+                data-hero-text="mainHeadingLine1"
+                className="absolute z-[2] max-w-[46%]"
+                style={{ ...textStyle(config.mainHeadingLine1), ...selectionStyle("mainHeadingLine1") }}
+                onPointerDown={(e) => startDrag("mainHeadingLine1", e)}
               >
-                {t.home.upFocus.cta} <ArrowRight size={14} />
-              </LinkButton>
-            </div>
-          </motion.div>
-        )}
+                {config.mainHeadingLine1.text}
+              </h1>
+            )}
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-          className="mx-auto mt-10 grid max-w-3xl grid-cols-2 gap-4 sm:grid-cols-5"
-        >
-          {[
-            { value: stats.states, label: "States" },
-            { value: stats.constituencies, label: t.stats.constituencies },
-            { value: stats.districts, label: t.stats.districts },
-            { value: stats.responses, label: t.stats.responses },
-            { value: stats.activeSurveys, label: t.stats.activeSurveys },
-          ].map((s) => (
-            <div key={s.label} className="rounded-2xl border border-border bg-background/60 px-4 py-5">
-              <AnimatedCounter value={s.value} className="font-display text-2xl font-extrabold sm:text-3xl" />
-              <p className="mt-1 text-xs text-muted">{s.label}</p>
-            </div>
-          ))}
-        </motion.div>
+            {config.mainHeadingLine2.visible && (
+              <p
+                data-hero-text="mainHeadingLine2"
+                className="absolute z-[2] max-w-[46%] font-extrabold"
+                style={{ ...textStyle(config.mainHeadingLine2), ...selectionStyle("mainHeadingLine2") }}
+                onPointerDown={(e) => startDrag("mainHeadingLine2", e)}
+              >
+                {config.mainHeadingLine2.text}
+              </p>
+            )}
+
+            {config.badge.visible && (
+              <span
+                data-hero-text="badge"
+                className="absolute z-[2] inline-flex max-w-[85%] items-center gap-1.5 rounded-full border border-orange-400/50 bg-white/80 px-2.5 py-1 backdrop-blur dark:bg-black/40"
+                style={{ ...textStyle(config.badge), ...selectionStyle("badge") }}
+                onPointerDown={(e) => startDrag("badge", e)}
+              >
+                <span className="text-[0.9em] leading-none">🇮🇳</span>
+                {config.badge.text}
+              </span>
+            )}
+
+            {config.subtitle.visible && (
+              <p
+                data-hero-text="subtitle"
+                className="absolute z-[2] max-w-[44%]"
+                style={{ ...textStyle(config.subtitle), ...selectionStyle("subtitle") }}
+                onPointerDown={(e) => startDrag("subtitle", e)}
+              >
+                {config.subtitle.text}
+              </p>
+            )}
+
+            {config.showFeatureLabels && (
+              <div
+                data-hero-text="features"
+                className="absolute z-[2] flex max-w-[44%] flex-col gap-2"
+                style={selectionStyle("features")}
+                onPointerDown={(e) => startDrag("features", e)}
+              >
+                {config.features.map((feature, i) => {
+                  const Icon = FEATURE_ICONS[i];
+                  if (!feature.visible) return null;
+                  return (
+                    <div key={i} className="flex items-center gap-1.5" style={textStyle(feature)}>
+                      <Icon size={16} className="shrink-0" style={{ color: feature.color }} />
+                      <span data-hero-text={`feature-${i}`}>{feature.text}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {config.editorialLine1.visible && (
+              <h2
+                data-hero-text="editorialLine1"
+                className="absolute z-[2] max-w-[45%] font-extrabold"
+                style={{ ...textStyle(config.editorialLine1), ...selectionStyle("editorialLine1") }}
+                onPointerDown={(e) => startDrag("editorialLine1", e)}
+              >
+                {config.editorialLine1.text}
+              </h2>
+            )}
+
+            {config.editorialLine2.visible && (
+              <p
+                data-hero-text="editorialLine2"
+                className="absolute z-[2] max-w-[45%] font-extrabold"
+                style={{ ...textStyle(config.editorialLine2), ...selectionStyle("editorialLine2") }}
+                onPointerDown={(e) => startDrag("editorialLine2", e)}
+              >
+                {config.editorialLine2.text}
+              </p>
+            )}
+          </>
+        )}
       </div>
+
+      <SurveyEntryCard states={surveyStates} heading={config.surveyHeading} />
     </section>
   );
 }
