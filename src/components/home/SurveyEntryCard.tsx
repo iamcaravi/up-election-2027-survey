@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { ArrowRight, ChevronDown } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { displayStateName } from "@/lib/utils";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -62,7 +62,53 @@ function FieldSelect<T extends { id: string }>({
   getLabel: (item: T) => string;
   onSelect: (item: T) => void;
 }) {
+  const { t } = useLocale();
   const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const queryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const noOptionsLabel = t.heroSurvey.noOptions;
+  const closeOptionsLabel = t.heroSurvey.closeOptions;
+
+  // Items change when the parent field above this one is reselected (e.g. a
+  // new state reloads the district list) — clear any leftover filter so it
+  // doesn't silently hide the freshly-loaded list.
+  useEffect(() => {
+    setQuery("");
+  }, [items]);
+
+  // Type-to-filter: typing while the control is focused narrows the list to
+  // items whose label starts with what's been typed so far (e.g. "g" then
+  // "go" then "gon"), like a native <select>'s typeahead but filtering the
+  // visible list instead of just jumping to the first match. The buffer
+  // resets after a short pause so a later, unrelated keypress starts fresh.
+  function queueQueryReset() {
+    if (queryTimeoutRef.current) clearTimeout(queryTimeoutRef.current);
+    queryTimeoutRef.current = setTimeout(() => setQuery(""), 1200);
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLButtonElement>) {
+    if (disabled) return;
+    if (e.key === "Escape") {
+      setOpen(false);
+      setQuery("");
+      return;
+    }
+    if (e.key === "Backspace") {
+      setQuery((prev) => prev.slice(0, -1));
+      queueQueryReset();
+      return;
+    }
+    if (e.key.length === 1 && /[a-zA-Z0-9ऀ-ॿ]/.test(e.key)) {
+      e.preventDefault();
+      setOpen(true);
+      setQuery((prev) => prev + e.key);
+      queueQueryReset();
+    }
+  }
+
+  const filteredItems = query.trim()
+    ? items.filter((item) => getLabel(item).toLowerCase().startsWith(query.trim().toLowerCase()))
+    : items;
 
   return (
     <div className="relative">
@@ -70,9 +116,10 @@ function FieldSelect<T extends { id: string }>({
         type="button"
         disabled={disabled}
         onClick={() => setOpen((o) => !o)}
-        className="flex h-10 w-full items-center gap-1.5 whitespace-nowrap rounded-full border border-[#101A3A]/15 bg-white px-4 text-left text-xs font-semibold text-[#101A3A] shadow-md transition-colors hover:bg-[#101A3A]/5 disabled:cursor-not-allowed sm:text-sm lg:h-12 lg:gap-2 lg:px-5"
+        onKeyDown={handleKeyDown}
+        aria-label={label}
+        className="flex h-10 w-full min-w-[9rem] items-center justify-center gap-1.5 whitespace-nowrap rounded-full border border-[#101A3A]/15 bg-white px-4 text-center text-sm font-semibold text-[#101A3A] shadow-md transition-colors hover:border-[#101A3A]/25 hover:bg-[#F3F4F7] disabled:cursor-not-allowed sm:min-w-[10.5rem] sm:text-base lg:h-12 lg:min-w-[12rem] lg:gap-2 lg:px-5"
       >
-        <span className="text-[10px] font-bold uppercase tracking-wider text-[#101A3A]/60 sm:text-[11px] lg:text-xs">{label}</span>
         <span className="max-w-[9rem] truncate sm:max-w-[10.5rem] lg:max-w-[12rem]">{value ? getLabel(value) : placeholder}</span>
         <ChevronDown size={14} className={`h-3.5 w-3.5 shrink-0 text-[#101A3A]/70 transition-transform sm:h-4 sm:w-4 lg:h-[17px] lg:w-[17px] ${open ? "rotate-180" : ""}`} />
       </button>
@@ -80,19 +127,23 @@ function FieldSelect<T extends { id: string }>({
         <>
           <button
             type="button"
-            aria-label="विकल्प सूची बंद करें"
+            aria-label={closeOptionsLabel}
             className="fixed inset-0 z-10 cursor-default"
-            onClick={() => setOpen(false)}
+            onClick={() => {
+              setOpen(false);
+              setQuery("");
+            }}
           />
           <div className="absolute bottom-full left-0 right-0 z-20 mb-2 max-h-64 min-w-[13rem] overflow-y-auto rounded-xl border border-[#101A3A]/15 bg-white shadow-xl">
-            {items.length === 0 && <p className="px-4 py-3 text-sm text-[#101A3A]/60">कोई विकल्प उपलब्ध नहीं</p>}
-            {items.map((item) => (
+            {filteredItems.length === 0 && <p className="px-4 py-3 text-sm text-[#101A3A]/60">{noOptionsLabel}</p>}
+            {filteredItems.map((item) => (
               <button
                 key={item.id}
                 type="button"
                 onClick={() => {
                   onSelect(item);
                   setOpen(false);
+                  setQuery("");
                 }}
                 className="block w-full border-b border-[#101A3A]/10 px-4 py-2.5 text-left text-sm font-medium text-[#101A3A] last:border-b-0 hover:bg-[#101A3A]/5"
               >
@@ -108,7 +159,7 @@ function FieldSelect<T extends { id: string }>({
 
 export function SurveyEntryCard({ states, heading }: SurveyEntryCardProps) {
   const router = useRouter();
-  const { locale } = useLocale();
+  const { locale, t } = useLocale();
 
   const [selectedState, setSelectedState] = useState<SurveyEntryState | null>(states[0] ?? null);
   const [districts, setDistricts] = useState<DistrictItem[]>([]);
@@ -164,30 +215,30 @@ export function SurveyEntryCard({ states, heading }: SurveyEntryCardProps) {
         <div className="rounded-2xl bg-white px-4 py-2 shadow-md sm:px-5 sm:py-2.5">
           <p
             data-hero-text="surveyHeading"
-            className="text-center text-xs font-bold text-[#101A3A] sm:text-sm lg:text-base"
+            className="text-center text-[10px] font-bold text-[#101A3A] sm:text-xs lg:text-sm"
             style={{
               fontWeight: heading?.fontWeight,
               lineHeight: heading?.lineHeight,
               letterSpacing: heading?.letterSpacing,
             }}
           >
-            अपना विधानसभा क्षेत्र चुनें और सर्वे में भाग लें।
+            {t.heroSurvey.heading}
           </p>
         </div>
       )}
 
       <div className="flex flex-wrap items-center justify-center gap-2 lg:gap-2.5">
         <FieldSelect
-          label="राज्य"
-          placeholder="राज्य चुनें"
+          label={t.heroSurvey.selectState}
+          placeholder={t.heroSurvey.selectState}
           value={selectedState}
           items={states}
           getLabel={(s) => displayStateName(s.name, s.slug, locale)}
           onSelect={setSelectedState}
         />
         <FieldSelect
-          label="जिला"
-          placeholder={loadingDistricts ? "लोड हो रहा है…" : "जिला चुनें"}
+          label={t.heroSurvey.selectDistrict}
+          placeholder={loadingDistricts ? t.common.loading : t.heroSurvey.selectDistrict}
           value={selectedDistrict}
           items={districts}
           disabled={!selectedState || loadingDistricts}
@@ -195,8 +246,8 @@ export function SurveyEntryCard({ states, heading }: SurveyEntryCardProps) {
           onSelect={setSelectedDistrict}
         />
         <FieldSelect
-          label="विधानसभा क्षेत्र"
-          placeholder={loadingConstituencies ? "लोड हो रहा है…" : "विधानसभा क्षेत्र चुनें"}
+          label={t.heroSurvey.selectConstituency}
+          placeholder={loadingConstituencies ? t.common.loading : t.heroSurvey.selectConstituency}
           value={selectedConstituency}
           items={constituencies}
           disabled={!selectedDistrict || loadingConstituencies}
@@ -211,7 +262,7 @@ export function SurveyEntryCard({ states, heading }: SurveyEntryCardProps) {
           disabled={!canSubmit}
           className="flex h-10 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full bg-orange-600 px-5 text-xs font-bold text-white shadow-lg transition-colors hover:bg-orange-700 disabled:cursor-not-allowed sm:text-sm lg:h-12 lg:gap-2 lg:px-7"
         >
-          सर्वे में भाग लें <ArrowRight size={14} className="sm:h-4 sm:w-4 lg:h-[17px] lg:w-[17px]" />
+          {t.heroSurvey.participate} <ArrowRight size={14} className="sm:h-4 sm:w-4 lg:h-[17px] lg:w-[17px]" />
         </motion.button>
       </div>
     </motion.div>

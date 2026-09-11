@@ -1,25 +1,28 @@
 import { getHomeStats, getSiteSetting, getStates } from "@/lib/data";
-import { getTopIssuesOverall } from "@/lib/analytics";
 import { DEFAULT_HERO_CONFIG, normalizeHeroConfig } from "@/lib/hero-config";
+import {
+  DEFAULT_HOMEPAGE_SECTIONS_CONFIG,
+  buildHomepageSectionsStyleCss,
+  normalizeHomepageSectionsConfig,
+} from "@/lib/homepage-sections-config";
 import { Hero } from "@/components/home/Hero";
 import { StatisticsStrip } from "@/components/home/StatisticsStrip";
 import { FeatureCards } from "@/components/home/FeatureCards";
 import { IssuesSection } from "@/components/home/IssuesSection";
-import { MissionSection } from "@/components/home/MissionSection";
-import { ResponsibleInitiative } from "@/components/home/ResponsibleInitiative";
+import { HomeIssuesHeading } from "@/components/home/HomeIssuesHeading";
+import { LowerCardsSection } from "@/components/home/LowerCardsSection";
 import { StatesSection } from "@/components/home/StatesSection";
 import { Container } from "@/components/ui/Container";
 import { electionPath, statePath } from "@/lib/routes";
-import Link from "next/link";
 
 export const revalidate = 60;
 
 export default async function Home() {
-  const [stats, states, topIssues, heroConfig] = await Promise.all([
+  const [stats, states, heroConfig, sectionsConfigRaw] = await Promise.all([
     getHomeStats(),
     getStates(),
-    getTopIssuesOverall(6),
     getSiteSetting("HERO_CONFIG", DEFAULT_HERO_CONFIG),
+    getSiteSetting("HOMEPAGE_SECTIONS_CONFIG", DEFAULT_HOMEPAGE_SECTIONS_CONFIG),
   ]);
 
   const primary = states[0] ?? null;
@@ -28,31 +31,53 @@ export default async function Home() {
   const surveyHref = primary ? statePath(primary.slug) : "/states";
   const resultsHref = primary && primaryElection ? electionPath(primary.slug, primaryElection.slug) : surveyHref;
 
+  const sections = normalizeHomepageSectionsConfig(sectionsConfigRaw);
+  // Aggregated per-device visibility/padding CSS for every homepage section
+  // (see src/lib/homepage-sections-config.ts) — one small <style> tag, no
+  // client JS, so a section hidden for e.g. mobile is genuinely never shown
+  // there without any hydration/flash risk.
+  const sectionsStyleCss = buildHomepageSectionsStyleCss(sections);
+
   return (
     <div>
-      <Hero surveyStates={states} config={normalizeHeroConfig(heroConfig)} />
+      {/* numeric/path values only, sourced from homepageSectionsConfigSchema-validated config */}
+      <style dangerouslySetInnerHTML={{ __html: sectionsStyleCss }} />
 
-      <StatisticsStrip stats={stats} />
+      <div data-section="hero">
+        <Hero
+          surveyStates={states}
+          config={normalizeHeroConfig(heroConfig)}
+          mobileImageUrl={sections.hero.mobileImageUrl}
+          tabletImageUrl={sections.hero.tabletImageUrl}
+        />
+      </div>
 
-      <FeatureCards surveyHref={surveyHref} resultsHref={resultsHref} analyticsHref={resultsHref} />
+      <div data-section="stats">
+        <StatisticsStrip stats={stats} />
+      </div>
 
-      <Container className="py-10" id="issues">
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
-          <h2 className="font-display text-2xl font-bold text-foreground sm:text-3xl">मुद्दे जो मायने रखते हैं</h2>
-          <Link href="/methodology" className="text-sm font-semibold text-accent">
-            देखें कि मुद्दों का डेटा कैसे मापा जाता है →
-          </Link>
-        </div>
-        <IssuesSection issues={topIssues.issues} sufficientSample={topIssues.sufficientSample} />
-      </Container>
+      <div data-section="featureCards">
+        <FeatureCards surveyHref={surveyHref} resultsHref={resultsHref} analyticsHref={resultsHref} />
+      </div>
 
-      <MissionSection />
+      <div data-section="issues">
+        <Container className="py-6" id="issues">
+          <HomeIssuesHeading />
+          <IssuesSection />
+        </Container>
+      </div>
 
-      <ResponsibleInitiative />
+      <div data-section="about">
+        <Container className="py-6">
+          <LowerCardsSection mobileImageUrl={sections.about.mobileImageUrl} tabletImageUrl={sections.about.tabletImageUrl} />
+        </Container>
+      </div>
 
-      <Container className="py-12" id="elections">
-        <StatesSection states={states} />
-      </Container>
+      <div data-section="states">
+        <Container className="py-6" id="elections">
+          <StatesSection states={states} />
+        </Container>
+      </div>
     </div>
   );
 }

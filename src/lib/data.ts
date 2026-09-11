@@ -203,7 +203,7 @@ export async function searchAll(query: string) {
   const q = query.trim();
   if (!q) return { districts: [], constituencies: [], candidates: [] };
 
-  const [districts, constituencies, candidates, electionSlugsByState] = await Promise.all([
+  const [districts, nameMatchedConstituencies, candidates, electionSlugsByState] = await Promise.all([
     prisma.district.findMany({
       where: { name: { contains: q } },
       include: { state: true },
@@ -221,6 +221,24 @@ export async function searchAll(query: string) {
     }),
     getActiveElectionSlugsByState(),
   ]);
+
+  // A matched district's own constituencies belong under it in the hierarchy,
+  // even when their names don't themselves contain the query text.
+  const matchedDistrictIds = districts.map((d) => d.id);
+  const districtConstituencies = matchedDistrictIds.length
+    ? await prisma.constituency.findMany({
+        where: { districtId: { in: matchedDistrictIds } },
+        include: { district: true, state: true },
+      })
+    : [];
+
+  const seenConstituencyIds = new Set<string>();
+  const constituencies = [...nameMatchedConstituencies, ...districtConstituencies].filter((c) => {
+    if (seenConstituencyIds.has(c.id)) return false;
+    seenConstituencyIds.add(c.id);
+    return true;
+  });
+
   return {
     districts: districts.map((d) => ({ ...d, electionSlug: electionSlugsByState.get(d.stateId) ?? null })),
     constituencies: constituencies.map((c) => ({ ...c, electionSlug: electionSlugsByState.get(c.stateId) ?? null })),

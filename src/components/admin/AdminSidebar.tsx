@@ -37,7 +37,7 @@ const HIERARCHY_NAV = [
 ];
 
 const CONTENT_NAV = [
-  { href: "/admin/hero", label: "Hero Editor", icon: Type },
+  { href: "/admin/hero", label: "Homepage Editor", icon: Type },
   { href: "/admin/candidates", label: "Candidates", icon: Users },
   { href: "/admin/images", label: "Image Review", icon: ImageIcon },
   { href: "/admin/imports", label: "Imports", icon: Upload },

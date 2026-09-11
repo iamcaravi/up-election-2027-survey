@@ -3,8 +3,13 @@ import { Inter, Manrope, Noto_Sans_Devanagari } from "next/font/google";
 import { Providers } from "./providers";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
-import { getStates } from "@/lib/data";
+import { getSiteSetting, getStates } from "@/lib/data";
 import { statePath, electionPath } from "@/lib/routes";
+import {
+  DEFAULT_HOMEPAGE_SECTIONS_CONFIG,
+  buildGlobalChromeStyleCss,
+  normalizeHomepageSectionsConfig,
+} from "@/lib/homepage-sections-config";
 import "./globals.css";
 
 const inter = Inter({ variable: "--font-inter", subsets: ["latin"] });
@@ -47,11 +52,18 @@ export const viewport: Viewport = {
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
-  const states = await getStates();
+  const [states, sectionsConfigRaw] = await Promise.all([
+    getStates(),
+    getSiteSetting("HOMEPAGE_SECTIONS_CONFIG", DEFAULT_HOMEPAGE_SECTIONS_CONFIG),
+  ]);
   const primary = states[0] ?? null;
   const primaryElection = primary?.elections[0] ?? null;
   const stateHref = primary ? statePath(primary.slug) : "/states";
   const resultsHref = primary && primaryElection ? electionPath(primary.slug, primaryElection.slug) : stateHref;
+  // Header/Footer render on every page (not just the homepage), so only their
+  // padding — never visibility — is driven by the Homepage Sections config.
+  // See buildGlobalChromeStyleCss's doc comment.
+  const chromeStyleCss = buildGlobalChromeStyleCss(normalizeHomepageSectionsConfig(sectionsConfigRaw));
 
   return (
     <html
@@ -60,10 +72,16 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       className={`${inter.variable} ${manrope.variable} ${notoDevanagari.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        {/* numeric values only, sourced from homepageSectionsConfigSchema-validated config */}
+        <style dangerouslySetInnerHTML={{ __html: chromeStyleCss }} />
         <Providers>
-          <SiteHeader stateHref={stateHref} resultsHref={resultsHref} />
+          <div data-section="header">
+            <SiteHeader stateHref={stateHref} resultsHref={resultsHref} />
+          </div>
           <main className="flex-1">{children}</main>
-          <SiteFooter />
+          <div data-section="footer">
+            <SiteFooter stateHref={stateHref} resultsHref={resultsHref} />
+          </div>
         </Providers>
       </body>
     </html>

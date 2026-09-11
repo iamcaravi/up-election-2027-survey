@@ -385,3 +385,20 @@ model SiteSetting {
 
   @@map("site_settings")
 }
+
+// Anonymous footer visitor-analytics. `visitorHash` is a salted one-way hash
+// (see src/lib/hash.ts) of the same random device identifier already used
+// for survey duplicate-detection (src/lib/fingerprint.ts) — no new tracking
+// surface, no raw identifier or IP ever stored. One row per unique visitor
+// ever seen: `firstSeenAt` never changes (so COUNT(*) is the lifetime unique
+// visitor total), `lastSeenAt` is bumped on every heartbeat (so "live now" is
+// COUNT(*) WHERE lastSeenAt >= now - window, with no separate expiry job —
+// a row simply ages out of the live window on its own without being deleted).
+model VisitorPresence {
+  visitorHash String   @id
+  firstSeenAt DateTime @default(now())
+  lastSeenAt  DateTime @default(now())
+
+  @@index([lastSeenAt])
+  @@map("visitor_presence")
+}

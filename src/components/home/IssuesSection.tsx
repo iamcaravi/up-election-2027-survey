@@ -1,59 +1,35 @@
 "use client";
 
 import { motion } from "framer-motion";
-import {
-  Briefcase,
-  TrendingUp,
-  Route,
-  Zap,
-  Droplet,
-  BookOpen,
-  HeartPulse,
-  Scale,
-  Wheat,
-  Bus,
-  Waves,
-  MoreHorizontal,
-  type LucideIcon,
-} from "lucide-react";
-import { DEFAULT_ISSUES } from "@/lib/enums";
+import { Briefcase, GraduationCap, Wheat, HeartPulse, Route, Gavel, Sprout, Users, type LucideIcon } from "lucide-react";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
-interface IssueTally {
+interface HomepageIssue {
   key: string;
-  label: string;
-  count: number;
-  pct: number;
+  labelKey: "rojgar" | "shiksha" | "kisan" | "swasthya" | "infrastructure" | "lawOrder" | "development" | "socialJustice";
+  icon: LucideIcon;
 }
 
-const ISSUE_ICONS: Record<string, LucideIcon> = {
-  rojgar: Briefcase,
-  mahangai: TrendingUp,
-  sadak: Route,
-  bijli: Zap,
-  pani: Droplet,
-  shiksha: BookOpen,
-  swasthya: HeartPulse,
-  kanoon_vyavastha: Scale,
-  krishi: Wheat,
-  parivahan: Bus,
-  jal_nikasi: Waves,
-  other: MoreHorizontal,
-};
+// Editorial showcase of broad issue categories for the homepage — distinct from
+// the survey's own DEFAULT_ISSUES (src/lib/enums.ts), which drives real survey
+// questions/analytics and must not be changed here.
+const HOMEPAGE_ISSUES: HomepageIssue[] = [
+  { key: "rojgar", labelKey: "rojgar", icon: Briefcase },
+  { key: "shiksha", labelKey: "shiksha", icon: GraduationCap },
+  { key: "kisan", labelKey: "kisan", icon: Wheat },
+  { key: "swasthya", labelKey: "swasthya", icon: HeartPulse },
+  { key: "infra", labelKey: "infrastructure", icon: Route },
+  { key: "kanoon", labelKey: "lawOrder", icon: Gavel },
+  { key: "vikas", labelKey: "development", icon: Sprout },
+  { key: "samajik_nyay", labelKey: "socialJustice", icon: Users },
+];
 
-export function IssuesSection({
-  issues,
-  sufficientSample,
-}: {
-  issues: IssueTally[];
-  sufficientSample: boolean;
-}) {
-  const pctByKey = new Map(issues.map((i) => [i.key, i.pct]));
-
+export function IssuesSection() {
+  const { t } = useLocale();
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">
-      {DEFAULT_ISSUES.map((issue, i) => {
-        const Icon = ISSUE_ICONS[issue.key] ?? MoreHorizontal;
-        const pct = sufficientSample ? pctByKey.get(issue.key) : undefined;
+    <div className="flex gap-3 overflow-x-auto pb-2 sm:grid sm:grid-cols-4 sm:gap-3 sm:overflow-visible sm:pb-0 lg:grid-cols-8">
+      {HOMEPAGE_ISSUES.map((issue, i) => {
+        const Icon = issue.icon;
         return (
           <motion.div
             key={issue.key}
@@ -61,13 +37,12 @@ export function IssuesSection({
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-40px" }}
             transition={{ duration: 0.35, delay: i * 0.03 }}
-            className="card-surface flex flex-col items-center gap-2.5 rounded-2xl p-4 text-center transition-all hover:-translate-y-0.5 hover:shadow-[var(--shadow-soft)]"
+            className="card-surface flex w-[104px] shrink-0 flex-col items-center gap-2.5 rounded-2xl p-4 text-center transition-all hover:-translate-y-0.5 hover:shadow-[var(--shadow-soft)] sm:w-auto sm:shrink"
           >
             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-ink/10 text-ink dark:bg-white/10 dark:text-white">
               <Icon size={20} />
             </div>
-            <p className="font-display text-sm font-bold text-foreground">{issue.label}</p>
-            {pct !== undefined && <p className="text-xs text-muted">{pct}% प्राथमिकता</p>}
+            <p className="font-display text-sm font-bold text-foreground">{t.homeIssues[issue.labelKey]}</p>
           </motion.div>
         );
       })}

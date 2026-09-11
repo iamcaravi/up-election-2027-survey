@@ -1,5 +1,18 @@
 @import "tailwindcss";
 
+/* Footer "live now" indicator dot — soft opacity/scale pulse, ~1.8s cycle. */
+@keyframes presence-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(1.4);
+  }
+}
+
 :root {
   --background: #fafaf8;
   --surface: #ffffff;

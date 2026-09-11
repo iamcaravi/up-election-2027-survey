@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Users, Landmark, Flag, Lock, FileBarChart } from "lucide-react";
 import { AnimatedCounter } from "@/components/ui/AnimatedCounter";
 import { formatNumber } from "@/lib/utils";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 interface StatisticsStripProps {
   stats: {
@@ -14,12 +15,13 @@ interface StatisticsStripProps {
 }
 
 export function StatisticsStrip({ stats }: StatisticsStripProps) {
+  const { t } = useLocale();
   const items = [
-    { icon: Users, value: stats.responses, suffix: "", primary: null as string | null, label: "कुल वैध प्रतिक्रियाएं" },
-    { icon: Landmark, value: stats.constituencies, suffix: "", primary: null as string | null, label: "विधानसभा क्षेत्रों में सर्वे" },
-    { icon: Flag, value: stats.parties, suffix: "", primary: null as string | null, label: "मुख्य राजनीतिक दल" },
-    { icon: Lock, value: null, suffix: "100%", primary: null as string | null, label: "गोपनीय और सुरक्षित" },
-    { icon: FileBarChart, value: null, suffix: "", primary: "तथ्य आधारित", label: "डेटा और विश्लेषण" },
+    { icon: Users, value: stats.responses, suffix: "", primary: null as string | null, label: t.statisticsStrip.totalResponses },
+    { icon: Landmark, value: stats.constituencies, suffix: "", primary: null as string | null, label: t.statisticsStrip.constituenciesSurveyed },
+    { icon: Flag, value: stats.parties, suffix: "", primary: null as string | null, label: t.statisticsStrip.mainParties },
+    { icon: Lock, value: null, suffix: "100%", primary: null as string | null, label: t.statisticsStrip.confidential },
+    { icon: FileBarChart, value: null, suffix: "", primary: t.statisticsStrip.factBased, label: t.statisticsStrip.dataAndAnalysis },
   ];
 
   return (

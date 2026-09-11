@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { ArrowRight, Edit3, BarChart3, Crown, Globe } from "lucide-react";
 import Link from "next/link";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 interface FeatureCardsProps {
   surveyHref: string;
@@ -11,11 +12,12 @@ interface FeatureCardsProps {
 }
 
 export function FeatureCards({ surveyHref, resultsHref, analyticsHref }: FeatureCardsProps) {
+  const { t } = useLocale();
   const cards = [
     {
       icon: Edit3,
-      title: "सर्वे में भाग लें",
-      description: "अपने क्षेत्र के लिए 2 मिनट का आसान सर्वे पूरा करें",
+      title: t.featureCards.survey.title,
+      description: t.featureCards.survey.description,
       href: surveyHref,
       iconBg: "bg-green-600",
       cardBg: "bg-green-50 dark:bg-green-950/40",
@@ -24,8 +26,8 @@ export function FeatureCards({ surveyHref, resultsHref, analyticsHref }: Feature
     },
     {
       icon: BarChart3,
-      title: "परिणाम देखें",
-      description: "अपने विधानसभा क्षेत्र और राज्य के वर्तमान सर्वे रुझान जानें",
+      title: t.featureCards.results.title,
+      description: t.featureCards.results.description,
       href: resultsHref,
       iconBg: "bg-blue-600",
       cardBg: "bg-blue-50 dark:bg-blue-950/40",
@@ -34,8 +36,8 @@ export function FeatureCards({ surveyHref, resultsHref, analyticsHref }: Feature
     },
     {
       icon: Crown,
-      title: "प्रीमियम विश्लेषण",
-      description: "विस्तृत डेटा, चार्ट और एक्सेल रिपोर्ट तक पहुंच प्राप्त करें",
+      title: t.featureCards.premium.title,
+      description: t.featureCards.premium.description,
       href: analyticsHref,
       iconBg: "bg-purple-600",
       cardBg: "bg-purple-50 dark:bg-purple-950/40",
@@ -44,8 +46,8 @@ export function FeatureCards({ surveyHref, resultsHref, analyticsHref }: Feature
     },
     {
       icon: Globe,
-      title: "अन्य राज्यों के लिए तैयार",
-      description: "पंजाब, उत्तराखंड, गोवा, मणिपुर, हिमाचल प्रदेश, गुजरात और अधिक",
+      title: t.featureCards.otherStates.title,
+      description: t.featureCards.otherStates.description,
       href: "/states",
       iconBg: "bg-orange-600",
       cardBg: "bg-orange-50 dark:bg-orange-950/40",
@@ -55,7 +57,7 @@ export function FeatureCards({ surveyHref, resultsHref, analyticsHref }: Feature
   ];
 
   return (
-    <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+    <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {cards.map((card, i) => {
           const Icon = card.icon;

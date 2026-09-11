@@ -156,9 +156,19 @@ export function Hero({
   onDragText,
   onDragFeatures,
   onDragBackground,
+  // Homepage Sections editor overrides (src/lib/homepage-sections-config.ts):
+  // an admin-set tablet image switches the <640px..1024px tier over to the
+  // same "single pre-composited poster" model mobile already uses, instead of
+  // the desktop photo+text layer above. `null` (the default) means "no
+  // override" — tablet keeps rendering the desktop composition exactly as it
+  // does today, unaffected by any of this.
+  mobileImageUrl = "/images/homepage/hero-mobile.png",
+  tabletImageUrl = null,
 }: {
   surveyStates: SurveyEntryState[];
   config?: HeroConfig;
+  mobileImageUrl?: string;
+  tabletImageUrl?: string | null;
 } & HeroEditableProps) {
   const bannerRef = useRef<HTMLDivElement>(null);
   const [dragging, setDragging] = useState<HeroElementKey | null>(null);
@@ -246,6 +256,18 @@ export function Hero({
 
   const bg = config.background;
 
+  // In the admin editor (editable=true), which of {desktop banner, tablet
+  // poster, mobile poster} is showing is driven deterministically by the
+  // already-selected `activeTier`, not real CSS breakpoints — the same
+  // reasoning buildStaticStyleCss already documents above: the editor's
+  // preview canvas can be physically narrower than the browser window, so a
+  // real `sm:`/`lg:` viewport media query would never reflect the tier the
+  // admin actually picked. On the public site (editable=false) this is
+  // irrelevant — the CSS-driven classNames below are used instead.
+  const editorShowsDesktopBanner = activeTier === "desktop" || (activeTier === "tablet" && !tabletImageUrl);
+  const editorShowsTabletPoster = activeTier === "tablet" && !!tabletImageUrl;
+  const editorShowsMobilePoster = activeTier === "mobile";
+
   return (
     <section
       className="relative w-full"
@@ -263,7 +285,15 @@ export function Hero({
       <div
         ref={bannerRef}
         data-hero-viewport
-        className="relative w-full overflow-hidden bg-ink"
+        className={
+          editable
+            ? editorShowsDesktopBanner
+              ? "relative w-full overflow-hidden bg-ink"
+              : "hidden"
+            : tabletImageUrl
+              ? "relative hidden w-full overflow-hidden bg-ink lg:block"
+              : "relative hidden w-full overflow-hidden bg-ink sm:block"
+        }
         onPointerMove={handleMove}
         onPointerUp={endDrag}
         onPointerLeave={endDrag}
@@ -389,7 +419,48 @@ export function Hero({
         )}
       </div>
 
-      <SurveyEntryCard states={surveyStates} heading={config.surveyHeading} />
+      {/* Mobile-only replacement banner (<640px): a single pre-composited poster
+          (badge/headline/subtitle/features baked in) instead of the desktop's
+          admin-editable text-over-photo layout above. Rendered at its natural
+          aspect ratio rather than cropped into the desktop viewport height. */}
+      {(editable ? editorShowsMobilePoster : true) && (
+        <div
+          className={editable ? "relative w-full overflow-hidden" : "relative block w-full overflow-hidden sm:hidden"}
+          style={{ aspectRatio: "1024 / 1536" }}
+        >
+          <Image
+            src={mobileImageUrl}
+            alt="भारत का सबसे बड़ा जनमत सर्वे प्लेटफॉर्म — राज्यों का चुनाव, जनता का मूड"
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover"
+          />
+        </div>
+      )}
+
+      {/* Tablet-only replacement banner (640-1023px), only when the admin has set a
+          dedicated tablet image via the Homepage Sections editor — absent that, tablet
+          keeps using the desktop composition above (hidden lg:block still applies it
+          there in that case, so this block is never rendered redundantly alongside it). */}
+      {tabletImageUrl && (editable ? editorShowsTabletPoster : true) && (
+        <div
+          className={editable ? "relative w-full overflow-hidden" : "relative hidden w-full overflow-hidden sm:block lg:hidden"}
+          style={{ aspectRatio: "1024 / 1536" }}
+        >
+          <Image
+            src={tabletImageUrl}
+            alt="भारत का सबसे बड़ा जनमत सर्वे प्लेटफॉर्म — राज्यों का चुनाव, जनता का मूड"
+            fill
+            sizes="100vw"
+            className="object-cover"
+          />
+        </div>
+      )}
+
+      <div data-section="surveyCta">
+        <SurveyEntryCard states={surveyStates} heading={config.surveyHeading} />
+      </div>
     </section>
   );
 }

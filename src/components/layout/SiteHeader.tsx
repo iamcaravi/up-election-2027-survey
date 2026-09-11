@@ -21,17 +21,17 @@ export function SiteHeader({ stateHref, resultsHref }: SiteHeaderProps) {
 
   const navItems = [
     { href: "/", label: t.nav.home },
-    { href: stateHref, label: "उत्तर प्रदेश" },
+    { href: stateHref, label: t.siteHeader.uttarPradesh },
     { href: "/#elections", label: t.nav.elections },
-    { href: "/states", label: "विधानसभा क्षेत्र" },
-    { href: resultsHref, label: "परिणाम" },
-    { href: "/methodology", label: "विश्लेषण" },
-    { href: "/methodology", label: "हमारे बारे में" },
+    { href: "/states", label: t.siteHeader.constituency },
+    { href: resultsHref, label: t.siteHeader.results },
+    { href: "/methodology", label: t.siteHeader.analysis },
+    { href: "/about", label: t.siteHeader.aboutUs },
   ];
 
   return (
     <header className="sticky top-0 z-40 border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/85">
-      <div className="mx-auto flex h-16 w-full max-w-7xl items-center gap-4 px-4 sm:px-6 lg:h-[68px] lg:px-8">
+      <div className="mx-auto flex h-16 w-full max-w-7xl flex-nowrap items-center justify-between gap-1 px-3 sm:px-4 lg:h-[68px] lg:gap-1.5 lg:px-4">
         {/* Logo & Brand */}
         <Link href="/" className="flex shrink-0 items-center gap-2.5 font-display text-lg font-extrabold lg:gap-3 lg:text-[22px]">
           <span className="flex items-end gap-1 lg:gap-1.5">
@@ -39,19 +39,16 @@ export function SiteHeader({ stateHref, resultsHref }: SiteHeaderProps) {
             <span className="h-6 w-1.5 rounded-sm bg-positive lg:h-[30px] lg:w-2" />
             <span className="h-3 w-1.5 rounded-sm bg-ink lg:h-4 lg:w-2" />
           </span>
-          <span className="flex flex-col leading-tight">
-            <span className="lowercase">votersurvey.in</span>
-            <span className="text-[10px] font-medium tracking-wide text-muted lg:text-xs">जनता की राय, बेहतर कल के लिए</span>
-          </span>
+          <span className="lowercase leading-none">votersurvey.in</span>
         </Link>
 
         {/* Center Navigation - Desktop */}
-        <nav className="hidden items-center gap-0.5 xl:flex">
+        <nav className="hidden shrink-0 flex-nowrap items-center gap-0.5 xl:flex">
           {navItems.map((item) => (
             <Link
               key={item.label}
               href={item.href}
-              className="rounded-lg px-2.5 py-2 text-base font-medium text-foreground/70 transition-colors hover:bg-surface-2 hover:text-foreground"
+              className="shrink-0 whitespace-nowrap rounded-lg px-1.5 py-2 text-base font-medium text-foreground/70 transition-colors hover:bg-surface-2 hover:text-foreground"
             >
               {item.label}
             </Link>
@@ -59,16 +56,16 @@ export function SiteHeader({ stateHref, resultsHref }: SiteHeaderProps) {
         </nav>
 
         {/* Right Controls */}
-        <div className="ml-auto flex items-center gap-2 sm:gap-2.5">
+        <div className="flex shrink-0 items-center gap-1 sm:gap-1.5">
           {/* Search - Desktop */}
-          <div className="hidden w-44 lg:block">
+          <div className="hidden w-28 shrink-0 lg:block xl:w-32">
             <SearchBox />
           </div>
 
           {/* Search Icon - Mobile/Tablet */}
           <button
             className="flex h-9 w-9 items-center justify-center rounded-lg text-foreground/60 transition-colors hover:bg-surface-2 hover:text-foreground lg:hidden"
-            aria-label="Search"
+            aria-label={t.siteHeader.search}
           >
             <Search size={18} />
           </button>
@@ -79,17 +76,17 @@ export function SiteHeader({ stateHref, resultsHref }: SiteHeaderProps) {
           {/* Premium Analytics CTA - Desktop */}
           <Link
             href={resultsHref}
-            className="hidden items-center gap-1.5 rounded-xl bg-ink px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-ink-2 lg:flex"
+            className="hidden shrink-0 items-center gap-1 whitespace-nowrap rounded-xl bg-ink px-2.5 py-2 text-sm font-semibold text-white transition-all hover:bg-ink-2 lg:flex"
           >
             <Crown size={14} />
-            प्रीमियम विश्लेषण
+            {t.siteHeader.premiumAnalysis}
           </Link>
 
           {/* Mobile Menu Toggle */}
           <button
             onClick={() => setOpen((o) => !o)}
             className="flex h-9 w-9 items-center justify-center rounded-lg border border-border xl:hidden"
-            aria-label="Menu"
+            aria-label={t.siteHeader.menu}
           >
             {open ? <X size={16} /> : <Menu size={16} />}
           </button>
@@ -118,7 +115,7 @@ export function SiteHeader({ stateHref, resultsHref }: SiteHeaderProps) {
             className="flex items-center justify-center gap-1.5 rounded-lg bg-ink px-4 py-2.5 text-sm font-semibold text-white transition-all hover:bg-ink-2"
           >
             <Crown size={14} />
-            प्रीमियम विश्लेषण
+            {t.siteHeader.premiumAnalysis}
           </Link>
         </div>
       )}

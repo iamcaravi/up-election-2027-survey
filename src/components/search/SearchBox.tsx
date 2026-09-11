@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Search, Loader2, MapPin, Building2, User } from "lucide-react";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -58,15 +58,33 @@ export function SearchBox({ className, autoFocus }: { className?: string; autoFo
     return () => clearTimeout(handle);
   }, [query]);
 
+  function resetSearch() {
+    setOpen(false);
+    setQuery("");
+    setResults(null);
+  }
+
+  function selectResult(navigate: () => void) {
+    navigate();
+    resetSearch();
+  }
+
   useEffect(() => {
     function onClick(e: MouseEvent) {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false);
+        resetSearch();
       }
     }
     document.addEventListener("mousedown", onClick);
     return () => document.removeEventListener("mousedown", onClick);
   }, []);
+
+  function onKeyDown(e: KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "Escape") {
+      resetSearch();
+      (e.target as HTMLInputElement).blur();
+    }
+  }
 
   const hasResults =
     results && (results.districts.length || results.constituencies.length || results.candidates.length);
@@ -80,6 +98,7 @@ export function SearchBox({ className, autoFocus }: { className?: string; autoFo
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => query.length >= 2 && setOpen(true)}
+          onKeyDown={onKeyDown}
           placeholder={t.common.search}
           className="h-12 w-full rounded-xl border border-border bg-surface pl-10 pr-10 text-sm text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-ink/30"
         />
@@ -89,23 +108,24 @@ export function SearchBox({ className, autoFocus }: { className?: string; autoFo
       </div>
 
       {open && query.length >= 2 && (
-        <div className="absolute z-50 mt-2 max-h-96 w-full overflow-y-auto rounded-xl border border-border bg-surface shadow-[var(--shadow-soft)]">
+        <div className="absolute z-50 mt-2 max-h-96 min-w-full max-w-[calc(100vw-2rem)] overflow-x-hidden overflow-y-auto rounded-xl border border-border bg-surface shadow-[var(--shadow-soft)] sm:min-w-[300px]">
           {!hasResults && !loading && (
-            <div className="px-4 py-6 text-center text-sm text-muted">No matches found.</div>
+            <div className="px-4 py-6 text-center text-sm text-muted">{t.search.noMatches}</div>
           )}
 
           {results && results.districts.length > 0 && (
             <div className="border-b border-border p-2">
               <p className="px-2 pb-1 pt-1 text-[11px] font-semibold uppercase tracking-wide text-muted">
-                {t.nav.districts}
+                {t.search.districts}
               </p>
               {results.districts.map((d) => (
                 <button
                   key={d.slug}
-                  onClick={() => {
-                    if (d.electionSlug) router.push(districtPath(d.stateSlug, d.electionSlug, d.slug));
-                    setOpen(false);
-                  }}
+                  onClick={() =>
+                    selectResult(() => {
+                      if (d.electionSlug) router.push(districtPath(d.stateSlug, d.electionSlug, d.slug));
+                    })
+                  }
                   className="flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-left text-sm hover:bg-surface-2"
                 >
                   <MapPin size={15} className="text-ink" />
@@ -118,20 +138,20 @@ export function SearchBox({ className, autoFocus }: { className?: string; autoFo
           {results && results.constituencies.length > 0 && (
             <div className="border-b border-border p-2">
               <p className="px-2 pb-1 pt-1 text-[11px] font-semibold uppercase tracking-wide text-muted">
-                Constituencies
+                {t.search.constituencies}
               </p>
               {results.constituencies.map((c) => (
                 <button
                   key={c.slug}
-                  onClick={() => {
-                    if (c.electionSlug) router.push(constituencyPath(c.stateSlug, c.electionSlug, c.slug));
-                    setOpen(false);
-                  }}
+                  onClick={() =>
+                    selectResult(() => {
+                      if (c.electionSlug) router.push(constituencyPath(c.stateSlug, c.electionSlug, c.slug));
+                    })
+                  }
                   className="flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-left text-sm hover:bg-surface-2"
                 >
-                  <Building2 size={15} className="text-ink" />
-                  <span>{c.name}</span>
-                  <span className="ml-auto text-xs text-muted">{c.districtName}</span>
+                  <Building2 size={15} className="shrink-0 text-ink" />
+                  <span className="whitespace-nowrap">{c.name}</span>
                 </button>
               ))}
             </div>
@@ -140,15 +160,16 @@ export function SearchBox({ className, autoFocus }: { className?: string; autoFo
           {results && results.candidates.length > 0 && (
             <div className="p-2">
               <p className="px-2 pb-1 pt-1 text-[11px] font-semibold uppercase tracking-wide text-muted">
-                Candidates
+                {t.search.candidates}
               </p>
               {results.candidates.map((c) => (
                 <button
                   key={c.slug + c.constituencySlug}
-                  onClick={() => {
-                    if (c.electionSlug) router.push(constituencyPath(c.stateSlug, c.electionSlug, c.constituencySlug));
-                    setOpen(false);
-                  }}
+                  onClick={() =>
+                    selectResult(() => {
+                      if (c.electionSlug) router.push(constituencyPath(c.stateSlug, c.electionSlug, c.constituencySlug));
+                    })
+                  }
                   className="flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-left text-sm hover:bg-surface-2"
                 >
                   <User size={15} className="text-ink" />
