@@ -33,7 +33,8 @@ import * as Icons from "lucide-react";
 export interface SurveyOptionItem {
   key: string;
   label: string;
-  subLabel?: string | null;
+  labelHi?: string | null;
+  abbreviation?: string | null;
   logoUrl?: string | null;
   colorHex?: string | null;
   icon?: string;
@@ -55,6 +56,9 @@ export interface SurveyExperienceProps {
 // The 6 actual survey questions this flow can answer.
 const QUESTION_KEYS = ["party_preference", "top_issue", "age_group", "gender", "social_category", "religion"] as const;
 type QuestionKey = (typeof QUESTION_KEYS)[number];
+// top_issue is "select all that apply" — tracked separately as an array
+// (see selectedIssues) rather than in the single-value `answers` record.
+type SingleAnswerKey = Exclude<QuestionKey, "top_issue">;
 
 // The 3 visible pages: personal_info groups age/gender/social_category/
 // religion onto one page instead of one page per question.
@@ -76,14 +80,14 @@ export function SurveyExperience({
   const { t } = useLocale();
   const router = useRouter();
   const [pageIndex, setPageIndex] = useState(0);
-  const [answers, setAnswers] = useState<Record<QuestionKey, string | undefined>>({
+  const [answers, setAnswers] = useState<Record<SingleAnswerKey, string | undefined>>({
     party_preference: undefined,
-    top_issue: undefined,
     age_group: undefined,
     gender: undefined,
     social_category: undefined,
     religion: undefined,
   });
+  const [selectedIssues, setSelectedIssues] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
@@ -105,9 +109,9 @@ export function SurveyExperience({
   const localize = (items: SurveyOptionItem[]) =>
     items.map((item) => ({ ...item, label: optionLabels[item.key] ?? item.label }));
   // Party option keys (e.g. "other") can collide with generic demographic
-  // option keys in `optionLabels` — parties keep their own shortName/label
-  // (already Hindi-mapped server-side via getPartyDisplayName for subLabel)
-  // instead of running through the shared demographic translation table.
+  // option keys in `optionLabels` — parties keep their own English/Hindi
+  // names (already resolved server-side via getPartyDisplayName as
+  // label/labelHi) instead of running through the shared translation table.
   const localizedParties = parties;
   const localizedIssues = localize(issues);
   const localizedAgeGroups = localize(ageGroups);
@@ -115,8 +119,12 @@ export function SurveyExperience({
   const localizedSocialCategories = localize(socialCategories);
   const localizedReligions = localize(religions);
 
-  function select(key: QuestionKey, value: string) {
+  function select(key: SingleAnswerKey, value: string) {
     setAnswers((current) => ({ ...current, [key]: value }));
+  }
+
+  function toggleIssue(key: string) {
+    setSelectedIssues((current) => (current.includes(key) ? current.filter((k) => k !== key) : [...current, key]));
   }
 
   async function handlePrimary() {
@@ -132,10 +140,11 @@ export function SurveyExperience({
     setSubmitting(true);
     setError(null);
     try {
-      const payload = QUESTION_KEYS.filter((key) => answers[key]).map((key) => ({
-        questionKey: key,
-        optionKey: answers[key] as string,
-      }));
+      const singleAnswerKeys = QUESTION_KEYS.filter((key): key is SingleAnswerKey => key !== "top_issue" && Boolean(answers[key as SingleAnswerKey]));
+      const payload = [
+        ...singleAnswerKeys.map((key) => ({ questionKey: key, optionKey: answers[key] as string })),
+        ...selectedIssues.map((issueKey) => ({ questionKey: "top_issue", optionKey: issueKey })),
+      ];
       const response = await fetch(`/api/surveys/${surveyId}/responses`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -193,7 +202,7 @@ export function SurveyExperience({
         >
             {pageKey === "party_preference" && (
               <StepBody heading={t.surveyFlow.partyHeading} subtitle={t.surveyFlow.partySubtitle}>
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+                <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5">
                   {localizedParties.map((party) => (
                     <PartyOptionCard
                       key={party.key}
@@ -213,8 +222,8 @@ export function SurveyExperience({
                     <IconOptionCard
                       key={issue.key}
                       option={issue}
-                      selected={answers.top_issue === issue.key}
-                      onSelect={() => select("top_issue", issue.key)}
+                      selected={selectedIssues.includes(issue.key)}
+                      onSelect={() => toggleIssue(issue.key)}
                     />
                   ))}
                 </div>
@@ -361,16 +370,16 @@ function PersonalInfoRow({
 }) {
   const palette = PERSONAL_INFO_ROW_COLORS[color];
   return (
-    <div className={cn("flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:gap-6 sm:p-6", palette.bg)}>
-      <div className="flex items-start gap-3.5 sm:w-80 sm:shrink-0">
-        <span className={cn("flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-white", palette.icon)}>
-          <Icon size={22} />
+    <div className={cn("flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:gap-5 sm:p-4", palette.bg)}>
+      <div className="flex items-start gap-3 sm:w-72 sm:shrink-0">
+        <span className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white", palette.icon)}>
+          <Icon size={18} />
         </span>
         <div>
-          <p className="font-display text-lg font-extrabold leading-snug text-ink sm:text-xl">
+          <p className="font-display text-base font-extrabold leading-snug text-ink sm:text-lg">
             {index}. {question}
           </p>
-          <p className="mt-0.5 text-sm text-muted">{subtitle}</p>
+          <p className="mt-0.5 text-xs text-muted">{subtitle}</p>
         </div>
       </div>
       <div className="sm:flex-1">{children}</div>
@@ -387,33 +396,34 @@ function PartyOptionCard({
   selected: boolean;
   onSelect: () => void;
 }) {
+  const { locale } = useLocale();
+  const displayName = locale === "hi" ? option.labelHi ?? option.label : option.label;
   return (
     <label
       className={cn(
-        "card-surface relative flex cursor-pointer flex-col items-center gap-2 rounded-2xl p-4 text-center transition-all focus-within:ring-2 focus-within:ring-ink/40 hover:-translate-y-0.5 hover:shadow-[var(--shadow-soft)]",
+        "card-surface relative flex cursor-pointer flex-col items-center gap-1 rounded-2xl p-2 text-center transition-all focus-within:ring-2 focus-within:ring-ink/40 hover:-translate-y-0.5 hover:shadow-[var(--shadow-soft)]",
         selected && "border-ink bg-ink/[0.04] ring-2 ring-ink/25"
       )}
     >
       <input type="radio" name="party_preference" checked={selected} onChange={onSelect} className="sr-only" />
       {selected && (
-        <span className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-ink text-white">
+        <span className="absolute right-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-ink text-white">
           <Check size={12} />
         </span>
       )}
-      <span className="flex h-16 w-16 items-center justify-center sm:h-[4.5rem] sm:w-[4.5rem]">
+      <span className="flex h-16 w-16 items-center justify-center sm:h-20 sm:w-20">
         {option.logoUrl ? (
-          <Image src={option.logoUrl} alt="" width={72} height={72} className="h-full w-full object-contain" />
+          <Image src={option.logoUrl} alt="" width={80} height={80} className="h-full w-full object-contain" />
         ) : (
           <span
-            className="flex h-14 w-14 items-center justify-center rounded-full text-base font-extrabold text-white sm:h-16 sm:w-16"
+            className="flex h-14 w-14 items-center justify-center rounded-full text-sm font-extrabold text-white sm:h-16 sm:w-16"
             style={{ backgroundColor: option.colorHex ?? "#6b7280" }}
           >
-            {option.label.slice(0, 3).toUpperCase()}
+            {(option.abbreviation ?? option.label).slice(0, 3).toUpperCase()}
           </span>
         )}
       </span>
-      <span className="font-display text-base font-extrabold text-ink sm:text-lg">{option.label}</span>
-      {option.subLabel && <span className="text-sm leading-tight text-muted">{option.subLabel}</span>}
+      <span className="font-display text-xs font-extrabold leading-tight text-ink sm:text-sm">{displayName}</span>
     </label>
   );
 }
@@ -452,24 +462,24 @@ function IconOptionCard({
   return (
     <label
       className={cn(
-        "relative flex cursor-pointer flex-col items-center justify-center gap-2.5 rounded-2xl border p-5 text-center transition-all hover:-translate-y-0.5 hover:shadow-[var(--shadow-soft)]",
+        "relative flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-2xl border p-3.5 text-center transition-all hover:-translate-y-0.5 hover:shadow-[var(--shadow-soft)]",
         style.bg,
         style.border,
         selected && "border-blue-500 ring-2 ring-blue-500"
       )}
     >
-      <input type="radio" name="top_issue" checked={selected} onChange={onSelect} className="sr-only" />
+      <input type="checkbox" checked={selected} onChange={onSelect} className="sr-only" />
       <span
         aria-hidden="true"
         className={cn(
-          "absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full border-2 bg-white/70",
+          "absolute right-2.5 top-2.5 flex h-5 w-5 items-center justify-center rounded-full border-2 bg-white/70",
           selected ? "border-blue-600 bg-blue-600 text-white" : "border-ink/15 text-transparent"
         )}
       >
         <Check size={12} />
       </span>
-      <IconComponent size={30} className={style.icon} />
-      <span className="font-display text-base font-bold text-ink">{option.label}</span>
+      <IconComponent size={23} className={style.icon} />
+      <span className="font-display text-sm font-bold text-ink">{option.label}</span>
     </label>
   );
 }
@@ -484,7 +494,7 @@ function ChipGroup({
   onSelect: (value: string) => void;
 }) {
   return (
-    <div className="flex flex-wrap gap-3">
+    <div className="flex flex-wrap gap-2">
       {options.map((option) => {
         const isSelected = selected === option.key;
         return (
@@ -494,7 +504,7 @@ function ChipGroup({
             aria-pressed={isSelected}
             onClick={() => onSelect(option.key)}
             className={cn(
-              "rounded-full border px-6 py-3 text-base font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/40",
+              "rounded-full border px-4 py-1.5 text-sm font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/40",
               isSelected ? "border-ink bg-ink text-white" : "border-border bg-surface text-ink hover:bg-surface-2"
             )}
           >

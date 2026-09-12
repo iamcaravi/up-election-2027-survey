@@ -42,10 +42,12 @@ export default async function SurveyPage({
   const basePath = electionPath(state.slug, election.slug);
   const questionByKey = new Map(survey.questions.map((q) => [q.key, q]));
 
-  const partyOptions = [...(questionByKey.get("party_preference")?.options ?? [])].sort(
-    (a, b) =>
-      getPartyDisplayPriority(a.party?.slug ?? a.key) - getPartyDisplayPriority(b.party?.slug ?? b.key)
-  );
+  const partyOptions = [...(questionByKey.get("party_preference")?.options ?? [])]
+    .filter((option) => (option.party?.slug ?? option.key) !== "jansatta-dal-loktantrik-party")
+    .sort(
+      (a, b) =>
+        getPartyDisplayPriority(a.party?.slug ?? a.key) - getPartyDisplayPriority(b.party?.slug ?? b.key)
+    );
   const parties: SurveyOptionItem[] = partyOptions.map((option) => {
     const shortName = option.party?.shortName ?? option.label;
     const slugForLogo = option.party?.slug ?? option.key;
@@ -55,8 +57,9 @@ export default async function SurveyPage({
     const abbreviation = slugForLogo === "other" ? "OTH" : slugForLogo === "undecided" ? "N/A" : shortName;
     return {
       key: option.key,
-      label: abbreviation,
-      subLabel: getPartyDisplayName(slugForLogo, option.party?.name ?? option.label),
+      label: option.party?.name ?? option.label,
+      labelHi: getPartyDisplayName(slugForLogo, option.party?.name ?? option.label),
+      abbreviation,
       logoUrl: getPartyLogoUrl(shortName, slugForLogo),
       colorHex: option.party?.colorHex ?? null,
     };
