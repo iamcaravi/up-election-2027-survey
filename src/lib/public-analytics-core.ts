@@ -236,10 +236,14 @@ export function aggregatePublicAnalytics(input: PublicAnalyticsInput): PublicAna
       count: partyCounts.get(option.id) ?? 0,
     };
   });
-  const partyPreference = validResponseCount < input.minRequired
-    ? validResponseCount === 0
-      ? { state: "unavailable" as const, reason: "no_responses" as const, minRequired: input.minRequired }
-      : { state: "suppressed" as const, minRequired: input.minRequired }
+  // Results are visible starting from the very first valid response — there
+  // is no platform-wide "minimum sample size" gate on the whole page.
+  // `buildDistribution` still applies the per-cell privacy floor
+  // (`minRequired`, see analytics-privacy.ts) below, so an early, thin
+  // sample shows a real total-response count while any individual
+  // party/demographic bucket stays suppressed until it clears that floor.
+  const partyPreference = validResponseCount === 0
+    ? { state: "unavailable" as const, reason: "no_responses" as const, minRequired: input.minRequired }
     : buildDistribution(partyCells, partyAnswerByResponse.size, input.minRequired, "no_answers");
 
   const candidateById = new Map(input.candidates.map((candidate) => [candidate.id, candidate]));
@@ -336,10 +340,8 @@ export function aggregatePublicAnalytics(input: PublicAnalyticsInput): PublicAna
       displayOrder: option.order,
       count: countsByOption.get(option.id) ?? 0,
     }));
-    const distribution = validResponseCount < input.minRequired
-      ? validResponseCount === 0
-        ? { state: "unavailable" as const, reason: "no_responses" as const, minRequired: input.minRequired }
-        : { state: "suppressed" as const, minRequired: input.minRequired }
+    const distribution = validResponseCount === 0
+      ? { state: "unavailable" as const, reason: "no_responses" as const, minRequired: input.minRequired }
       : buildDistribution(cells, denominator, input.minRequired, "no_answers");
     return [questionKey, distribution];
   })) as PublicAnalyticsResult["demographics"];

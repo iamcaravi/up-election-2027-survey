@@ -171,8 +171,15 @@ test("valid same-party candidate resolves only option IDs", async () => {
   ]);
 });
 
-test("candidate is conditionally required when an ordinary party has eligible candidates", async () => {
-  await expectInvalid([{ questionKey: "party_preference", optionKey: "bjp" }]);
+test("candidate answer is optional even when an ordinary party has eligible candidates", async () => {
+  // The public survey flow no longer has a candidate_choice step (party,
+  // top_issue, age_group, gender, religion — 5 steps total), so a
+  // submission with no candidate_choice answer must be accepted even when
+  // the selected party does have eligible candidates.
+  const result = await validateSurveySubmission(dbFixture(), survey(), [
+    { questionKey: "party_preference", optionKey: "bjp" },
+  ]);
+  assert.deepEqual(result, [{ questionId: "q-party", optionId: "o-bjp" }]);
 });
 
 test("Other party accepts an absent candidate answer", async () => {
@@ -264,13 +271,16 @@ test("survey outside its configured date window is rejected", async () => {
   });
 });
 
-test("synthetic Other candidate is accepted only when eligible candidates exist", async () => {
+test("synthetic Other candidate answer is accepted when a caller still submits one", async () => {
+  // candidate_choice is no longer part of the public flow, but an explicit
+  // synthetic "other" answer (e.g. from an older client) is still accepted
+  // rather than rejected, since it is never required either way now.
   const otherAnswers = [
     { questionKey: "party_preference", optionKey: "bjp" },
     { questionKey: "candidate_choice", optionKey: "other" },
   ];
   await assert.doesNotReject(validateSurveySubmission(dbFixture(), survey(), otherAnswers));
-  await expectInvalid(otherAnswers, { db: dbFixture({}, []) });
+  await assert.doesNotReject(validateSurveySubmission(dbFixture({}, []), survey(), otherAnswers));
 });
 
 test("synthetic Other candidate is rejected for Other and Undecided party options", async () => {

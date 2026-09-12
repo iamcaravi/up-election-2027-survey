@@ -182,6 +182,72 @@ export async function getTopIssuesOverall(limit = 6) {
   return { total, sufficientSample: total >= minRequired, minRequired, issues: sorted };
 }
 
+// Maps each homepage "मुद्दे जो मायने रखते हैं" card (src/components/home/
+// IssuesSection.tsx) to the real Q2 top_issue option key(s) (src/lib/enums.ts
+// DEFAULT_ISSUES) it aggregates. The two taxonomies are intentionally
+// different — the homepage shows a small set of broad editorial categories,
+// Q2 asks a longer specific list — so this mapping (not label-text matching)
+// is the one place they're reconciled. `null` means there is no Q2 option
+// this homepage card can honestly be backed by; that card shows a
+// "no data source" state rather than a fabricated number. "mahangai" and
+// "other" have no homepage card at all — their responses are still counted
+// in the shared total, just not surfaced under any single card.
+const HOMEPAGE_ISSUE_SOURCE_MAP: Record<string, string[] | null> = {
+  rojgar: ["rojgar"],
+  shiksha: ["shiksha"],
+  kisan: ["krishi"],
+  swasthya: ["swasthya"],
+  infra: ["sadak", "bijli", "pani", "parivahan", "jal_nikasi"],
+  kanoon: ["kanoon_vyavastha"],
+  vikas: null,
+  samajik_nyay: null,
+};
+
+export interface HomepageIssueStats {
+  // Every valid Q2 (top_issue) answer across all active elections/surveys —
+  // the shared denominator for every card's percentage.
+  total: number;
+  // One entry per HOMEPAGE_ISSUE_SOURCE_MAP key. `null` = no live Q2 source
+  // (vikas/samajik_nyay) — render as "no data source", never a number.
+  percentages: Record<string, number | null>;
+}
+
+export async function getHomepageIssueStats(): Promise<HomepageIssueStats> {
+  // Each constituency's survey has its own SurveyOption rows for "top_issue"
+  // (same `key` string, different row per survey), so there is no single
+  // optionId to group by across surveys — a lean per-answer select of just
+  // the option's stable key (not the full response/answer record) is the
+  // correct aggregation here, matching the existing getTopIssuesOverall
+  // pattern above.
+  const answers = await prisma.surveyAnswer.findMany({
+    where: {
+      question: { key: "top_issue" },
+      optionId: { not: null },
+      response: { status: "VALID", survey: { election: { isActive: true } } },
+    },
+    select: { option: { select: { key: true } } },
+  });
+
+  const counts = new Map<string, number>();
+  for (const answer of answers) {
+    if (!answer.option) continue;
+    counts.set(answer.option.key, (counts.get(answer.option.key) ?? 0) + 1);
+  }
+  const total = answers.length;
+
+  const percentages: Record<string, number | null> = {};
+  for (const [cardKey, sourceKeys] of Object.entries(HOMEPAGE_ISSUE_SOURCE_MAP)) {
+    if (!sourceKeys || total === 0) {
+      percentages[cardKey] = null;
+      continue;
+    }
+    const sum = sourceKeys.reduce((acc, key) => acc + (counts.get(key) ?? 0), 0);
+    percentages[cardKey] = (sum / total) * 100;
+  }
+
+  return { total, percentages };
+}
+
 export async function getConstituencyDemographicBreakdown(
   constituencyId: string,
   electionId: string,

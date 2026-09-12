@@ -2,7 +2,6 @@ import "server-only";
 
 import { prisma } from "./prisma";
 import { getSiteSetting } from "./data";
-import { getMinCellSize } from "./analytics-privacy";
 import { ELIGIBLE_RESPONSE_STATUS } from "./enums";
 import {
   aggregatePublicAnalytics,
@@ -69,10 +68,15 @@ export async function getPublicSurveyResults(
     return null;
   }
 
-  const [minCellSize, electionPeriodMode] = await Promise.all([
-    getMinCellSize(),
-    getSiteSetting<ElectionPeriodVisibility>("ELECTION_PERIOD_MODE", { restricted: false }),
-  ]);
+  // Results are shown from the very first valid response — there is no
+  // minimum-sample-size gate on public results, so the "privacy cell" floor
+  // is fixed at 1 (i.e. effectively disabled) rather than read from the
+  // MIN_ANALYTICS_GROUP_SIZE site setting used elsewhere (e.g. premium
+  // analytics). Response counting, storage and percentage calculation are
+  // unaffected — every bucket's percentage is always computed from the real
+  // current vote count.
+  const minCellSize = 1;
+  const electionPeriodMode = await getSiteSetting<ElectionPeriodVisibility>("ELECTION_PERIOD_MODE", { restricted: false });
   const visibility = evaluateResultsVisibility(survey, electionPeriodMode);
   const base = {
     survey: {
@@ -224,7 +228,13 @@ export async function getPublicSurveyResults(
     ...base,
     sample: {
       validResponseCount: analytics.validResponseCount,
-      resultsAvailable: analytics.partyPreference.state === "available",
+      // The results page/tab itself opens as soon as there is at least one
+      // valid response — individual breakdowns (party/demographics) still
+      // apply the minCellSize privacy floor independently (see
+      // public-analytics-core.ts), so a thin early sample renders with a
+      // real response count while its buckets show as "suppressed" until
+      // they clear that floor.
+      resultsAvailable: analytics.validResponseCount > 0,
       minCellSize,
     },
     analytics,

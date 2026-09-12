@@ -1,11 +1,16 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
-type Variant = "primary" | "secondary" | "ghost" | "outline";
+type Variant = "primary" | "cta" | "secondary" | "ghost" | "outline";
 type Size = "sm" | "md" | "lg";
 
 const variantClasses: Record<Variant, string> = {
   primary: "bg-ink text-white hover:bg-ink-2 shadow-[0_4px_14px_-4px_rgba(30,33,72,0.4)]",
+  // The site's main tricolor call-to-action style — saffron/orange, used for
+  // the primary user action on a page (take the survey, submit, next
+  // question). "primary" (navy) stays available for secondary/admin actions
+  // that intentionally want the brand's navy instead of the CTA color.
+  cta: "bg-orange-600 text-white hover:bg-orange-700 shadow-[0_4px_14px_-4px_rgba(234,88,12,0.45)]",
   secondary: "bg-accent text-[#1a1305] hover:bg-accent-2",
   ghost: "bg-transparent text-foreground hover:bg-surface-2",
   outline: "bg-transparent text-foreground border border-border hover:bg-surface-2",

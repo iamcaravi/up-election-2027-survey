@@ -1,7 +1,6 @@
 import "server-only";
 
 import type { PrismaClient } from "@prisma/client";
-import { SURVEY_ELIGIBLE_CANDIDATE_STATUSES } from "./enums";
 import { isCandidateEligibleForSurveyParty, isSpecialPartyPreferenceKey } from "./survey-eligibility";
 
 export interface SubmittedSurveyAnswer {
@@ -144,6 +143,12 @@ export async function validateSurveySubmission(
     throw new SurveySubmissionValidationError("Selected party option is not linked to a party.");
   }
 
+  // The public survey flow no longer presents a "candidate_choice" step (the
+  // product now asks only party/issue/age/gender/religion — 5 steps total),
+  // so a submission with no candidate_choice answer is the normal case even
+  // when the selected party does have eligible candidates. If a caller does
+  // still submit one (e.g. an older client, or an admin preview), it is
+  // still validated for consistency — it just is never required.
   const selectedCandidateOption = resolvedOptions.get("candidate_choice");
   if (isSpecialParty) {
     if (selectedCandidateOption) {
@@ -152,33 +157,11 @@ export async function validateSurveySubmission(
     return resolved;
   }
 
-  const selectedPartyId = selectedPartyOption.partyId!;
-  const eligibleCandidates = (
-    await db.candidate.findMany({
-      where: {
-        electionId: survey.electionId,
-        constituencyId: survey.constituencyId,
-        partyId: selectedPartyId,
-        isActive: true,
-        status: { in: [...SURVEY_ELIGIBLE_CANDIDATE_STATUSES] },
-      },
-      select: { electionId: true, constituencyId: true, partyId: true, status: true, isActive: true },
-    })
-  ).filter((candidate) =>
-    isCandidateEligibleForSurveyParty(survey.electionId, survey.constituencyId!, selectedPartyId, candidate)
-  );
-
-  if (eligibleCandidates.length === 0) {
-    if (selectedCandidateOption) {
-      throw new SurveySubmissionValidationError("No candidate preference is available for the selected party.");
-    }
+  if (!selectedCandidateOption) {
     return resolved;
   }
 
-  if (!selectedCandidateOption) {
-    throw new SurveySubmissionValidationError("Candidate preference is required for the selected party.");
-  }
-
+  const selectedPartyId = selectedPartyOption.partyId!;
   const isSyntheticOther =
     selectedCandidateOption.key === SYNTHETIC_OTHER_CANDIDATE_KEY &&
     selectedCandidateOption.candidateRef === null &&

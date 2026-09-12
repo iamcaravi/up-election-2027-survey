@@ -354,7 +354,7 @@ export function Hero({
             {config.badge.visible && (
               <span
                 data-hero-text="badge"
-                className="absolute z-[2] inline-flex max-w-[85%] items-center gap-1.5 rounded-full border border-orange-400/50 bg-white/80 px-2.5 py-1 backdrop-blur dark:bg-black/40"
+                className="absolute z-[2] inline-flex max-w-[85%] items-center gap-1.5 rounded-full border border-orange-400/50 bg-white/80 px-2.5 py-1 backdrop-blur dark:bg-ink/60"
                 style={{ ...textStyle(config.badge), ...selectionStyle("badge") }}
                 onPointerDown={(e) => startDrag("badge", e)}
               >

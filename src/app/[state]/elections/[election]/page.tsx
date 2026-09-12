@@ -57,7 +57,7 @@ export default async function ElectionPage({
           </div>
 
           <div className="mt-8">
-            <LinkButton href={districtsPath(state.slug, election.slug)} size="lg" variant="primary">
+            <LinkButton href={districtsPath(state.slug, election.slug)} size="lg" variant="cta">
               Explore Districts &amp; Take the Survey
             </LinkButton>
           </div>

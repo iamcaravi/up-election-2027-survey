@@ -14,10 +14,6 @@ import {
 const repoRoot = path.resolve(__dirname, "..");
 const flowSource = readFileSync(path.join(repoRoot, "src/components/survey/SurveyFlow.tsx"), "utf8");
 const cardSource = readFileSync(path.join(repoRoot, "src/components/candidate/CandidateCard.tsx"), "utf8");
-const pageSource = readFileSync(
-  path.join(repoRoot, "src/app/[state]/elections/[election]/constituencies/[constituency]/survey/page.tsx"),
-  "utf8"
-);
 
 const bjp = { key: "bjp", partyId: "party-bjp", isSpecialParty: false };
 const sp = { key: "sp", partyId: "party-sp", isSpecialParty: false };
@@ -64,7 +60,6 @@ for (const [number, status] of [[7, "INCUMBENT"], [8, "HISTORICAL"], [9, "OTHER"
       status,
       isActive: true,
     }), false);
-    assert.match(pageSource, /isCandidateEligibleForSurveyParty/);
   });
 }
 

@@ -1,12 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Menu, X, Search, Crown } from "lucide-react";
-import { ThemeToggle } from "./ThemeToggle";
 import { LocaleToggle } from "./LocaleToggle";
 import { SearchBox } from "@/components/search/SearchBox";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { cn } from "@/lib/utils";
 
 interface SiteHeaderProps {
   /** Real route to the primary (currently featured) state page. */
@@ -18,6 +18,24 @@ interface SiteHeaderProps {
 export function SiteHeader({ stateHref, resultsHref }: SiteHeaderProps) {
   const { t } = useLocale();
   const [open, setOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!searchOpen) return;
+    function onClick(e: MouseEvent) {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) setSearchOpen(false);
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setSearchOpen(false);
+    }
+    document.addEventListener("mousedown", onClick);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onClick);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [searchOpen]);
 
   const navItems = [
     { href: "/", label: t.nav.home },
@@ -30,16 +48,19 @@ export function SiteHeader({ stateHref, resultsHref }: SiteHeaderProps) {
   ];
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/85">
-      <div className="mx-auto flex h-16 w-full max-w-7xl flex-nowrap items-center justify-between gap-1 px-3 sm:px-4 lg:h-[68px] lg:gap-1.5 lg:px-4">
+    <header className="sticky top-0 z-40 border-b border-border bg-background">
+      <div className="mx-auto flex h-[60px] w-full max-w-7xl flex-nowrap items-center justify-between gap-2 px-7 lg:px-8">
         {/* Logo & Brand */}
-        <Link href="/" className="flex shrink-0 items-center gap-2.5 font-display text-lg font-extrabold lg:gap-3 lg:text-[22px]">
-          <span className="flex items-end gap-1 lg:gap-1.5">
-            <span className="h-4 w-1.5 rounded-sm bg-accent lg:h-5 lg:w-2" />
-            <span className="h-6 w-1.5 rounded-sm bg-positive lg:h-[30px] lg:w-2" />
-            <span className="h-3 w-1.5 rounded-sm bg-ink lg:h-4 lg:w-2" />
+        <Link href="/" className="flex shrink-0 items-center gap-2">
+          <span className="flex items-end gap-1">
+            <span className="h-4 w-1.5 rounded-sm bg-accent" />
+            <span className="h-6 w-1.5 rounded-sm bg-positive" />
+            <span className="h-3.5 w-1.5 rounded-sm bg-ink" />
           </span>
-          <span className="lowercase leading-none">votersurvey.in</span>
+          <span className="flex flex-col justify-center leading-tight">
+            <span className="font-display text-lg font-extrabold lowercase text-foreground">votersurvey.in</span>
+            <span className="text-[10.5px] font-medium text-muted">{t.siteHeader.tagline}</span>
+          </span>
         </Link>
 
         {/* Center Navigation - Desktop */}
@@ -48,7 +69,11 @@ export function SiteHeader({ stateHref, resultsHref }: SiteHeaderProps) {
             <Link
               key={item.label}
               href={item.href}
-              className="shrink-0 whitespace-nowrap rounded-lg px-1.5 py-2 text-base font-medium text-foreground/70 transition-colors hover:bg-surface-2 hover:text-foreground"
+              className={cn(
+                "relative shrink-0 whitespace-nowrap px-2.5 py-2 text-sm font-semibold text-ink transition-colors hover:text-ink-2",
+                item.href === "/" &&
+                  "after:absolute after:-bottom-0.5 after:left-1/2 after:h-0.5 after:w-4 after:-translate-x-1/2 after:rounded-full after:bg-ink"
+              )}
             >
               {item.label}
             </Link>
@@ -56,14 +81,27 @@ export function SiteHeader({ stateHref, resultsHref }: SiteHeaderProps) {
         </nav>
 
         {/* Right Controls */}
-        <div className="flex shrink-0 items-center gap-1 sm:gap-1.5">
-          {/* Search - Desktop */}
-          <div className="hidden w-28 shrink-0 lg:block xl:w-32">
-            <SearchBox />
+        <div className="flex shrink-0 items-center gap-2">
+          {/* Search - Desktop: icon only, opens a compact popover using the existing SearchBox */}
+          <div ref={searchRef} className="relative hidden lg:block">
+            <button
+              onClick={() => setSearchOpen((o) => !o)}
+              aria-label={t.siteHeader.search}
+              aria-expanded={searchOpen}
+              className="flex h-9 w-9 items-center justify-center rounded-lg text-ink transition-colors hover:bg-surface-2"
+            >
+              <Search size={20} />
+            </button>
+            {searchOpen && (
+              <div className="absolute right-0 top-full z-50 mt-2 w-80">
+                <SearchBox autoFocus />
+              </div>
+            )}
           </div>
 
-          {/* Search Icon - Mobile/Tablet */}
+          {/* Search Icon - Mobile/Tablet (opens the mobile menu's inline search) */}
           <button
+            onClick={() => setOpen(true)}
             className="flex h-9 w-9 items-center justify-center rounded-lg text-foreground/60 transition-colors hover:bg-surface-2 hover:text-foreground lg:hidden"
             aria-label={t.siteHeader.search}
           >
@@ -71,14 +109,13 @@ export function SiteHeader({ stateHref, resultsHref }: SiteHeaderProps) {
           </button>
 
           <LocaleToggle />
-          <ThemeToggle />
 
           {/* Premium Analytics CTA - Desktop */}
           <Link
             href={resultsHref}
-            className="hidden shrink-0 items-center gap-1 whitespace-nowrap rounded-xl bg-ink px-2.5 py-2 text-sm font-semibold text-white transition-all hover:bg-ink-2 lg:flex"
+            className="hidden shrink-0 items-center gap-2 whitespace-nowrap rounded-lg bg-ink px-5 py-2.5 text-sm font-semibold text-white transition-all hover:bg-ink-2 lg:flex"
           >
-            <Crown size={14} />
+            <Crown size={15} />
             {t.siteHeader.premiumAnalysis}
           </Link>
 

@@ -46,7 +46,7 @@ export function MissionSection() {
           sizes="(min-width: 1024px) 25vw, 100vw"
           className="object-cover"
         />
-        <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/55 via-black/0 to-transparent p-4">
+        <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-ink/70 via-ink/5 to-transparent p-4">
           <p className="font-display text-sm font-bold text-white">जनता की आवाज़</p>
           <p className="text-xs font-medium text-white/90">एक बेहतर भारत के लिए</p>
         </div>

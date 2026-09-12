@@ -1,4 +1,5 @@
 import { getHomeStats, getSiteSetting, getStates } from "@/lib/data";
+import { getHomepageIssueStats } from "@/lib/analytics";
 import { DEFAULT_HERO_CONFIG, normalizeHeroConfig } from "@/lib/hero-config";
 import {
   DEFAULT_HOMEPAGE_SECTIONS_CONFIG,
@@ -18,11 +19,14 @@ import { electionPath, statePath } from "@/lib/routes";
 export const revalidate = 60;
 
 export default async function Home() {
-  const [stats, states, heroConfig, sectionsConfigRaw] = await Promise.all([
+  const [stats, states, heroConfig, sectionsConfigRaw, issueStats] = await Promise.all([
     getHomeStats(),
     getStates(),
     getSiteSetting("HERO_CONFIG", DEFAULT_HERO_CONFIG),
     getSiteSetting("HOMEPAGE_SECTIONS_CONFIG", DEFAULT_HOMEPAGE_SECTIONS_CONFIG),
+    // A failure here must not take down the rest of the homepage — fall back
+    // to the section's own empty state (total: 0) rather than throwing.
+    getHomepageIssueStats().catch(() => ({ total: 0, percentages: {} })),
   ]);
 
   const primary = states[0] ?? null;
@@ -63,7 +67,7 @@ export default async function Home() {
       <div data-section="issues">
         <Container className="py-6" id="issues">
           <HomeIssuesHeading />
-          <IssuesSection />
+          <IssuesSection stats={issueStats} />
         </Container>
       </div>
 

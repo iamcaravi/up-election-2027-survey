@@ -67,7 +67,7 @@ export default async function ConstituencyPage({
           </div>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <LinkButton href={`${basePath}/constituencies/${slug}/survey`} size="lg" variant="primary">
+            <LinkButton href={`${basePath}/constituencies/${slug}/survey`} size="lg" variant="cta">
               सर्वे में भाग लें
             </LinkButton>
             <LinkButton href={`${basePath}/constituencies/${slug}/results`} size="lg" variant="outline">

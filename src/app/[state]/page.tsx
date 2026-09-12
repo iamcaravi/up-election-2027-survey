@@ -62,7 +62,7 @@ export default async function StatePage({ params }: { params: Promise<{ state: s
 
           {election && (
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <LinkButton href={districtsPath(state.slug, election.slug)} size="lg" variant="primary">
+              <LinkButton href={districtsPath(state.slug, election.slug)} size="lg" variant="cta">
                 Explore Districts
               </LinkButton>
               <LinkButton href={electionPath(state.slug, election.slug)} size="lg" variant="outline">

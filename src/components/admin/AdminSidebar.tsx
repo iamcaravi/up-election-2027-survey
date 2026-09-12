@@ -21,6 +21,7 @@ import {
   Link2,
   ClipboardList,
   UserCog,
+  GalleryHorizontal,
 } from "lucide-react";
 
 const NAV = [
@@ -38,6 +39,7 @@ const HIERARCHY_NAV = [
 
 const CONTENT_NAV = [
   { href: "/admin/hero", label: "Homepage Editor", icon: Type },
+  { href: "/admin/survey-hero", label: "Hero Visual Editor", icon: GalleryHorizontal },
   { href: "/admin/candidates", label: "Candidates", icon: Users },
   { href: "/admin/images", label: "Image Review", icon: ImageIcon },
   { href: "/admin/imports", label: "Imports", icon: Upload },

@@ -300,23 +300,22 @@ test("15b. a newly created candidate always starts with photoVerified=false even
   await prisma.candidate.delete({ where: { id: c.id } });
 });
 
-// Regression: the public survey page independently builds its candidate
-// list from constituency.candidates (for display metadata) rather than
-// purely from SurveyOption rows, and had NO status filter at all — an
-// INCUMBENT-only candidate was rendering as a selectable 2027 survey choice
-// even though syncCandidateChoiceOptions correctly never created a
-// SurveyOption for them. Fixed by filtering constituency.candidates to
-// SURVEY_ELIGIBLE_CANDIDATE_STATUSES before passing to SurveyFlow.
-test("16. the public survey page filters its candidate list to survey-eligible statuses before rendering", () => {
+// Regression (historical): the public survey page used to independently
+// build a candidate list from constituency.candidates for a candidate_choice
+// step, with no status filter — an INCUMBENT-only candidate could render as
+// a selectable 2027 survey choice even though syncCandidateChoiceOptions
+// correctly never created a SurveyOption for them.
+//
+// The public survey flow no longer has a candidate_choice step at all (it is
+// now party_preference/top_issue/age_group/gender/religion — 5 steps), so
+// survey/page.tsx no longer reads constituency.candidates or renders any
+// candidate list, making this specific vulnerability structurally
+// impossible rather than merely filtered.
+test("16. the public survey page no longer reads or renders a candidate list", () => {
   const source = readRoute(
     "src/app/[state]/elections/[election]/constituencies/[constituency]/survey/page.tsx"
   );
-  assert.match(
-    source,
-    /SURVEY_ELIGIBLE_CANDIDATE_STATUSES/,
-    "survey/page.tsx must filter constituency.candidates by SURVEY_ELIGIBLE_CANDIDATE_STATUSES before passing to SurveyFlow"
-  );
-  assert.match(source, /\.filter\(/, "the candidates prop must be filtered, not passed through unfiltered");
+  assert.doesNotMatch(source, /constituency\.candidates/, "survey/page.tsx must not read constituency.candidates — the 5-step flow has no candidate_choice step");
 });
 
 // Phase 19 — verified UP current-MLA import: bulk idempotency, party

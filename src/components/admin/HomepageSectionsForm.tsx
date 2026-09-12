@@ -325,7 +325,9 @@ function HomepagePreview({
           <div style={sectionStyle("issues")}>
             <Container className="py-6">
               <HomeIssuesHeading />
-              <IssuesSection />
+              {/* Admin layout preview only — real percentages are fetched
+                  server-side on the live homepage (src/app/page.tsx). */}
+              <IssuesSection stats={{ total: 0, percentages: {} }} />
             </Container>
           </div>
           <div style={sectionStyle("about")}>

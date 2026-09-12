@@ -39,10 +39,13 @@ export function FeatureCards({ surveyHref, resultsHref, analyticsHref }: Feature
       title: t.featureCards.premium.title,
       description: t.featureCards.premium.description,
       href: analyticsHref,
-      iconBg: "bg-purple-600",
-      cardBg: "bg-purple-50 dark:bg-purple-950/40",
-      border: "border-purple-200 dark:border-purple-900",
-      text: "text-purple-700 dark:text-purple-300",
+      // Premium Analysis is the site's navy-branded feature elsewhere (the
+      // header CTA is navy) — kept navy here too instead of an unrelated
+      // purple, matching the site's navy/saffron/green palette.
+      iconBg: "bg-ink",
+      cardBg: "bg-ink/5 dark:bg-ink/20",
+      border: "border-ink/15 dark:border-ink/40",
+      text: "text-ink dark:text-ink-2",
     },
     {
       icon: Globe,

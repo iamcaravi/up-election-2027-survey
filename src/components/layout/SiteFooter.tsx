@@ -100,7 +100,7 @@ export function SiteFooter({ stateHref, resultsHref }: SiteFooterProps) {
                 </span>
                 <span className="font-display text-lg font-bold lowercase">votersurvey.in</span>
               </div>
-              <p className="text-sm text-muted mb-2.5">{t.siteHeader.tagline}</p>
+              <p className="text-[15px] text-muted mb-2.5">{t.siteHeader.tagline}</p>
               {/* Social Icons */}
               <div className="flex gap-3">
                 {SOCIAL_LINKS.map(({ label, href, Icon }) => (
@@ -118,8 +118,8 @@ export function SiteFooter({ stateHref, resultsHref }: SiteFooterProps) {
 
             {/* Column 1: त्वरित लिंक */}
             <div>
-              <p className="text-sm font-semibold mb-2">{t.siteFooter.quickLinks}</p>
-              <ul className="space-y-1.5 text-sm text-muted">
+              <p className="text-base font-bold mb-2">{t.siteFooter.quickLinks}</p>
+              <ul className="space-y-1.5 text-[15px] text-muted">
                 {quickLinks.map((item) => (
                   <li key={item.label}>
                     <Link href={item.href} className="hover:text-foreground transition-colors">
@@ -132,8 +132,8 @@ export function SiteFooter({ stateHref, resultsHref }: SiteFooterProps) {
 
             {/* Column 2: सहायता */}
             <div>
-              <p className="text-sm font-semibold mb-2">{t.siteFooter.help}</p>
-              <ul className="space-y-1.5 text-sm text-muted">
+              <p className="text-base font-bold mb-2">{t.siteFooter.help}</p>
+              <ul className="space-y-1.5 text-[15px] text-muted">
                 {helpLinks.map((item) => (
                   <li key={item.label}>
                     <Link href={item.href} className="hover:text-foreground transition-colors">
@@ -146,13 +146,13 @@ export function SiteFooter({ stateHref, resultsHref }: SiteFooterProps) {
 
             {/* Column 3: नवीनतम अपडेट पाएं */}
             <div>
-              <p className="text-sm font-semibold mb-2">{t.siteFooter.newsletterHeading}</p>
-              <p className="text-sm text-muted mb-2.5">{t.siteFooter.newsletterBody}</p>
+              <p className="text-base font-bold mb-2">{t.siteFooter.newsletterHeading}</p>
+              <p className="text-[15px] text-muted mb-2.5">{t.siteFooter.newsletterBody}</p>
               <form className="flex gap-2" onSubmit={(e) => e.preventDefault()}>
                 <input
                   type="email"
                   placeholder={t.siteFooter.emailPlaceholder}
-                  className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/50"
+                  className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-[15px] placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/50"
                 />
                 <button
                   type="submit"
@@ -162,7 +162,7 @@ export function SiteFooter({ stateHref, resultsHref }: SiteFooterProps) {
                   <ArrowRight size={16} />
                 </button>
               </form>
-              <p className="mt-1.5 text-xs text-muted">{t.siteFooter.noSpam}</p>
+              <p className="mt-1.5 text-sm text-muted">{t.siteFooter.noSpam}</p>
             </div>
           </div>
         </div>
