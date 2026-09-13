@@ -205,3 +205,29 @@ test("11. statewide top-issues aggregation is scoped to a single election, not g
   assert.ok(issuesA.issues.some((i) => i.key === "roads"));
   assert.ok(!issuesA.issues.some((i) => i.key === "jobs"));
 });
+
+test("13. state-scoped party lists never cross-contaminate, and every state gets Other/NOTA/Undecided", async () => {
+  const { getStatePartiesForSurvey } = await import("../src/lib/survey-template-data");
+
+  const stateAParties = await getStatePartiesForSurvey(prisma, fx.stateA.id);
+  const stateASlugs = stateAParties.map((p) => p.slug);
+  assert.ok(stateASlugs.includes("test-party"), "stateA's featured party must be present");
+  assert.ok(stateASlugs.includes("jansatta-dal-loktantrik-party"), "stateA's second featured party must be present");
+  assert.ok(!stateASlugs.includes("state-b-regional-party"), "stateB's featured party must never leak into stateA");
+
+  const stateBParties = await getStatePartiesForSurvey(prisma, fx.stateB.id);
+  const stateBSlugs = stateBParties.map((p) => p.slug);
+  assert.ok(stateBSlugs.includes("state-b-regional-party"), "stateB's featured party must be present");
+  assert.ok(!stateBSlugs.includes("test-party"), "stateA's featured party must never leak into stateB");
+  assert.ok(!stateBSlugs.includes("jansatta-dal-loktantrik-party"), "stateA's second featured party must never leak into stateB");
+
+  // Other/NOTA/Undecided are global and always included, last, in both states.
+  for (const slugs of [stateASlugs, stateBSlugs]) {
+    assert.ok(slugs.includes("other"));
+    assert.ok(slugs.includes("nota"));
+    assert.ok(slugs.includes("undecided"));
+    assert.deepEqual(slugs.slice(-3), ["other", "nota", "undecided"]);
+    const nonSpecialCount = slugs.length - 3;
+    assert.ok(nonSpecialCount <= 5, `a state's featured (non-special) party count must never exceed 5, got ${nonSpecialCount}`);
+  }
+});

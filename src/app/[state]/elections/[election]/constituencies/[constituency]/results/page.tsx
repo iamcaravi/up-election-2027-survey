@@ -1,11 +1,20 @@
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import type { Metadata } from "next";
-import { getStateAndElection, getConstituencyBySlug } from "@/lib/data";
+import { getStateAndElection, getConstituencyBySlug, getSiteSetting } from "@/lib/data";
 import { getPublicSurveyResults } from "@/lib/public-survey-results";
 import { getPublicStatewideResults } from "@/lib/public-statewide-results";
 import { ResultsTabs } from "@/components/results/ResultsTabs";
+import { SurveyHero } from "@/components/survey/SurveyHero";
 import { Container } from "@/components/ui/Container";
-import { electionPath } from "@/lib/routes";
+import { electionPath, districtPath, statePath, premiumPath } from "@/lib/routes";
+import { PremiumAnalyticsBanner } from "@/components/premium/PremiumAnalyticsBanner";
+import {
+  SURVEY_HERO_ELEMENTS_KEY,
+  surveyHeroElementsOverrideKey,
+  normalizeHeroElementsConfig,
+  DEFAULT_HERO_ELEMENTS_CONFIG,
+} from "@/lib/survey-hero-elements-config";
 
 export const metadata: Metadata = { title: "Survey Results" };
 export const dynamic = "force-dynamic";
@@ -26,14 +35,36 @@ export default async function ResultsPage({
   if (!results) notFound();
   const statewideResults = await getPublicStatewideResults(scopedElection.election.id);
 
+  const [globalHeroConfigRaw, heroConfigOverrideRaw] = await Promise.all([
+    getSiteSetting(SURVEY_HERO_ELEMENTS_KEY, DEFAULT_HERO_ELEMENTS_CONFIG),
+    getSiteSetting<unknown>(surveyHeroElementsOverrideKey(constituency.id), null),
+  ]);
+  const heroConfig = normalizeHeroElementsConfig(heroConfigOverrideRaw ?? globalHeroConfigRaw);
+
   const basePath = electionPath(scopedElection.state.slug, scopedElection.election.slug);
   return (
-    <Container className="max-w-5xl py-10 sm:py-14">
-      <ResultsTabs
-        constituencyResults={results}
-        statewideResults={statewideResults}
-        surveyHref={`${basePath}/constituencies/${constituency.slug}/survey`}
+    <div>
+      <SurveyHero
+        stateName={constituency.state.name}
+        stateHref={statePath(scopedElection.state.slug)}
+        districtName={constituency.district.name}
+        districtHref={districtPath(scopedElection.state.slug, scopedElection.election.slug, constituency.district.slug)}
+        constituencyName={constituency.name}
+        constituencyNumber={constituency.number}
+        electionYear={scopedElection.election.year}
+        config={heroConfig}
+        breadcrumbLabel="सर्वेक्षण परिणाम"
       />
-    </Container>
+      <Container className="py-6 sm:py-8">
+        <Suspense fallback={null}>
+          <ResultsTabs
+            constituencyResults={results}
+            statewideResults={statewideResults}
+            surveyHref={`${basePath}/constituencies/${constituency.slug}/survey`}
+          />
+        </Suspense>
+        <PremiumAnalyticsBanner href={premiumPath(scopedElection.state.slug, scopedElection.election.slug)} />
+      </Container>
+    </div>
   );
 }

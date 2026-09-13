@@ -9,13 +9,15 @@ import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
 interface SiteHeaderProps {
-  /** Real route to the primary (currently featured) state page. */
-  stateHref: string;
-  /** Real route to that state's active election / results page. */
+  /** Real route to the current (URL-resolved) state's active election / results page. */
   resultsHref: string;
+  /** Real route to the current state's "चुनाव विश्लेषण" analytics landing page. */
+  analysisHref: string;
+  /** Real route to the current state's "प्रीमियम विश्लेषण" (Premium Analytics) landing page. */
+  premiumHref: string;
 }
 
-export function SiteHeader({ stateHref, resultsHref }: SiteHeaderProps) {
+export function SiteHeader({ resultsHref, analysisHref, premiumHref }: SiteHeaderProps) {
   const { t } = useLocale();
   const [open, setOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -39,11 +41,10 @@ export function SiteHeader({ stateHref, resultsHref }: SiteHeaderProps) {
 
   const navItems = [
     { href: "/", label: t.nav.home },
-    { href: stateHref, label: t.siteHeader.uttarPradesh },
     { href: "/#elections", label: t.nav.elections },
     { href: "/states", label: t.siteHeader.constituency },
     { href: resultsHref, label: t.siteHeader.results },
-    { href: "/methodology", label: t.siteHeader.analysis },
+    { href: analysisHref, label: t.siteHeader.analysis },
     { href: "/about", label: t.siteHeader.aboutUs },
   ];
 
@@ -112,7 +113,7 @@ export function SiteHeader({ stateHref, resultsHref }: SiteHeaderProps) {
 
           {/* Premium Analytics CTA - Desktop */}
           <Link
-            href={resultsHref}
+            href={premiumHref}
             className="hidden shrink-0 items-center gap-2 whitespace-nowrap rounded-lg bg-ink px-5 py-2.5 text-sm font-semibold text-white transition-all hover:bg-ink-2 lg:flex"
           >
             <Crown size={15} />
@@ -147,7 +148,7 @@ export function SiteHeader({ stateHref, resultsHref }: SiteHeaderProps) {
             ))}
           </div>
           <Link
-            href={resultsHref}
+            href={premiumHref}
             onClick={() => setOpen(false)}
             className="flex items-center justify-center gap-1.5 rounded-lg bg-ink px-4 py-2.5 text-sm font-semibold text-white transition-all hover:bg-ink-2"
           >

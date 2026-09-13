@@ -18,10 +18,10 @@ const repoRoot = path.resolve(__dirname, "..");
 const readSource = (file: string) => readFileSync(path.join(repoRoot, file), "utf8");
 
 const partyOptions: PublicAnalyticsInput["partyOptions"] = [
-  { id: "p-bjp", key: "bjp", label: "BJP option", order: 2, isActive: true, partyId: "bjp", party: { id: "bjp", name: "Bharatiya Janata Party", shortName: "BJP", colorHex: "#ff7a21", displayOrder: 0, isActive: true } },
-  { id: "p-sp", key: "sp", label: "SP option", order: 1, isActive: true, partyId: "sp", party: { id: "sp", name: "Samajwadi Party", shortName: "SP", colorHex: "#c8102e", displayOrder: 1, isActive: true } },
-  { id: "p-other", key: "other", label: "Other", order: 9, isActive: true, partyId: "other-party", party: { id: "other-party", name: "Other / Independent", shortName: "Other", colorHex: "#6b7280", displayOrder: 9, isActive: true } },
-  { id: "p-undecided", key: "undecided", label: "Undecided", order: 10, isActive: true, partyId: "undecided-party", party: { id: "undecided-party", name: "Undecided", shortName: "Undecided", colorHex: "#9ca3af", displayOrder: 10, isActive: true } },
+  { id: "p-bjp", key: "bjp", label: "BJP option", order: 2, isActive: true, partyId: "bjp", party: { id: "bjp", nameEnglish: "Bharatiya Janata Party", nameHindi: "भारतीय जनता पार्टी", shortName: "BJP", colorHex: "#ff7a21", logoUrl: null, displayOrder: 0, isActive: true } },
+  { id: "p-sp", key: "sp", label: "SP option", order: 1, isActive: true, partyId: "sp", party: { id: "sp", nameEnglish: "Samajwadi Party", nameHindi: "समाजवादी पार्टी", shortName: "SP", colorHex: "#c8102e", logoUrl: null, displayOrder: 1, isActive: true } },
+  { id: "p-other", key: "other", label: "Other", order: 9, isActive: true, partyId: "other-party", party: { id: "other-party", nameEnglish: "Other / Independent", nameHindi: null, shortName: "Other", colorHex: "#6b7280", logoUrl: null, displayOrder: 9, isActive: true } },
+  { id: "p-undecided", key: "undecided", label: "Undecided", order: 10, isActive: true, partyId: "undecided-party", party: { id: "undecided-party", nameEnglish: "Undecided", nameHindi: null, shortName: "Undecided", colorHex: "#9ca3af", logoUrl: null, displayOrder: 10, isActive: true } },
 ];
 
 const candidateOptions: PublicAnalyticsInput["candidateOptions"] = [

@@ -1,14 +1,19 @@
 import type { PrismaClient } from "@prisma/client";
 import { DEFAULT_ISSUES, AGE_GROUPS, GENDERS, SOCIAL_CATEGORIES, RELIGIONS } from "./enums";
 
+// "Other", "NOTA" and "Undecided" are canonical global Party rows (slugs
+// other/nota/undecided) always appended last to every state's survey,
+// regardless of that state's featured-party configuration — they are not
+// part of the 5-main-party cap.
 const SPECIAL_PARTY_SLUG_ORDER = new Map([
   ["other", 0],
-  ["undecided", 1],
+  ["nota", 1],
+  ["undecided", 2],
 ]);
+const SPECIAL_PARTY_SLUGS = [...SPECIAL_PARTY_SLUG_ORDER.keys()];
 
 type SurveyParty = {
   id: string;
-  name: string;
   shortName: string;
   slug: string;
   displayOrder: number;
@@ -24,16 +29,34 @@ export function orderPartiesForSurvey(parties: SurveyParty[]): SurveyParty[] {
     .filter((party) => SPECIAL_PARTY_SLUG_ORDER.has(party.slug))
     .sort((a, b) => SPECIAL_PARTY_SLUG_ORDER.get(a.slug)! - SPECIAL_PARTY_SLUG_ORDER.get(b.slug)!);
 
-  if (!special.some((party) => party.slug === "other") || !special.some((party) => party.slug === "undecided")) {
-    throw new Error('Active canonical Party records with slugs "other" and "undecided" are required.');
+  for (const slug of SPECIAL_PARTY_SLUGS) {
+    if (!special.some((party) => party.slug === slug)) {
+      throw new Error(`Active canonical Party records with slugs ${SPECIAL_PARTY_SLUGS.join(", ")} are required.`);
+    }
   }
   return [...ordinary, ...special];
 }
 
-export async function syncPartyPreferenceOptions(prisma: PrismaClient, questionId: string) {
-  const parties = orderPartiesForSurvey(
-    await prisma.party.findMany({ where: { isActive: true }, orderBy: [{ displayOrder: "asc" }, { shortName: "asc" }] })
-  );
+// Builds a state's public party list: that state's featured parties (from
+// StateParty, capped at 5 by the admin API — see
+// src/app/api/admin/states/[id]/parties/route.ts) plus the three always-on
+// globals. A party featured in one state never leaks into another state's
+// survey, since featuring is per-StateParty-row, not a property of Party
+// itself (see tests/state-party-isolation.test.ts).
+export async function getStatePartiesForSurvey(prisma: PrismaClient, stateId: string): Promise<SurveyParty[]> {
+  const [featured, specials] = await Promise.all([
+    prisma.stateParty.findMany({
+      where: { stateId, isFeatured: true, party: { isActive: true } },
+      include: { party: true },
+      orderBy: { displayOrder: "asc" },
+    }),
+    prisma.party.findMany({ where: { slug: { in: SPECIAL_PARTY_SLUGS }, isActive: true } }),
+  ]);
+  return orderPartiesForSurvey([...featured.map((fp) => fp.party), ...specials]);
+}
+
+export async function syncPartyPreferenceOptions(prisma: PrismaClient, questionId: string, stateId: string) {
+  const parties = await getStatePartiesForSurvey(prisma, stateId);
   const existing = await prisma.surveyOption.findMany({ where: { questionId } });
   const unused = new Map(existing.map((option) => [option.id, option]));
 
@@ -73,6 +96,7 @@ export async function syncPartyPreferenceOptions(prisma: PrismaClient, questionI
 export async function createDefaultSurveyQuestions(
   prisma: PrismaClient,
   surveyId: string,
+  stateId: string,
   opts?: { candidateQuestionLabel?: string; partyQuestionLabel?: string; issueQuestionLabel?: string }
 ) {
   const partyQ = await prisma.surveyQuestion.create({
@@ -85,7 +109,7 @@ export async function createDefaultSurveyQuestions(
       order: 1,
     },
   });
-  await syncPartyPreferenceOptions(prisma, partyQ.id);
+  await syncPartyPreferenceOptions(prisma, partyQ.id, stateId);
 
   const candidateQ = await prisma.surveyQuestion.create({
     data: {
@@ -106,6 +130,7 @@ export async function createDefaultSurveyQuestions(
       surveyId,
       key: "top_issue",
       label: opts?.issueQuestionLabel ?? "आपके क्षेत्र में सबसे बड़ा मुद्दा क्या है?",
+      type: "MULTIPLE_CHOICE",
       required: false,
       allowSkip: true,
       order: 3,

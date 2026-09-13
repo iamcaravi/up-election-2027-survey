@@ -1,10 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Manrope, Noto_Sans_Devanagari } from "next/font/google";
 import { Providers } from "./providers";
-import { SiteHeader } from "@/components/layout/SiteHeader";
-import { SiteFooter } from "@/components/layout/SiteFooter";
+import { SiteChrome } from "@/components/layout/SiteChrome";
 import { getSiteSetting, getStates } from "@/lib/data";
-import { statePath, electionPath } from "@/lib/routes";
 import {
   DEFAULT_HOMEPAGE_SECTIONS_CONFIG,
   buildGlobalChromeStyleCss,
@@ -56,10 +54,11 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     getStates(),
     getSiteSetting("HOMEPAGE_SECTIONS_CONFIG", DEFAULT_HOMEPAGE_SECTIONS_CONFIG),
   ]);
-  const primary = states[0] ?? null;
-  const primaryElection = primary?.elections[0] ?? null;
-  const stateHref = primary ? statePath(primary.slug) : "/states";
-  const resultsHref = primary && primaryElection ? electionPath(primary.slug, primaryElection.slug) : stateHref;
+  // Every state's slug + current election slug — SiteChrome (a client
+  // component) uses the current URL to resolve nav links to WHICHEVER
+  // state the visitor is actually browsing, instead of the site ever
+  // guessing/defaulting to one "primary" state (see SiteChrome.tsx).
+  const navStates = states.map((s) => ({ slug: s.slug, electionSlug: s.elections[0]?.slug ?? null }));
   // Header/Footer render on every page (not just the homepage), so only their
   // padding — never visibility — is driven by the Homepage Sections config.
   // See buildGlobalChromeStyleCss's doc comment.
@@ -75,13 +74,9 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         {/* numeric values only, sourced from homepageSectionsConfigSchema-validated config */}
         <style dangerouslySetInnerHTML={{ __html: chromeStyleCss }} />
         <Providers>
-          <div data-section="header">
-            <SiteHeader stateHref={stateHref} resultsHref={resultsHref} />
-          </div>
-          <main className="flex-1">{children}</main>
-          <div data-section="footer">
-            <SiteFooter stateHref={stateHref} resultsHref={resultsHref} />
-          </div>
+          <SiteChrome states={navStates}>
+            {children}
+          </SiteChrome>
         </Providers>
       </body>
     </html>

@@ -161,7 +161,9 @@ export function SurveyEntryCard({ states, heading }: SurveyEntryCardProps) {
   const router = useRouter();
   const { locale, t } = useLocale();
 
-  const [selectedState, setSelectedState] = useState<SurveyEntryState | null>(states[0] ?? null);
+  // No state pre-selected — the visitor picks one explicitly rather than the
+  // form silently defaulting to whichever state happens to sort first.
+  const [selectedState, setSelectedState] = useState<SurveyEntryState | null>(null);
   const [districts, setDistricts] = useState<DistrictItem[]>([]);
   const [selectedDistrict, setSelectedDistrict] = useState<DistrictItem | null>(null);
   const [constituencies, setConstituencies] = useState<ConstituencyItem[]>([]);

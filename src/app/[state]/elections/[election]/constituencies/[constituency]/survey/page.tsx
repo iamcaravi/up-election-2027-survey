@@ -6,7 +6,7 @@ import { SurveyExperience, type SurveyOptionItem } from "@/components/survey/Sur
 import { SurveyTrustStrip } from "@/components/survey/SurveyTrustStrip";
 import { Container } from "@/components/ui/Container";
 import { electionPath, districtPath, statePath } from "@/lib/routes";
-import { getPartyLogoUrl, getPartyDisplayName, getPartyDisplayPriority } from "@/lib/party-logos";
+import { getPartyLogoUrl, getPartyDisplayName } from "@/lib/party-logos";
 import { getIssueIcon } from "@/lib/survey-issue-icons";
 import {
   SURVEY_HERO_ELEMENTS_KEY,
@@ -42,25 +42,24 @@ export default async function SurveyPage({
   const basePath = electionPath(state.slug, election.slug);
   const questionByKey = new Map(survey.questions.map((q) => [q.key, q]));
 
-  const partyOptions = [...(questionByKey.get("party_preference")?.options ?? [])]
-    .filter((option) => (option.party?.slug ?? option.key) !== "jansatta-dal-loktantrik-party")
-    .sort(
-      (a, b) =>
-        getPartyDisplayPriority(a.party?.slug ?? a.key) - getPartyDisplayPriority(b.party?.slug ?? b.key)
-    );
+  // Already ordered correctly by the DB query (options are stored in the
+  // order syncPartyPreferenceOptions gave them: this state's featured
+  // parties, then Other/NOTA/Undecided last).
+  const partyOptions = questionByKey.get("party_preference")?.options ?? [];
   const parties: SurveyOptionItem[] = partyOptions.map((option) => {
     const shortName = option.party?.shortName ?? option.label;
     const slugForLogo = option.party?.slug ?? option.key;
-    // "Other"/"Undecided" are meta options rather than real contesting
+    // "Other"/"NOTA"/"Undecided" are meta options rather than real contesting
     // parties — shown with a short generic abbreviation instead of their
     // full DB shortName, matching how the real party cards read (BJP, SP…).
-    const abbreviation = slugForLogo === "other" ? "OTH" : slugForLogo === "undecided" ? "N/A" : shortName;
+    const abbreviation =
+      slugForLogo === "other" ? "OTH" : slugForLogo === "nota" ? "NOTA" : slugForLogo === "undecided" ? "N/A" : shortName;
     return {
       key: option.key,
-      label: option.party?.name ?? option.label,
-      labelHi: getPartyDisplayName(slugForLogo, option.party?.name ?? option.label),
+      label: option.party?.nameEnglish ?? option.label,
+      labelHi: getPartyDisplayName(option.party, option.party?.nameEnglish ?? option.label),
       abbreviation,
-      logoUrl: getPartyLogoUrl(shortName, slugForLogo),
+      logoUrl: getPartyLogoUrl(option.party),
       colorHex: option.party?.colorHex ?? null,
     };
   });

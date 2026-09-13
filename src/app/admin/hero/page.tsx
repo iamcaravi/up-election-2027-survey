@@ -1,7 +1,6 @@
 import { getHomeStats, getSiteSetting, getStates } from "@/lib/data";
 import { DEFAULT_HERO_CONFIG, normalizeHeroConfig } from "@/lib/hero-config";
 import { DEFAULT_HOMEPAGE_SECTIONS_CONFIG, normalizeHomepageSectionsConfig } from "@/lib/homepage-sections-config";
-import { electionPath, statePath } from "@/lib/routes";
 import { HeroEditorForm } from "@/components/admin/HeroEditorForm";
 import { HomepageSectionsForm } from "@/components/admin/HomepageSectionsForm";
 
@@ -15,10 +14,10 @@ export default async function AdminHeroPage() {
   const heroConfig = normalizeHeroConfig(heroConfigRaw);
   const sectionsConfig = normalizeHomepageSectionsConfig(sectionsConfigRaw);
 
-  const primary = states[0] ?? null;
-  const primaryElection = primary?.elections[0] ?? null;
-  const surveyHref = primary ? statePath(primary.slug) : "/states";
-  const resultsHref = primary && primaryElection ? electionPath(primary.slug, primaryElection.slug) : surveyHref;
+  // Mirrors the real homepage: with no single state in context, its
+  // feature-card CTAs point at the state browser rather than guessing one.
+  const surveyHref = "/states";
+  const resultsHref = "/states";
 
   return (
     <div>

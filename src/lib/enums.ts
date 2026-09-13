@@ -99,22 +99,22 @@ export const DEFAULT_ISSUES = [
   { key: "other", label: "अन्य" },
 ] as const;
 
-export const DEFAULT_PARTIES: Array<{
-  name: string;
+// The three canonical global parties every state's survey always includes,
+// regardless of that state's featured-party configuration (see
+// prisma/data/state-seeds.ts and src/lib/survey-template-data.ts). Per-state
+// featured party lists (BJP, state-specific regional parties, etc.) live in
+// prisma/data/state-seeds.ts, not here — Party is no longer a single fixed
+// global list, it's state-curated via StateParty.
+export const CANONICAL_SPECIAL_PARTIES: Array<{
+  nameEnglish: string;
+  nameHindi: string;
   shortName: string;
   slug: string;
   colorHex: string;
 }> = [
-  { name: "Bharatiya Janata Party", shortName: "BJP", slug: "bjp", colorHex: "#FF7A21" },
-  { name: "Samajwadi Party", shortName: "SP", slug: "sp", colorHex: "#C8102E" },
-  { name: "Indian National Congress", shortName: "Congress", slug: "congress", colorHex: "#00A0E3" },
-  { name: "Bahujan Samaj Party", shortName: "BSP", slug: "bsp", colorHex: "#22409A" },
-  { name: "Rashtriya Lok Dal", shortName: "RLD", slug: "rld", colorHex: "#2E7D32" },
-  { name: "Suheldev Bharatiya Samaj Party", shortName: "SBSP", slug: "sbsp", colorHex: "#7B3F00" },
-  { name: "Apna Dal (Soneylal)", shortName: "Apna Dal", slug: "apna-dal", colorHex: "#FFC107" },
-  { name: "Nishad Party", shortName: "Nishad Party", slug: "nishad-party", colorHex: "#1565C0" },
-  { name: "Other / Independent", shortName: "Other", slug: "other", colorHex: "#6B7280" },
-  { name: "Undecided", shortName: "Undecided", slug: "undecided", colorHex: "#9CA3AF" },
+  { nameEnglish: "Other / Independent", nameHindi: "अन्य", shortName: "Other", slug: "other", colorHex: "#6B7280" },
+  { nameEnglish: "None of the Above", nameHindi: "इनमें से कोई नहीं", shortName: "NOTA", slug: "nota", colorHex: "#4B5563" },
+  { nameEnglish: "Undecided", nameHindi: "अनिर्णीत", shortName: "Undecided", slug: "undecided", colorHex: "#9CA3AF" },
 ];
 
 export const MINIMUM_ANALYTICS_CELL_SIZE = 30;

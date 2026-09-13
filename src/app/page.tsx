@@ -14,7 +14,6 @@ import { HomeIssuesHeading } from "@/components/home/HomeIssuesHeading";
 import { LowerCardsSection } from "@/components/home/LowerCardsSection";
 import { StatesSection } from "@/components/home/StatesSection";
 import { Container } from "@/components/ui/Container";
-import { electionPath, statePath } from "@/lib/routes";
 
 export const revalidate = 60;
 
@@ -29,11 +28,12 @@ export default async function Home() {
     getHomepageIssueStats().catch(() => ({ total: 0, percentages: {} })),
   ]);
 
-  const primary = states[0] ?? null;
-  const primaryElection = primary?.elections[0] ?? null;
-
-  const surveyHref = primary ? statePath(primary.slug) : "/states";
-  const resultsHref = primary && primaryElection ? electionPath(primary.slug, primaryElection.slug) : surveyHref;
+  // Feature cards below have no state context yet (the visitor hasn't
+  // picked one) — always send them to browse/pick a state rather than
+  // guessing one, so the homepage never silently favors whichever state
+  // happens to sort first (see SiteChrome for the equivalent header/footer
+  // fix once a state IS in context).
+  const browseStatesHref = "/states";
 
   const sections = normalizeHomepageSectionsConfig(sectionsConfigRaw);
   // Aggregated per-device visibility/padding CSS for every homepage section
@@ -61,7 +61,7 @@ export default async function Home() {
       </div>
 
       <div data-section="featureCards">
-        <FeatureCards surveyHref={surveyHref} resultsHref={resultsHref} analyticsHref={resultsHref} />
+        <FeatureCards surveyHref={browseStatesHref} resultsHref={browseStatesHref} analyticsHref={browseStatesHref} />
       </div>
 
       <div data-section="issues">

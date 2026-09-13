@@ -16,6 +16,12 @@ export function formatNumber(n: number): string {
 // (English) for anything not listed, so nothing here can misrepresent data.
 const STATE_NAME_HI: Record<string, string> = {
   "uttar-pradesh": "उत्तर प्रदेश",
+  "punjab": "पंजाब",
+  "uttarakhand": "उत्तराखंड",
+  "goa": "गोवा",
+  "manipur": "मणिपुर",
+  "himachal-pradesh": "हिमाचल प्रदेश",
+  "gujarat": "गुजरात",
 };
 
 export function displayStateName(name: string, slug: string, locale: "hi" | "en"): string {

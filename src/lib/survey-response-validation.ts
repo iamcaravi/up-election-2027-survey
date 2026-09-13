@@ -87,22 +87,34 @@ export async function validateSurveySubmission(
   }
 
   const questionsByKey = new Map(survey.questions.map((question) => [question.key, question]));
-  const seenKeys = new Set<string>();
+  // MULTIPLE_CHOICE questions (currently just top_issue — "select all that
+  // apply") are allowed to appear more than once in the submitted answers
+  // array, one entry per selected option; every other question type still
+  // requires exactly one answer.
+  const answersByQuestionKey = new Map<string, SubmittedSurveyAnswer[]>();
   for (const answer of answers) {
-    if (!questionsByKey.has(answer.questionKey)) {
+    const question = questionsByKey.get(answer.questionKey);
+    if (!question) {
       throw new SurveySubmissionValidationError(`Unknown question: ${answer.questionKey}`);
     }
-    if (seenKeys.has(answer.questionKey)) {
-      throw new SurveySubmissionValidationError(`Duplicate answer: ${answer.questionKey}`);
+    const existing = answersByQuestionKey.get(answer.questionKey);
+    if (existing) {
+      if (question.type !== "MULTIPLE_CHOICE") {
+        throw new SurveySubmissionValidationError(`Duplicate answer: ${answer.questionKey}`);
+      }
+      existing.push(answer);
+    } else {
+      answersByQuestionKey.set(answer.questionKey, [answer]);
     }
-    seenKeys.add(answer.questionKey);
   }
+  const seenKeys = new Set(answersByQuestionKey.keys());
 
   const resolved: ResolvedSurveyAnswer[] = [];
   const resolvedOptions = new Map<string, SubmissionOption>();
-  for (const answer of answers) {
-    const question = questionsByKey.get(answer.questionKey)!;
+  for (const [key, groupedAnswers] of answersByQuestionKey) {
+    const question = questionsByKey.get(key)!;
     if (question.type === "SINGLE_CHOICE") {
+      const answer = groupedAnswers[0];
       if (!answer.optionKey || answer.valueText !== undefined) {
         throw new SurveySubmissionValidationError(`Choice question ${question.key} requires an option.`);
       }
@@ -112,7 +124,22 @@ export async function validateSurveySubmission(
       }
       resolved.push({ questionId: question.id, optionId: option.id });
       resolvedOptions.set(question.key, option);
+    } else if (question.type === "MULTIPLE_CHOICE") {
+      const seenOptionKeys = new Set<string>();
+      for (const answer of groupedAnswers) {
+        if (!answer.optionKey || answer.valueText !== undefined) {
+          throw new SurveySubmissionValidationError(`Choice question ${question.key} requires an option.`);
+        }
+        if (seenOptionKeys.has(answer.optionKey)) continue; // ignore an accidental repeat of the same option
+        const option = question.options.find((candidate) => candidate.key === answer.optionKey && candidate.isActive);
+        if (!option) {
+          throw new SurveySubmissionValidationError(`Invalid option for ${question.key}`);
+        }
+        seenOptionKeys.add(answer.optionKey);
+        resolved.push({ questionId: question.id, optionId: option.id });
+      }
     } else if (question.type === "TEXT") {
+      const answer = groupedAnswers[0];
       if (answer.optionKey !== undefined || !answer.valueText?.trim()) {
         throw new SurveySubmissionValidationError(`Text question ${question.key} requires text.`);
       }

@@ -16,6 +16,7 @@ import {
   type PublicPreferenceAnswerInput,
   type ResultsVisibility,
 } from "./public-analytics-core";
+import { REAL_DATA_SOURCE, SYNTHETIC_DATA_MODE_KEY, SYNTHETIC_DATA_SOURCE } from "./synthetic-data";
 
 const PUBLIC_DEMOGRAPHIC_KEYS = ["gender", "age_group", "social_category", "religion", "top_issue"] as const;
 
@@ -38,7 +39,15 @@ export interface PublicSurveyResultsDto {
     validResponseCount: number | null;
     resultsAvailable: boolean;
     minCellSize: number;
+    /** Valid responses recorded in the last 7 days. Null when results are hidden/unavailable. */
+    newResponsesLast7Days: number | null;
+    /** Valid responses recorded in the 7 days before that — used only to compute the week-over-week delta shown alongside newResponsesLast7Days. */
+    newResponsesPrior7Days: number | null;
+    /** ISO timestamp of the most recent valid response, for a "last updated" display. Null when there are none. */
+    lastResponseAt: string | null;
   };
+  /** True when Demo Data Mode is on and this DTO is built from synthetic_demo rows rather than real responses. */
+  isSynthetic: boolean;
   analytics: PublicAnalyticsResult | null;
   methodology: {
     eligibleResponseStatus: typeof ELIGIBLE_RESPONSE_STATUS;
@@ -76,7 +85,11 @@ export async function getPublicSurveyResults(
   // unaffected — every bucket's percentage is always computed from the real
   // current vote count.
   const minCellSize = 1;
-  const electionPeriodMode = await getSiteSetting<ElectionPeriodVisibility>("ELECTION_PERIOD_MODE", { restricted: false });
+  const [electionPeriodMode, isSynthetic] = await Promise.all([
+    getSiteSetting<ElectionPeriodVisibility>("ELECTION_PERIOD_MODE", { restricted: false }),
+    getSiteSetting<boolean>(SYNTHETIC_DATA_MODE_KEY, false),
+  ]);
+  const activeDataSource = isSynthetic ? SYNTHETIC_DATA_SOURCE : REAL_DATA_SOURCE;
   const visibility = evaluateResultsVisibility(survey, electionPeriodMode);
   const base = {
     survey: {
@@ -105,7 +118,15 @@ export async function getPublicSurveyResults(
   if (visibility.state === "hidden") {
     return {
       ...base,
-      sample: { validResponseCount: null, resultsAvailable: false, minCellSize },
+      sample: {
+        validResponseCount: null,
+        resultsAvailable: false,
+        minCellSize,
+        newResponsesLast7Days: null,
+        newResponsesPrior7Days: null,
+        lastResponseAt: null,
+      },
+      isSynthetic,
       analytics: null,
     };
   }
@@ -125,12 +146,12 @@ export async function getPublicSurveyResults(
 
   const [responses, preferenceAnswers, candidates, groupedDemographics] = await Promise.all([
     prisma.surveyResponse.findMany({
-      where: { surveyId: survey.id, status: ELIGIBLE_RESPONSE_STATUS },
-      select: { id: true, status: true },
+      where: { surveyId: survey.id, status: ELIGIBLE_RESPONSE_STATUS, dataSource: activeDataSource },
+      select: { id: true, status: true, createdAt: true },
     }),
     prisma.surveyAnswer.findMany({
       where: {
-        response: { surveyId: survey.id, status: ELIGIBLE_RESPONSE_STATUS },
+        response: { surveyId: survey.id, status: ELIGIBLE_RESPONSE_STATUS, dataSource: activeDataSource },
         question: { key: { in: ["party_preference", "candidate_choice"] } },
         optionId: { not: null },
       },
@@ -157,7 +178,7 @@ export async function getPublicSurveyResults(
           where: {
             questionId: { in: Array.from(demographicQuestionIds.keys()) },
             optionId: { not: null },
-            response: { surveyId: survey.id, status: ELIGIBLE_RESPONSE_STATUS },
+            response: { surveyId: survey.id, status: ELIGIBLE_RESPONSE_STATUS, dataSource: activeDataSource },
           },
           _count: { _all: true },
         })
@@ -174,9 +195,11 @@ export async function getPublicSurveyResults(
     party: option.party
       ? {
           id: option.party.id,
-          name: option.party.name,
+          nameEnglish: option.party.nameEnglish,
+          nameHindi: option.party.nameHindi,
           shortName: option.party.shortName,
           colorHex: option.party.colorHex,
+          logoUrl: option.party.logoUrl,
           displayOrder: option.party.displayOrder,
           isActive: option.party.isActive,
         }
@@ -224,6 +247,21 @@ export async function getPublicSurveyResults(
     demographicOptions,
   });
 
+  // Real week-over-week counts (never a fabricated/placeholder delta) for
+  // the "new responses this week" summary card — computed directly off the
+  // same eligible-response set used everywhere else on this page.
+  const now = Date.now();
+  const oneWeekMs = 7 * 24 * 60 * 60 * 1000;
+  let newResponsesLast7Days = 0;
+  let newResponsesPrior7Days = 0;
+  let lastResponseAt: Date | null = null;
+  for (const response of responses) {
+    const ageMs = now - response.createdAt.getTime();
+    if (ageMs <= oneWeekMs) newResponsesLast7Days += 1;
+    else if (ageMs <= oneWeekMs * 2) newResponsesPrior7Days += 1;
+    if (!lastResponseAt || response.createdAt > lastResponseAt) lastResponseAt = response.createdAt;
+  }
+
   return {
     ...base,
     sample: {
@@ -236,7 +274,11 @@ export async function getPublicSurveyResults(
       // they clear that floor.
       resultsAvailable: analytics.validResponseCount > 0,
       minCellSize,
+      newResponsesLast7Days,
+      newResponsesPrior7Days,
+      lastResponseAt: lastResponseAt ? lastResponseAt.toISOString() : null,
     },
+    isSynthetic,
     analytics,
   };
 }

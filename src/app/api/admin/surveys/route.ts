@@ -77,6 +77,9 @@ export async function POST(req: NextRequest) {
   const conflictBlocker = await assertNoConflictingActiveSurvey(prisma, data.electionId, data.constituencyId);
   if (conflictBlocker) return NextResponse.json(conflictBlocker, { status: 409 });
 
+  const constituency = await prisma.constituency.findUnique({ where: { id: data.constituencyId }, select: { stateId: true } });
+  if (!constituency) return NextResponse.json({ error: "Constituency not found." }, { status: 404 });
+
   const survey = await prisma.survey.create({
     data: {
       electionId: data.electionId,
@@ -94,7 +97,7 @@ export async function POST(req: NextRequest) {
 
   // Same standard question template every survey has always used (see
   // src/lib/survey-template.ts) — no ad-hoc/hardcoded question set here.
-  await createDefaultSurveyQuestions(prisma, survey.id);
+  await createDefaultSurveyQuestions(prisma, survey.id, constituency.stateId);
 
   // Immediately pull in any candidates already declared for this exact
   // (election, constituency) pair — never candidates from another election

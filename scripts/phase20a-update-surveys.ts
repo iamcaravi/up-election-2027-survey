@@ -9,6 +9,7 @@ async function snapshot() {
       select: {
         id: true,
         questions: { select: { id: true, key: true, order: true } },
+        constituency: { select: { stateId: true } },
       },
     }),
     prisma.surveyResponse.count(),
@@ -76,7 +77,10 @@ async function main() {
         order: 2,
       },
     });
-    await syncPartyPreferenceOptions(prisma, partyQuestion.id);
+    if (!survey.constituency) {
+      throw new Error(`Survey ${survey.id} has no constituency — cannot resolve its state's featured parties.`);
+    }
+    await syncPartyPreferenceOptions(prisma, partyQuestion.id, survey.constituency.stateId);
   }
 
   const after = await snapshot();

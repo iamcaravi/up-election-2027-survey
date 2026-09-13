@@ -25,6 +25,8 @@ export interface SurveyHeroProps {
   electionYear: number;
   /** Admin-configurable per-element layout — falls back to the shipped default when omitted. */
   config?: HeroElementsConfig;
+  /** Overrides the breadcrumb's last segment (defaults to "सर्वे") — e.g. the Results page passes "सर्वेक्षण परिणाम". */
+  breadcrumbLabel?: string;
 
   // --- Editor-only props (all optional/no-ops on the public site) ---------
   /** Turns on selection outlines + drag/resize handles. Never set true on the public site. */
@@ -46,6 +48,7 @@ export function SurveyHero({
   constituencyNumber,
   electionYear,
   config = DEFAULT_HERO_ELEMENTS_CONFIG,
+  breadcrumbLabel,
   editable = false,
   selectedKey = null,
   onSelect,
@@ -56,12 +59,8 @@ export function SurveyHero({
   const canvasRef = useRef<HTMLDivElement>(null);
   const { elements, background } = config;
 
-  const orderedKeys = [...HERO_ELEMENT_KEYS].sort((a, b) => elements[a].zIndex - elements[b].zIndex);
-
-  const dynamicData = { stateName, districtName, constituencyName, constituencyNumber, electionYear, t };
-
-  return (
-    <div className="relative isolate overflow-hidden border-b border-border" onClick={() => editable && onSelect?.(null)}>
+  const backgroundLayer = (
+    <>
       <Image
         src={background.imageUrl}
         alt=""
@@ -74,41 +73,95 @@ export function SurveyHero({
       {background.overlayOpacity > 0 && (
         <div className="absolute inset-0 -z-10 bg-black" style={{ opacity: background.overlayOpacity / 100 }} aria-hidden="true" />
       )}
+    </>
+  );
 
-      {/* Mobile fallback (<sm): always the original simple stacked flow —
-          the per-element canvas below is a desktop/tablet editing surface by
-          design and is never applied to narrow viewports, so mobile never
-          "blindly" inherits desktop pixel/percentage placement. */}
-      <Container className="flex min-h-[280px] flex-col justify-center gap-5 py-4 sm:hidden">
-        <MobileHeroContent
-          stateName={stateName}
-          stateHref={stateHref}
-          districtName={districtName}
-          districtHref={districtHref}
-          constituencyName={constituencyName}
-          constituencyNumber={constituencyNumber}
-          electionYear={electionYear}
-        />
-      </Container>
-
-      {/* Desktop/tablet — full per-element canvas driven by `config`. */}
-      <div ref={canvasRef} className="relative hidden sm:block" style={{ height: config.height }}>
-        {orderedKeys.map((key) => (
-          <HeroElement
-            key={key}
-            elementKey={key}
-            box={elements[key]}
-            canvasRef={canvasRef}
-            editable={editable}
-            selected={selectedKey === key}
-            onSelect={onSelect}
-            onChangeBox={onChangeBox}
-            zoom={zoom}
-          >
-            {renderElementContent(key, elements[key], dynamicData, stateHref, districtHref, editable)}
-          </HeroElement>
-        ))}
+  // The admin "Hero Visual Editor" (src/app/admin/survey-hero) still uses the
+  // free-form drag/resize canvas below — that is an authoring tool, not the
+  // public layout, and stays untouched here (see HeroElement/renderElementContent).
+  if (editable) {
+    const orderedKeys = [...HERO_ELEMENT_KEYS].sort((a, b) => elements[a].zIndex - elements[b].zIndex);
+    const dynamicData = { stateName, districtName, constituencyName, constituencyNumber, electionYear, t };
+    return (
+      <div className="relative isolate overflow-hidden border-b border-border" onClick={() => onSelect?.(null)}>
+        {backgroundLayer}
+        <div ref={canvasRef} className="relative" style={{ height: config.height }}>
+          {orderedKeys.map((key) => (
+            <HeroElement
+              key={key}
+              elementKey={key}
+              box={elements[key]}
+              canvasRef={canvasRef}
+              editable={editable}
+              selected={selectedKey === key}
+              onSelect={onSelect}
+              onChangeBox={onChangeBox}
+              zoom={zoom}
+            >
+              {renderElementContent(key, elements[key], dynamicData, stateHref, districtHref, editable)}
+            </HeroElement>
+          ))}
+        </div>
       </div>
+    );
+  }
+
+  // Public rendering: ONE responsive flex layout (no absolute per-element
+  // canvas) so the hero reflows naturally for any constituency/district/state
+  // name length, in either language, instead of relying on admin-tuned
+  // pixel/percentage positions that only fit the content they were tuned
+  // against. This is the single source of truth for every page that renders
+  // SurveyHero — fixing it here fixes all of them at once.
+  return (
+    <div className="relative isolate overflow-hidden border-b border-border">
+      {backgroundLayer}
+      <div className="absolute inset-0 -z-10 bg-gradient-to-r from-white via-white/90 to-white/25 sm:to-white/10" aria-hidden="true" />
+
+      <Container className="relative py-3.5 sm:min-h-[125px] sm:py-4">
+        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 overflow-x-auto whitespace-nowrap text-xs font-medium text-muted sm:text-sm">
+          <Link href={stateHref} className="shrink-0 hover:text-ink">{stateName}</Link>
+          <ChevronRight size={13} className="shrink-0" aria-hidden="true" />
+          <Link href={districtHref} className="shrink-0 hover:text-ink">{districtName}</Link>
+          <ChevronRight size={13} className="shrink-0" aria-hidden="true" />
+          <span className="shrink-0 text-foreground">{constituencyName}</span>
+          <ChevronRight size={13} className="shrink-0" aria-hidden="true" />
+          <span className="shrink-0 font-semibold text-ink">{breadcrumbLabel ?? t.surveyFlow.breadcrumbSurvey}</span>
+        </nav>
+
+        <div className="mt-2.5 flex flex-col gap-2.5 sm:mt-3.5 sm:flex-row sm:items-center sm:justify-between sm:gap-7">
+          <div className="min-w-0 sm:max-w-xl sm:flex-1">
+            <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-accent">
+              <MapPin size={12} /> {stateName}
+            </p>
+            <h1 className="mt-1 font-display text-2xl font-extrabold leading-tight text-ink sm:text-3xl lg:text-4xl">
+              {constituencyName}
+            </h1>
+            <p className="mt-1 text-sm font-medium text-muted">
+              {t.surveyFlow.constituencyNumberLabel.replace("{number}", String(constituencyNumber))}
+            </p>
+
+            <dl className="mt-2 flex flex-wrap gap-x-7 gap-y-1.5 text-sm">
+              <HeroStatContent icon={<MapPin size={14} />} label={t.surveyFlow.statState} value={stateName} />
+              <HeroStatContent icon={<Building2 size={14} />} label={t.surveyFlow.statDistrict} value={districtName} />
+              <HeroStatContent icon={<Users2 size={14} />} label={t.surveyFlow.statConstituency} value={String(constituencyNumber)} />
+              <HeroStatContent icon={<CalendarDays size={14} />} label={t.surveyFlow.statElection} value={String(electionYear)} />
+            </dl>
+          </div>
+
+          <div className="w-full shrink-0 rounded-xl bg-ink px-4 py-2.5 text-center shadow-[var(--shadow-soft)] sm:w-[205px] sm:text-left">
+            <span className="mx-auto flex h-7 w-7 items-center justify-center rounded-full bg-white/15 sm:mx-0">
+              <Users2 size={13} className="text-white" />
+            </span>
+            <p className="mt-1.5 font-display text-base font-extrabold text-white">{t.surveyFlow.ctaCardTitle}</p>
+            <p className="text-xs text-white/75">{t.surveyFlow.ctaCardSubtitle}</p>
+            <div className="mx-auto mt-1.5 flex h-1 w-24 overflow-hidden rounded-full sm:mx-0">
+              <span className="w-1/3 bg-orange-500" />
+              <span className="w-1/3 bg-white" />
+              <span className="w-1/3 bg-green-600" />
+            </div>
+          </div>
+        </div>
+      </Container>
     </div>
   );
 }
@@ -445,71 +498,5 @@ function HeroStatContent({ icon, label, value }: { icon: React.ReactNode; label:
         <p className="text-[0.8em] font-normal leading-tight opacity-70">{label}</p>
       </div>
     </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Mobile (<sm) fallback — deliberately NOT driven by the per-element config;
-// a simple, always-stable stacked layout so the visual editor (a
-// desktop/tablet tool) can never break small screens.
-// ---------------------------------------------------------------------------
-function MobileHeroContent({
-  stateName,
-  stateHref,
-  districtName,
-  districtHref,
-  constituencyName,
-  constituencyNumber,
-  electionYear,
-}: {
-  stateName: string;
-  stateHref: string;
-  districtName: string;
-  districtHref: string;
-  constituencyName: string;
-  constituencyNumber: number;
-  electionYear: number;
-}) {
-  const { t } = useLocale();
-  return (
-    <>
-      <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 overflow-x-auto text-xs font-medium text-muted">
-        <Link href={stateHref} className="shrink-0 hover:text-ink">{stateName}</Link>
-        <ChevronRight size={13} className="shrink-0" aria-hidden="true" />
-        <Link href={districtHref} className="shrink-0 hover:text-ink">{districtName}</Link>
-        <ChevronRight size={13} className="shrink-0" aria-hidden="true" />
-        <span className="shrink-0 text-foreground">{constituencyName}</span>
-        <ChevronRight size={13} className="shrink-0" aria-hidden="true" />
-        <span className="shrink-0 font-semibold text-ink">{t.surveyFlow.breadcrumbSurvey}</span>
-      </nav>
-
-      <div className="flex flex-col gap-4">
-        <div className="min-w-0">
-          <h1 className="font-display text-3xl font-extrabold text-ink">{constituencyName}</h1>
-          <p className="mt-1 text-sm font-medium text-muted">
-            {t.surveyFlow.constituencyNumberLabel.replace("{number}", String(constituencyNumber))}
-          </p>
-          <dl className="mt-3 flex flex-wrap gap-x-6 gap-y-2">
-            <HeroStatContent icon={<MapPin size={15} />} label={t.surveyFlow.statState} value={stateName} />
-            <HeroStatContent icon={<Building2 size={15} />} label={t.surveyFlow.statDistrict} value={districtName} />
-            <HeroStatContent icon={<Users2 size={15} />} label={t.surveyFlow.statConstituency} value={String(constituencyNumber)} />
-            <HeroStatContent icon={<CalendarDays size={15} />} label={t.surveyFlow.statElection} value={String(electionYear)} />
-          </dl>
-        </div>
-
-        <div className="w-full shrink-0 rounded-2xl bg-ink px-5 py-4 text-center shadow-[var(--shadow-soft)]">
-          <span className="mx-auto flex h-9 w-9 items-center justify-center rounded-full bg-white/15">
-            <Users2 size={18} className="text-white" />
-          </span>
-          <p className="mt-2 font-display text-lg font-extrabold text-white">{t.surveyFlow.ctaCardTitle}</p>
-          <p className="text-xs text-white/75">{t.surveyFlow.ctaCardSubtitle}</p>
-          <div className="mx-auto mt-2.5 flex h-1 w-32 overflow-hidden rounded-full">
-            <span className="w-1/3 bg-orange-500" />
-            <span className="w-1/3 bg-white" />
-            <span className="w-1/3 bg-green-600" />
-          </div>
-        </div>
-      </div>
-    </>
   );
 }

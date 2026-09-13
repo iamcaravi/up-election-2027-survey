@@ -1,112 +1,142 @@
 "use client";
 
-import { BarChart3, ShieldCheck, Users } from "lucide-react";
-import { ResultBars } from "./ResultBars";
+import { BarChart3, CalendarDays, Globe, MapPin, Users } from "lucide-react";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
-import type { PublicDistribution } from "@/lib/public-analytics-core";
 import type { PublicStatewideResultsDto } from "@/lib/public-statewide-results";
+import {
+  SummaryCard,
+  PartySupportChart,
+  IssuesDonutChart,
+  StateCard,
+  PrivacyPill,
+  InlineState,
+  DistributionCard,
+  MethodItem,
+  DisclaimerShareBar,
+  SyntheticDataBanner,
+} from "./ResultsDashboardParts";
 
 export function StatewideResultsView({ data }: { data: PublicStatewideResultsDto }) {
   const { locale, t } = useLocale();
   const numberFormatter = new Intl.NumberFormat(locale === "hi" ? "hi-IN" : "en-IN");
-  const leadingParty = data.partyPreference.state === "available" ? data.partyPreference.buckets[0] : null;
+  const isZeroState = data.sample.validResponseCount === 0;
+
+  const weeklyDelta =
+    data.sample.newResponsesPrior7Days > 0
+      ? Math.round(((data.sample.newResponsesLast7Days - data.sample.newResponsesPrior7Days) / data.sample.newResponsesPrior7Days) * 100)
+      : null;
 
   return (
     <div>
-      <header>
-        <p className="text-xs font-semibold uppercase tracking-wider text-accent">{data.state.name}</p>
-        <h1 className="mt-2 font-display text-3xl font-extrabold tracking-tight sm:text-4xl">
-          {t.surveyFlow.stateWideHeading}
-        </h1>
-        <p className="mt-3 max-w-2xl text-sm leading-6 text-muted">{t.surveyFlow.stateWideNote}</p>
-      </header>
+      {data.isSynthetic && <SyntheticDataBanner />}
 
-      <div className="mt-6 grid gap-3 sm:grid-cols-3">
-        <ContextStat
-          icon={<Users size={17} />}
-          label={t.surveyFlow.totalResponsesLabel}
-          value={numberFormatter.format(data.sample.validResponseCount)}
-        />
-        <ContextStat
-          icon={<BarChart3 size={17} />}
-          label={t.surveyFlow.leadingPartyLabel}
-          value={leadingParty ? `${leadingParty.label} — ${leadingParty.state === "available" ? leadingParty.percentage : "—"}%` : "—"}
-        />
-        <ContextStat icon={<ShieldCheck size={17} />} label={t.results.election} value={`${data.election.name} · ${data.election.year}`} />
-      </div>
-
-      <p className="mt-4 rounded-xl border border-border bg-surface-2 px-4 py-2.5 text-xs font-medium text-muted">
-        {t.surveyFlow.surveyTrendNote}
-      </p>
-
-      {data.sample.validResponseCount === 0 ? (
-        <div className="mt-8 rounded-3xl border border-dashed border-border bg-surface-2 px-5 py-10 text-center sm:px-10">
-          <p className="text-sm text-muted">{t.results.zeroBody}</p>
+      {!isZeroState && (
+        <div id="summary" className="grid scroll-mt-24 grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+          <SummaryCard
+            icon={<Users size={17} />}
+            iconClass="bg-blue-100 text-blue-700"
+            label={t.results.totalResponsesCard}
+            value={numberFormatter.format(data.sample.validResponseCount)}
+          />
+          <SummaryCard
+            icon={<BarChart3 size={17} />}
+            iconClass="bg-positive/10 text-positive"
+            label={t.results.newResponsesThisWeek}
+            value={numberFormatter.format(data.sample.newResponsesLast7Days)}
+            delta={weeklyDelta}
+          />
+          <SummaryCard
+            icon={<CalendarDays size={17} />}
+            iconClass="bg-orange-100 text-orange-700"
+            label={t.results.electionYear}
+            value={String(data.election.year)}
+          />
+          <SummaryCard
+            icon={<MapPin size={17} />}
+            iconClass="bg-blue-100 text-blue-700"
+            label={t.surveyFlow.statState}
+            value={data.state.name}
+          />
+          <SummaryCard
+            icon={<Globe size={17} />}
+            iconClass="bg-positive/10 text-positive"
+            label={t.results.constituenciesSurveyed}
+            value={`${numberFormatter.format(data.respondingConstituencyCount)} / ${numberFormatter.format(data.totalConstituencies)}`}
+          />
         </div>
-      ) : (
+      )}
+
+      {isZeroState && <StateCard icon={<BarChart3 size={28} />} title={t.results.zeroTitle} body={t.results.zeroBody} />}
+
+      {!isZeroState && (
         <>
-          <section className="mt-8 card-surface rounded-2xl p-5 sm:p-6" aria-labelledby="statewide-party-heading">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <h2 id="statewide-party-heading" className="font-display text-xl font-bold">{t.results.partyPreference}</h2>
-                <p className="mt-1 text-sm text-muted">{t.results.partyDenominator}</p>
+          <div className="mt-6 grid gap-4 lg:grid-cols-2">
+            <section id="party" className="card-surface scroll-mt-24 rounded-2xl p-5 sm:p-6" aria-labelledby="statewide-party-heading">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h2 id="statewide-party-heading" className="font-display text-xl font-bold">{t.results.partySupport}</h2>
+                  <p className="mt-1 text-xs text-muted">{t.results.partyDenominator}</p>
+                </div>
+                <PrivacyPill />
               </div>
+              <div className="mt-5 overflow-x-auto pb-1">
+                {data.partyPreference.state === "available" ? (
+                  <PartySupportChart buckets={data.partyPreference.buckets} locale={locale} />
+                ) : (
+                  <InlineState>{t.results.zeroParty}</InlineState>
+                )}
+              </div>
+            </section>
+
+            <section id="issues" className="card-surface scroll-mt-24 rounded-2xl p-5 sm:p-6" aria-labelledby="statewide-issues-heading">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h2 id="statewide-issues-heading" className="font-display text-xl font-bold">{t.results.topIssues}</h2>
+                  <p className="mt-1 text-xs text-muted">{t.surveyFlow.stateWideNote.replace("{state}", data.state.name)}</p>
+                </div>
+                <PrivacyPill />
+              </div>
+              <div className="mt-5">
+                <IssuesDonutChart distribution={data.demographics.top_issue} centerLabel={t.results.topIssues} />
+              </div>
+            </section>
+          </div>
+
+          <div id="profile" className="mt-6 scroll-mt-24">
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <h2 className="font-display text-xl font-bold">{t.results.voterProfile}</h2>
               <PrivacyPill />
             </div>
-            <div className="mt-5">
-              <DistributionBlock distribution={data.partyPreference} />
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              <DistributionCard title={t.results.ageGroup} distribution={data.demographics.age_group} />
+              <DistributionCard title={t.results.gender} distribution={data.demographics.gender} />
+              <DistributionCard title={t.results.religion} distribution={data.demographics.religion} />
             </div>
-          </section>
+          </div>
 
-          <section className="mt-6 grid gap-4 md:grid-cols-2">
-            <DistributionCard title={t.results.topIssues} distribution={data.demographics.top_issue} />
-            <DistributionCard title={t.results.gender} distribution={data.demographics.gender} />
-            <DistributionCard title={t.results.ageGroup} distribution={data.demographics.age_group} />
-            <DistributionCard title={t.results.religion} distribution={data.demographics.religion} />
-          </section>
+          <DisclaimerShareBar shareTitle={t.surveyFlow.stateWideHeading.replace("{state}", data.state.name)} />
         </>
       )}
-    </div>
-  );
-}
 
-function ContextStat({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
-  return (
-    <div className="rounded-2xl border border-border bg-surface px-4 py-3 shadow-[var(--shadow-card)]">
-      <p className="flex items-center gap-2 text-xs font-medium text-muted">{icon}{label}</p>
-      <p className="mt-1 truncate font-display text-sm font-bold">{value}</p>
-    </div>
-  );
-}
-
-function PrivacyPill() {
-  const { t } = useLocale();
-  return (
-    <span className="inline-flex items-center gap-1.5 rounded-full border border-positive/25 bg-positive/10 px-2.5 py-1 text-[11px] font-semibold text-positive">
-      <ShieldCheck size={13} /> {t.results.privacyProtected}
-    </span>
-  );
-}
-
-function InlineState({ children }: { children: React.ReactNode }) {
-  return <p className="rounded-xl border border-dashed border-border bg-surface-2 p-5 text-center text-sm text-muted">{children}</p>;
-}
-
-function DistributionBlock({ distribution }: { distribution: PublicDistribution }) {
-  const { t } = useLocale();
-  if (distribution.state === "available" && distribution.buckets.length > 0) {
-    return <ResultBars options={distribution.buckets} />;
-  }
-  return <InlineState>{distribution.state === "suppressed" ? t.results.resultsSuppressed : t.results.zeroParty}</InlineState>;
-}
-
-function DistributionCard({ title, distribution }: { title: string; distribution: PublicDistribution }) {
-  return (
-    <div className="card-surface rounded-2xl p-5">
-      <h3 className="font-display font-bold">{title}</h3>
-      <div className="mt-4">
-        <DistributionBlock distribution={distribution} />
-      </div>
+      <section id="detailed" className="mt-8 scroll-mt-24 rounded-2xl border border-border bg-surface-2 p-5 sm:p-6" aria-labelledby="statewide-methodology-heading">
+        <h2 id="statewide-methodology-heading" className="font-display text-xl font-bold">{t.results.methodologyTitle}</h2>
+        <dl className="mt-4 grid gap-4 text-sm sm:grid-cols-2">
+          <MethodItem label={t.surveyFlow.statState} value={data.state.name} />
+          <MethodItem label={t.results.election} value={`${data.election.name} · ${data.election.year}`} />
+          <MethodItem
+            label={t.results.constituenciesSurveyed}
+            value={`${numberFormatter.format(data.respondingConstituencyCount)} / ${numberFormatter.format(data.totalConstituencies)}`}
+          />
+          <MethodItem
+            label={t.results.privacyThreshold}
+            value={t.results.privacyThresholdValue.replace("{minimum}", numberFormatter.format(data.sample.minCellSize))}
+          />
+        </dl>
+        <div className="mt-5 space-y-2 border-t border-border pt-4 text-xs leading-5 text-muted">
+          <p>{t.results.partyDenominatorNote}</p>
+          <p>{t.results.notElectionResult}</p>
+        </div>
+      </section>
     </div>
   );
 }

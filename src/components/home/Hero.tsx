@@ -13,8 +13,34 @@ import {
   type HeroTextElement,
 } from "@/lib/hero-config";
 import { SurveyEntryCard, type SurveyEntryState } from "./SurveyEntryCard";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 const FEATURE_ICONS = [Users, CheckCircle2, Shield];
+
+// The Hero's text is admin-positioned pixel-by-pixel (see hero-config.ts) and
+// stored as a single plain string per element — there's no per-locale field
+// in that schema, and doubling it would mean reworking the drag-and-drop
+// admin editor too. Rather than leave the public hero permanently Hindi-only
+// regardless of the site's language toggle, this maps the platform's DEFAULT
+// Hindi copy to its English equivalent for display only: an admin who has
+// customized a line still sees exactly what they typed (this never rewrites
+// their text, only the read-only English substitution shown to visitors).
+const EN_HERO_TEXT: Record<string, string> = {
+  "भारत का सबसे बड़ा जनमत सर्वे प्लेटफॉर्म": "India's Largest Public Opinion Survey Platform",
+  "राज्यों का चुनाव": "STATE ELECTIONS",
+  "जनता का मूड": "THE PEOPLE'S MOOD",
+  "आपकी राय, एक बेहतर और मजबूत लोकतंत्र के लिए": "Your voice, for a better and stronger democracy",
+  "देश के हर राज्य में": "Who will win across",
+  "कौन मारेगा बाज़ी?": "India's states?",
+  "जनता की भागीदारी": "People's participation",
+  "तथ्यों पर आधारित विश्लेषण": "Fact-based analysis",
+  "गोपनीयता और सुरक्षित": "Private & secure",
+};
+
+function heroText(text: string, locale: "hi" | "en"): string {
+  if (locale !== "en") return text;
+  return EN_HERO_TEXT[text] ?? text;
+}
 
 // Public-site + admin-preview breakpoints (unchanged from before): <640 mobile,
 // 640-1023 tablet, >=1024 desktop. Implemented with CSS *container* queries
@@ -164,12 +190,23 @@ export function Hero({
   // does today, unaffected by any of this.
   mobileImageUrl = "/images/homepage/hero-mobile.png",
   tabletImageUrl = null,
+  desktopImageUrl = "/images/homepage/hero-desktop.png",
 }: {
   surveyStates: SurveyEntryState[];
   config?: HeroConfig;
   mobileImageUrl?: string;
   tabletImageUrl?: string | null;
+  /** Public site (>=640px, or >=1024px when tabletImageUrl is set): a single
+   *  pre-composited poster, same model as mobileImageUrl — the admin-editable
+   *  photo+live-text layer below is now only ever shown inside the /admin/hero
+   *  editor (editable=true), never on the public homepage. */
+  desktopImageUrl?: string;
 } & HeroEditableProps) {
+  const { locale } = useLocale();
+  const heroAltText =
+    locale === "en"
+      ? "India's Largest Public Opinion Survey Platform — State Elections, the People's Mood"
+      : "भारत का सबसे बड़ा जनमत सर्वे प्लेटफॉर्म — राज्यों का चुनाव, जनता का मूड";
   const bannerRef = useRef<HTMLDivElement>(null);
   const [dragging, setDragging] = useState<HeroElementKey | null>(null);
   const lastPointerRef = useRef<{ x: number; y: number } | null>(null);
@@ -282,18 +319,15 @@ export function Hero({
       {/* numeric/hex values only, sourced from heroConfigSchema-validated config */}
       <style dangerouslySetInnerHTML={{ __html: responsiveStyleCss }} />
 
+      {/* Admin-editable photo+live-text composition — ONLY ever rendered inside
+          the /admin/hero editor (editable=true) now. The public homepage always
+          shows the flat poster images below instead, so there is no live
+          HTML/CSS text layer on the actual site. */}
+      {editable && (
       <div
         ref={bannerRef}
         data-hero-viewport
-        className={
-          editable
-            ? editorShowsDesktopBanner
-              ? "relative w-full overflow-hidden bg-ink"
-              : "hidden"
-            : tabletImageUrl
-              ? "relative hidden w-full overflow-hidden bg-ink lg:block"
-              : "relative hidden w-full overflow-hidden bg-ink sm:block"
-        }
+        className={editorShowsDesktopBanner ? "relative w-full overflow-hidden bg-ink" : "hidden"}
         onPointerMove={handleMove}
         onPointerUp={endDrag}
         onPointerLeave={endDrag}
@@ -311,7 +345,7 @@ export function Hero({
           <Image
             key={config.backgroundImageUrl}
             src={config.backgroundImageUrl}
-            alt="भारत का सबसे बड़ा जनमत सर्वे प्लेटफॉर्म — राज्यों का चुनाव, जनता का मूड"
+            alt={heroAltText}
             fill
             priority
             sizes="100vw"
@@ -336,7 +370,7 @@ export function Hero({
                 style={{ ...textStyle(config.mainHeadingLine1), ...selectionStyle("mainHeadingLine1") }}
                 onPointerDown={(e) => startDrag("mainHeadingLine1", e)}
               >
-                {config.mainHeadingLine1.text}
+                {heroText(config.mainHeadingLine1.text, locale)}
               </h1>
             )}
 
@@ -347,7 +381,7 @@ export function Hero({
                 style={{ ...textStyle(config.mainHeadingLine2), ...selectionStyle("mainHeadingLine2") }}
                 onPointerDown={(e) => startDrag("mainHeadingLine2", e)}
               >
-                {config.mainHeadingLine2.text}
+                {heroText(config.mainHeadingLine2.text, locale)}
               </p>
             )}
 
@@ -359,7 +393,7 @@ export function Hero({
                 onPointerDown={(e) => startDrag("badge", e)}
               >
                 <span className="text-[0.9em] leading-none">🇮🇳</span>
-                {config.badge.text}
+                {heroText(config.badge.text, locale)}
               </span>
             )}
 
@@ -370,7 +404,7 @@ export function Hero({
                 style={{ ...textStyle(config.subtitle), ...selectionStyle("subtitle") }}
                 onPointerDown={(e) => startDrag("subtitle", e)}
               >
-                {config.subtitle.text}
+                {heroText(config.subtitle.text, locale)}
               </p>
             )}
 
@@ -387,7 +421,7 @@ export function Hero({
                   return (
                     <div key={i} className="flex items-center gap-1.5" style={textStyle(feature)}>
                       <Icon size={16} className="shrink-0" style={{ color: feature.color }} />
-                      <span data-hero-text={`feature-${i}`}>{feature.text}</span>
+                      <span data-hero-text={`feature-${i}`}>{heroText(feature.text, locale)}</span>
                     </div>
                   );
                 })}
@@ -401,7 +435,7 @@ export function Hero({
                 style={{ ...textStyle(config.editorialLine1), ...selectionStyle("editorialLine1") }}
                 onPointerDown={(e) => startDrag("editorialLine1", e)}
               >
-                {config.editorialLine1.text}
+                {heroText(config.editorialLine1.text, locale)}
               </h2>
             )}
 
@@ -412,17 +446,17 @@ export function Hero({
                 style={{ ...textStyle(config.editorialLine2), ...selectionStyle("editorialLine2") }}
                 onPointerDown={(e) => startDrag("editorialLine2", e)}
               >
-                {config.editorialLine2.text}
+                {heroText(config.editorialLine2.text, locale)}
               </p>
             )}
           </>
         )}
       </div>
+      )}
 
-      {/* Mobile-only replacement banner (<640px): a single pre-composited poster
-          (badge/headline/subtitle/features baked in) instead of the desktop's
-          admin-editable text-over-photo layout above. Rendered at its natural
-          aspect ratio rather than cropped into the desktop viewport height. */}
+      {/* Mobile-only poster (<640px): a single pre-composited image (badge/
+          headline/subtitle/features/message baked in), rendered at its
+          natural portrait aspect ratio. */}
       {(editable ? editorShowsMobilePoster : true) && (
         <div
           className={editable ? "relative w-full overflow-hidden" : "relative block w-full overflow-hidden sm:hidden"}
@@ -430,7 +464,7 @@ export function Hero({
         >
           <Image
             src={mobileImageUrl}
-            alt="भारत का सबसे बड़ा जनमत सर्वे प्लेटफॉर्म — राज्यों का चुनाव, जनता का मूड"
+            alt={heroAltText}
             fill
             priority
             sizes="100vw"
@@ -439,10 +473,9 @@ export function Hero({
         </div>
       )}
 
-      {/* Tablet-only replacement banner (640-1023px), only when the admin has set a
-          dedicated tablet image via the Homepage Sections editor — absent that, tablet
-          keeps using the desktop composition above (hidden lg:block still applies it
-          there in that case, so this block is never rendered redundantly alongside it). */}
+      {/* Tablet-only poster (640-1023px), only when the admin has set a
+          dedicated tablet image via the Homepage Sections editor — absent
+          that, tablet uses the desktop poster below instead. */}
       {tabletImageUrl && (editable ? editorShowsTabletPoster : true) && (
         <div
           className={editable ? "relative w-full overflow-hidden" : "relative hidden w-full overflow-hidden sm:block lg:hidden"}
@@ -450,8 +483,29 @@ export function Hero({
         >
           <Image
             src={tabletImageUrl}
-            alt="भारत का सबसे बड़ा जनमत सर्वे प्लेटफॉर्म — राज्यों का चुनाव, जनता का मूड"
+            alt={heroAltText}
             fill
+            sizes="100vw"
+            className="object-cover"
+          />
+        </div>
+      )}
+
+      {/* Desktop poster (public site only, >=640px — or >=1024px when a
+          dedicated tabletImageUrl is set above): a single pre-composited
+          image, same model as the mobile poster, at its natural wide/banner
+          aspect ratio. Never shown in the admin editor — that always uses
+          the live photo+text canvas above instead. */}
+      {!editable && (
+        <div
+          className={tabletImageUrl ? "relative hidden w-full overflow-hidden lg:block" : "relative hidden w-full overflow-hidden sm:block"}
+          style={{ aspectRatio: "2021 / 778" }}
+        >
+          <Image
+            src={desktopImageUrl}
+            alt={heroAltText}
+            fill
+            priority
             sizes="100vw"
             className="object-cover"
           />

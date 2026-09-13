@@ -8,7 +8,7 @@ export interface SurveyCandidateEligibilityRecord {
   isActive: boolean;
 }
 
-const SPECIAL_PARTY_PREFERENCE_KEYS = new Set(["other", "undecided", "prefer_not_to_say"]);
+const SPECIAL_PARTY_PREFERENCE_KEYS = new Set(["other", "nota", "undecided", "prefer_not_to_say"]);
 
 export function isSpecialPartyPreferenceKey(key: string): boolean {
   return SPECIAL_PARTY_PREFERENCE_KEYS.has(key);

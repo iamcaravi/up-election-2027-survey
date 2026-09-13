@@ -7,7 +7,7 @@ async function main() {
     orderBy: { number: "asc" },
   });
   const parties = await prisma.party.findMany({
-    select: { id: true, name: true, shortName: true, slug: true },
+    select: { id: true, nameEnglish: true, shortName: true, slug: true },
   });
   const candidateCount = await prisma.candidate.count();
   console.log("constituencies:", consts.length);

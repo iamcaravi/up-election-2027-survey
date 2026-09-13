@@ -136,22 +136,31 @@ test("party-first template contract is represented by order and static requiredn
   assert.equal(target.questions[1].required, false);
 });
 
-test("active canonical parties include Jansatta deterministically with Other and Undecided last", () => {
+test("active canonical parties include Jansatta deterministically with Other, NOTA and Undecided last", () => {
   const ordered = orderPartiesForSurvey([
-    { id: "other", name: "Other", shortName: "Other", slug: "other", displayOrder: 0, isActive: true },
-    { id: "bjp", name: "BJP", shortName: "BJP", slug: "bjp", displayOrder: 0, isActive: true },
+    { id: "other", shortName: "Other", slug: "other", displayOrder: 0, isActive: true },
+    { id: "bjp", shortName: "BJP", slug: "bjp", displayOrder: 0, isActive: true },
     {
       id: "jansatta",
-      name: "Jansatta Dal Loktantrik Party",
       shortName: "Jansatta Dal Loktantrik Party",
       slug: "jansatta-dal-loktantrik-party",
       displayOrder: 8,
       isActive: true,
     },
-    { id: "undecided", name: "Undecided", shortName: "Undecided", slug: "undecided", displayOrder: 1, isActive: true },
-    { id: "inactive", name: "Inactive", shortName: "Inactive", slug: "inactive", displayOrder: 2, isActive: false },
+    { id: "nota", shortName: "NOTA", slug: "nota", displayOrder: 2, isActive: true },
+    { id: "undecided", shortName: "Undecided", slug: "undecided", displayOrder: 1, isActive: true },
+    { id: "inactive", shortName: "Inactive", slug: "inactive", displayOrder: 2, isActive: false },
   ]);
-  assert.deepEqual(ordered.map((party) => party.slug), ["bjp", "jansatta-dal-loktantrik-party", "other", "undecided"]);
+  assert.deepEqual(ordered.map((party) => party.slug), ["bjp", "jansatta-dal-loktantrik-party", "other", "nota", "undecided"]);
+});
+
+test("orderPartiesForSurvey throws if NOTA is missing from the active party set", () => {
+  assert.throws(() =>
+    orderPartiesForSurvey([
+      { id: "other", shortName: "Other", slug: "other", displayOrder: 0, isActive: true },
+      { id: "undecided", shortName: "Undecided", slug: "undecided", displayOrder: 1, isActive: true },
+    ])
+  );
 });
 
 test("shared eligibility helper accepts only active, same-scope, same-party eligible statuses", () => {

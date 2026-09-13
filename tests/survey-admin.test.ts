@@ -121,7 +121,7 @@ test("12&13. candidate options are scoped to election+constituency; a candidate 
   // one-active-survey-per-pair rule the admin API also enforces.
   await prisma.survey.update({ where: { id: fx.surveyA.id }, data: { isActive: false } });
 
-  await surveyTemplate.createDefaultSurveyQuestions(prisma, survey.id);
+  await surveyTemplate.createDefaultSurveyQuestions(prisma, survey.id, fx.stateA.id);
   await surveySync.syncCandidateChoiceOptions(fx.constituencyA.id, fx.electionA.id);
 
   const questions = await prisma.surveyQuestion.findMany({
@@ -137,7 +137,8 @@ test("12&13. candidate options are scoped to election+constituency; a candidate 
   assert.equal(questions[1].required, false);
   assert.equal(questions[1].allowSkip, true);
   assert.ok(questions[0].options.some((option) => option.partyId === fx.partyJansatta.id));
-  assert.equal(questions[0].options.at(-2)?.key, "other");
+  assert.equal(questions[0].options.at(-3)?.key, "other");
+  assert.equal(questions[0].options.at(-2)?.key, "nota");
   assert.equal(questions[0].options.at(-1)?.key, "undecided");
 
   const question = await prisma.surveyQuestion.findFirst({ where: { surveyId: survey.id, key: "candidate_choice" } });

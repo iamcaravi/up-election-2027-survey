@@ -1,8 +1,10 @@
 import "server-only";
 
 import { prisma } from "./prisma";
+import { getSiteSetting } from "./data";
 import { ELIGIBLE_RESPONSE_STATUS } from "./enums";
 import { protectPublicCells, type PublicDistribution } from "./public-analytics-core";
+import { REAL_DATA_SOURCE, SYNTHETIC_DATA_MODE_KEY, SYNTHETIC_DATA_SOURCE } from "./synthetic-data";
 
 // A statewide (Uttar-Pradesh-wide) view of survey sentiment: the same
 // party-preference + demographic distributions as a single constituency's
@@ -16,7 +18,23 @@ type StatewideDemographicKey = (typeof STATEWIDE_DEMOGRAPHIC_KEYS)[number];
 export interface PublicStatewideResultsDto {
   election: { name: string; slug: string; year: number };
   state: { name: string; slug: string };
-  sample: { validResponseCount: number; resultsAvailable: boolean; minCellSize: number };
+  sample: {
+    validResponseCount: number;
+    resultsAvailable: boolean;
+    minCellSize: number;
+    /** Valid responses recorded in the last 7 days. */
+    newResponsesLast7Days: number;
+    /** Valid responses recorded in the 7 days before that — used only for the week-over-week delta. */
+    newResponsesPrior7Days: number;
+    /** ISO timestamp of the most recent valid response across the state. Null when there are none. */
+    lastResponseAt: string | null;
+  };
+  /** Total constituencies belonging to this state (real count, not an estimate). */
+  totalConstituencies: number;
+  /** Distinct constituencies with at least one valid response so far. */
+  respondingConstituencyCount: number;
+  /** True when Demo Data Mode is on and this DTO is built from synthetic_demo rows rather than real responses. */
+  isSynthetic: boolean;
   partyPreference: PublicDistribution;
   demographics: Record<StatewideDemographicKey, PublicDistribution>;
 }
@@ -28,14 +46,17 @@ export async function getPublicStatewideResults(electionId: string): Promise<Pub
   // Same as public-survey-results.ts: statewide results show from the first
   // valid response, with no minimum-sample-size gate.
   const minRequired = 1;
+  const isSynthetic = await getSiteSetting<boolean>(SYNTHETIC_DATA_MODE_KEY, false);
+  const activeDataSource = isSynthetic ? SYNTHETIC_DATA_SOURCE : REAL_DATA_SOURCE;
 
-  const [validResponseCount, partyAnswers, demographicAnswers] = await Promise.all([
-    prisma.surveyResponse.count({
-      where: { status: ELIGIBLE_RESPONSE_STATUS, survey: { electionId } },
+  const [responses, partyAnswers, demographicAnswers, totalConstituencies, respondingSurveys] = await Promise.all([
+    prisma.surveyResponse.findMany({
+      where: { status: ELIGIBLE_RESPONSE_STATUS, dataSource: activeDataSource, survey: { electionId } },
+      select: { createdAt: true },
     }),
     prisma.surveyAnswer.findMany({
       where: {
-        response: { status: ELIGIBLE_RESPONSE_STATUS, survey: { electionId } },
+        response: { status: ELIGIBLE_RESPONSE_STATUS, dataSource: activeDataSource, survey: { electionId } },
         question: { key: "party_preference" },
         optionId: { not: null },
       },
@@ -46,14 +67,14 @@ export async function getPublicStatewideResults(electionId: string): Promise<Pub
             label: true,
             order: true,
             partyId: true,
-            party: { select: { name: true, shortName: true, colorHex: true, displayOrder: true, isActive: true } },
+            party: { select: { nameEnglish: true, nameHindi: true, shortName: true, colorHex: true, logoUrl: true, displayOrder: true, isActive: true } },
           },
         },
       },
     }),
     prisma.surveyAnswer.findMany({
       where: {
-        response: { status: ELIGIBLE_RESPONSE_STATUS, survey: { electionId } },
+        response: { status: ELIGIBLE_RESPONSE_STATUS, dataSource: activeDataSource, survey: { electionId } },
         question: { key: { in: [...STATEWIDE_DEMOGRAPHIC_KEYS] } },
         optionId: { not: null },
       },
@@ -62,7 +83,26 @@ export async function getPublicStatewideResults(electionId: string): Promise<Pub
         option: { select: { key: true, label: true, order: true } },
       },
     }),
+    prisma.constituency.count({ where: { stateId: election.stateId } }),
+    prisma.survey.findMany({
+      where: { electionId, responses: { some: { status: ELIGIBLE_RESPONSE_STATUS, dataSource: activeDataSource } } },
+      select: { constituencyId: true },
+      distinct: ["constituencyId"],
+    }),
   ]);
+
+  const validResponseCount = responses.length;
+  const now = Date.now();
+  const oneWeekMs = 7 * 24 * 60 * 60 * 1000;
+  let newResponsesLast7Days = 0;
+  let newResponsesPrior7Days = 0;
+  let lastResponseAt: Date | null = null;
+  for (const response of responses) {
+    const ageMs = now - response.createdAt.getTime();
+    if (ageMs <= oneWeekMs) newResponsesLast7Days += 1;
+    else if (ageMs <= oneWeekMs * 2) newResponsesPrior7Days += 1;
+    if (!lastResponseAt || response.createdAt > lastResponseAt) lastResponseAt = response.createdAt;
+  }
 
   const partyPreference = buildPartyDistribution(partyAnswers, minRequired);
 
@@ -83,7 +123,13 @@ export async function getPublicStatewideResults(electionId: string): Promise<Pub
       validResponseCount,
       resultsAvailable: validResponseCount > 0,
       minCellSize: minRequired,
+      newResponsesLast7Days,
+      newResponsesPrior7Days,
+      lastResponseAt: lastResponseAt ? lastResponseAt.toISOString() : null,
     },
+    totalConstituencies,
+    respondingConstituencyCount: respondingSurveys.length,
+    isSynthetic,
     partyPreference,
     demographics,
   };
@@ -95,14 +141,14 @@ interface PartyAnswerRow {
     label: string;
     order: number;
     partyId: string | null;
-    party: { name: string; shortName: string; colorHex: string; displayOrder: number; isActive: boolean } | null;
+    party: { nameEnglish: string; nameHindi: string | null; shortName: string; colorHex: string; logoUrl: string | null; displayOrder: number; isActive: boolean } | null;
   } | null;
 }
 
 function buildPartyDistribution(rows: PartyAnswerRow[], minRequired: number): PublicDistribution {
   if (rows.length === 0) return { state: "unavailable", reason: "no_responses", minRequired };
 
-  const counts = new Map<string, { label: string; colorHex: string | null; displayOrder: number; partyId: string | null; count: number }>();
+  const counts = new Map<string, { label: string; nameHindi: string | null; logoUrl: string | null; colorHex: string | null; displayOrder: number; partyId: string | null; count: number }>();
   for (const row of rows) {
     const option = row.option;
     if (!option) continue;
@@ -115,7 +161,9 @@ function buildPartyDistribution(rows: PartyAnswerRow[], minRequired: number): Pu
       existing.count += 1;
     } else {
       counts.set(groupKey, {
-        label: option.party?.name ?? option.label,
+        label: option.party?.nameEnglish ?? option.label,
+        nameHindi: option.party?.nameHindi ?? null,
+        logoUrl: option.party?.logoUrl ?? null,
         colorHex: option.party?.colorHex ?? null,
         displayOrder: option.party?.displayOrder ?? option.order,
         partyId: option.partyId,
@@ -128,6 +176,8 @@ function buildPartyDistribution(rows: PartyAnswerRow[], minRequired: number): Pu
     .map(([key, value]) => ({
       key,
       label: value.label,
+      nameHindi: value.nameHindi,
+      logoUrl: value.logoUrl,
       colorHex: value.colorHex,
       partyId: value.partyId,
       displayOrder: value.displayOrder,

@@ -95,22 +95,38 @@ export async function seedFixtures(prisma: PrismaClient) {
   });
 
   const party = await prisma.party.create({
-    data: { name: "Test Party", shortName: "TP", slug: "test-party" },
+    data: { nameEnglish: "Test Party", shortName: "TP", slug: "test-party" },
   });
   const partyJansatta = await prisma.party.create({
     data: {
-      name: "Jansatta Dal Loktantrik Party",
+      nameEnglish: "Jansatta Dal Loktantrik Party",
       shortName: "Jansatta Dal Loktantrik Party",
       slug: "jansatta-dal-loktantrik-party",
       displayOrder: 8,
     },
   });
   const partyOther = await prisma.party.create({
-    data: { name: "Other / Independent", shortName: "Other", slug: "other", displayOrder: 98 },
+    data: { nameEnglish: "Other / Independent", shortName: "Other", slug: "other", displayOrder: 98 },
+  });
+  const partyNota = await prisma.party.create({
+    data: { nameEnglish: "None of the Above", nameHindi: "इनमें से कोई नहीं", shortName: "NOTA", slug: "nota", displayOrder: 99 },
   });
   const partyUndecided = await prisma.party.create({
-    data: { name: "Undecided", shortName: "Undecided", slug: "undecided", displayOrder: 99 },
+    data: { nameEnglish: "Undecided", shortName: "Undecided", slug: "undecided", displayOrder: 100 },
   });
+  // Featured ONLY in stateB — proves a state's featured list never leaks
+  // into another state's survey (see the isolation test in isolation.test.ts).
+  const partyStateBOnly = await prisma.party.create({
+    data: { nameEnglish: "State B Regional Party", shortName: "SBRP", slug: "state-b-regional-party" },
+  });
+
+  // Feature `party` (TP) and `partyJansatta` for stateA — this is what makes
+  // them appear as party_preference options for stateA's surveys; other/
+  // nota/undecided are always-on globals and never need a StateParty row
+  // (see getStatePartiesForSurvey in src/lib/survey-template-data.ts).
+  await prisma.stateParty.create({ data: { stateId: stateA.id, partyId: party.id, displayOrder: 0 } });
+  await prisma.stateParty.create({ data: { stateId: stateA.id, partyId: partyJansatta.id, displayOrder: 1 } });
+  await prisma.stateParty.create({ data: { stateId: stateB.id, partyId: partyStateBOnly.id, displayOrder: 0 } });
 
   const candidateA = await prisma.candidate.create({
     data: {
@@ -194,7 +210,9 @@ export async function seedFixtures(prisma: PrismaClient) {
     party,
     partyJansatta,
     partyOther,
+    partyNota,
     partyUndecided,
+    partyStateBOnly,
     candidateA,
     candidateB,
     candidateA2,

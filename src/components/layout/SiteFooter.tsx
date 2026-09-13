@@ -6,10 +6,12 @@ import { VisitorPresence } from "./VisitorPresence";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 interface SiteFooterProps {
-  /** Real route to the primary (currently featured) state page. */
-  stateHref: string;
-  /** Real route to that state's active election / results page. */
+  /** Real route to the current (URL-resolved) state's active election / results page. */
   resultsHref: string;
+  /** Real route to the current state's "चुनाव विश्लेषण" analytics landing page. */
+  analysisHref: string;
+  /** Real route to the current state's "प्रीमियम विश्लेषण" (Premium Analytics) landing page. */
+  premiumHref: string;
 }
 
 function XIcon({ size = 16 }: { size?: number }) {
@@ -62,17 +64,17 @@ const SOCIAL_LINKS = [
   { label: "LinkedIn", href: "#", Icon: LinkedinIcon },
 ];
 
-export function SiteFooter({ stateHref, resultsHref }: SiteFooterProps) {
+export function SiteFooter({ resultsHref, analysisHref, premiumHref }: SiteFooterProps) {
   const { t } = useLocale();
   const currentYear = new Date().getFullYear();
 
   const quickLinks = [
     { href: "/", label: t.siteFooter.home },
-    { href: stateHref, label: t.siteHeader.uttarPradesh },
     { href: "/#elections", label: t.siteFooter.elections },
     { href: "/states", label: t.siteHeader.constituency },
     { href: resultsHref, label: t.siteHeader.results },
-    { href: resultsHref, label: t.siteHeader.premiumAnalysis },
+    { href: analysisHref, label: t.siteHeader.analysis },
+    { href: premiumHref, label: t.siteHeader.premiumAnalysis },
   ];
 
   const helpLinks = [

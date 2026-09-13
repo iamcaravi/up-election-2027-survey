@@ -231,10 +231,10 @@ export const DEFAULT_HERO_CONFIG: HeroConfig = {
     lineHeight: 1.4,
   }),
   editorialLine1: textEl({
-    text: "राज्यों के चुनाव में",
+    text: "देश के हर राज्य में",
     fontSize: { desktop: 38, tablet: 18, mobile: 10 },
     fontWeight: 800,
-    color: ACCENT_ORANGE,
+    color: INK,
     position: pos({ x: 52, y: 19 }, { x: 52, y: 19 }, { x: 52, y: 19 }),
     lineHeight: 1.1,
   }),

@@ -27,7 +27,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
 
   const candidates = await prisma.candidate.findMany({
     where: { constituencyId: constituency.id, electionId: election.id, isActive: true },
-    include: { party: { select: { name: true, shortName: true, colorHex: true, logoUrl: true } } },
+    include: { party: { select: { nameEnglish: true, nameHindi: true, shortName: true, colorHex: true, logoUrl: true } } },
     orderBy: { name: "asc" },
   });
 

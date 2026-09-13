@@ -37,6 +37,7 @@ model State {
   elections     Election[]
   districts     District[]
   constituencies Constituency[]
+  stateParties  StateParty[]
 
   @@map("states")
 }
@@ -137,9 +138,14 @@ model ElectionConstituency {
 // Parties & Candidates
 // ---------------------------------------------------------------------------
 
+// A Party is a single global row (BJP/INC/AAP are the same row everywhere),
+// shared across states via StateParty. logoUrl/nameHindi are plain nullable
+// fields an admin fills in — no logo/Hindi name is ever invented in code; a
+// party without one simply renders its English name / an initials fallback.
 model Party {
   id          String   @id @default(cuid())
-  name        String
+  nameEnglish String
+  nameHindi   String?
   shortName   String   @unique // e.g. BJP, SP, INC, BSP
   slug        String   @unique
   colorHex    String   @default("#6b7280")
@@ -151,8 +157,34 @@ model Party {
 
   candidates       Candidate[]
   surveyOptions    SurveyOption[]
+  stateParties     StateParty[]
 
   @@map("parties")
+}
+
+// Which parties are "featured" (shown in the public survey) for a given
+// state, and in what order. A national party (BJP/INC/AAP/...) gets one
+// StateParty row per state it's featured in; a state-only party (e.g.
+// Shiromani Akali Dal) simply never gets a row in any other state. The
+// public survey's party question is built from `isFeatured: true` rows only
+// (capped at 5 by the admin API) plus the three always-on globals
+// (other/nota/undecided), which are NOT modeled here — see
+// src/lib/survey-template-data.ts.
+model StateParty {
+  id           String   @id @default(cuid())
+  stateId      String
+  state        State    @relation(fields: [stateId], references: [id])
+  partyId      String
+  party        Party    @relation(fields: [partyId], references: [id])
+  isFeatured   Boolean  @default(true)
+  displayOrder Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([stateId, partyId])
+  @@index([stateId])
+  @@index([partyId])
+  @@map("state_parties")
 }
 
 model Candidate {
@@ -251,7 +283,7 @@ model SurveyQuestion {
   survey      Survey   @relation(fields: [surveyId], references: [id])
   key         String   // candidate_choice | party_preference | top_issue | age_group | gender | social_category | religion
   label       String
-  type        String   @default("SINGLE_CHOICE") // SINGLE_CHOICE
+  type        String   @default("SINGLE_CHOICE") // SINGLE_CHOICE | MULTIPLE_CHOICE | TEXT
   required    Boolean  @default(false)
   allowSkip   Boolean  @default(true)
   order       Int      @default(0)
@@ -292,6 +324,11 @@ model SurveyResponse {
   fingerprint    String?  // salted device/browser fingerprint hash
   flagReason     String?
   createdAt      DateTime @default(now())
+  // "real" (an actual submitted survey response) or "synthetic_demo" (admin-
+  // generated demo/testing data — see src/lib/synthetic-data.ts). Public
+  // aggregation queries always filter on this field so demo data can never
+  // silently mix with genuine responses.
+  dataSource     String   @default("real")
 
   answers        SurveyAnswer[]
   moderationFlags ModerationFlag[]
@@ -300,6 +337,7 @@ model SurveyResponse {
   @@index([constituencyId])
   @@index([fingerprint])
   @@index([createdAt])
+  @@index([dataSource])
   @@map("survey_responses")
 }
 

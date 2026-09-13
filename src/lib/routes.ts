@@ -26,3 +26,13 @@ export function districtPath(stateSlug: string, electionSlug: string, districtSl
 export function constituencyPath(stateSlug: string, electionSlug: string, constituencySlug: string) {
   return `${electionPath(stateSlug, electionSlug)}/constituencies/${constituencySlug}`;
 }
+
+/** The state-wide "चुनाव विश्लेषण" analytics landing page — not a constituency/candidate page. */
+export function analysisPath(stateSlug: string, electionSlug: string) {
+  return `${electionPath(stateSlug, electionSlug)}/analysis`;
+}
+
+/** The "प्रीमियम विश्लेषण" (Premium Analytics) marketing/landing page — separate from the results page. */
+export function premiumPath(stateSlug: string, electionSlug: string) {
+  return `${electionPath(stateSlug, electionSlug)}/premium`;
+}

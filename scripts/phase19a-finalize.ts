@@ -85,17 +85,17 @@ async function main() {
   if (existingGhosi.length > 0) throw new Error(`Unexpected Ghosi incumbent: ${JSON.stringify(existingGhosi)}`);
 
   const possiblePartyDuplicates = await prisma.party.findMany({
-    where: { OR: [{ name: PARTY_NAME }, { shortName: PARTY_SHORT_NAME }, { slug: PARTY_SLUG }] },
+    where: { OR: [{ nameEnglish: PARTY_NAME }, { shortName: PARTY_SHORT_NAME }, { slug: PARTY_SLUG }] },
   });
   let partyCreated = false;
   if (possiblePartyDuplicates.length === 0) {
     await prisma.party.create({
-      data: { name: PARTY_NAME, shortName: PARTY_SHORT_NAME, slug: PARTY_SLUG },
+      data: { nameEnglish: PARTY_NAME, shortName: PARTY_SHORT_NAME, slug: PARTY_SLUG },
     });
     partyCreated = true;
   } else if (
     possiblePartyDuplicates.length !== 1 ||
-    possiblePartyDuplicates[0].name !== PARTY_NAME ||
+    possiblePartyDuplicates[0].nameEnglish !== PARTY_NAME ||
     possiblePartyDuplicates[0].shortName !== PARTY_SHORT_NAME ||
     possiblePartyDuplicates[0].slug !== PARTY_SLUG
   ) {

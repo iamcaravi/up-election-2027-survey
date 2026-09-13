@@ -12,6 +12,7 @@ interface PublicBucketMetadata {
   key: string;
   label: string;
   nameHindi?: string | null;
+  logoUrl?: string | null;
   colorHex?: string | null;
   partyId?: string | null;
   candidateId?: string | null;
@@ -36,9 +37,11 @@ export interface PublicPartyOptionInput {
   partyId: string | null;
   party: {
     id: string;
-    name: string;
+    nameEnglish: string;
+    nameHindi: string | null;
     shortName: string;
     colorHex: string;
+    logoUrl: string | null;
     displayOrder: number;
     isActive: boolean;
   } | null;
@@ -184,8 +187,9 @@ function partyMetadata(option: PublicPartyOptionInput) {
   return {
     key: option.key,
     partyId: option.partyId,
-    name: option.party?.name ?? option.label,
-    nameHindi: null,
+    name: option.party?.nameEnglish ?? option.label,
+    nameHindi: option.party?.nameHindi ?? null,
+    logoUrl: option.party?.logoUrl ?? null,
     colorHex: option.party?.colorHex ?? null,
     displayOrder: option.party?.displayOrder ?? option.order,
     isSpecial: isSpecialPartyPreferenceKey(option.key),
@@ -230,6 +234,7 @@ export function aggregatePublicAnalytics(input: PublicAnalyticsInput): PublicAna
       key: metadata.key,
       label: metadata.name,
       nameHindi: metadata.nameHindi,
+      logoUrl: metadata.logoUrl,
       colorHex: metadata.colorHex,
       partyId: metadata.partyId,
       displayOrder: metadata.displayOrder,

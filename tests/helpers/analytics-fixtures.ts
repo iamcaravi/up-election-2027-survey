@@ -28,8 +28,8 @@ export async function seedAnalyticsFixtures(prisma: PrismaClient) {
   await prisma.electionConstituency.create({ data: { electionId: electionA.id, constituencyId: constituencyA.id } });
   await prisma.electionConstituency.create({ data: { electionId: electionB.id, constituencyId: constituencyB.id } });
 
-  const partyX = await prisma.party.create({ data: { name: "Party X", shortName: "PX", slug: "party-x", colorHex: "#ff0000" } });
-  const partyY = await prisma.party.create({ data: { name: "Party Y", shortName: "PY", slug: "party-y", colorHex: "#0000ff" } });
+  const partyX = await prisma.party.create({ data: { nameEnglish: "Party X", shortName: "PX", slug: "party-x", colorHex: "#ff0000" } });
+  const partyY = await prisma.party.create({ data: { nameEnglish: "Party Y", shortName: "PY", slug: "party-y", colorHex: "#0000ff" } });
 
   const candidateA1 = await prisma.candidate.create({
     data: { electionId: electionA.id, constituencyId: constituencyA.id, partyId: partyX.id, name: "Candidate A1", slug: "candidate-a1", status: "DECLARED" },
