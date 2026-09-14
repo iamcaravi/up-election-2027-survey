@@ -8,6 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "seed": "tsx prisma/seed.ts",
+    "seed:analysis-demo": "tsx scripts/seed-analysis-demo.ts",
+    "clear:analysis-demo": "tsx scripts/clear-analysis-demo.ts",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
     "typecheck": "next typegen && tsc --noEmit",

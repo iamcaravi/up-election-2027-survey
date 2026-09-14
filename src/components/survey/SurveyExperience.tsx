@@ -284,7 +284,7 @@ export function SurveyExperience({
           </p>
         )}
 
-        <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-8">
           <div className="flex items-start gap-3 rounded-xl border border-ink/15 bg-ink/5 px-4 py-3.5 text-sm text-foreground sm:max-w-sm">
             <ShieldCheck size={18} className="mt-0.5 shrink-0 text-ink" />
             <div>
@@ -292,29 +292,36 @@ export function SurveyExperience({
               <p className="mt-0.5 text-muted">{t.surveyFlow.privacyBody}</p>
             </div>
           </div>
-
-          {!isFirst && (
-            <Button
-              variant="outline"
-              size="lg"
-              className="border-ink/40 text-base text-ink hover:bg-ink/5 sm:self-end"
-              onClick={() => setPageIndex((i) => i - 1)}
-              disabled={submitting}
-            >
-              <ChevronLeft size={20} /> {t.surveyFlow.previous}
-            </Button>
-          )}
         </div>
 
-        {/* Bottom padding so the floating CTA below never overlaps the last
-            piece of content (privacy notice / previous button / last
-            answer option). */}
+        {/* Bottom padding so the floating Previous/Next controls below never
+            overlap the last piece of content (privacy notice / last answer
+            option). */}
         <div className="pb-20 sm:pb-4" aria-hidden="true" />
       </div>
 
-      {/* Only the primary CTA floats — no full-width bar/background behind
-          it, so it never covers survey content. */}
-      <div className="fixed bottom-5 right-4 z-40 sm:bottom-6 sm:right-16 lg:right-24">
+      {/* Previous and Next float together in the fixed bottom-right corner
+          (not in the normal document flow) so neither ever requires
+          scrolling to reach. Grouped side-by-side rather than in opposite
+          corners so they read as one navigation control; Previous only
+          renders when a previous step exists, per the existing !isFirst
+          survey-navigation rule. Icon-only below `sm:` keeps both compact
+          enough to fit side-by-side without overflow at 320px. */}
+      <div className="fixed bottom-5 right-4 z-40 flex items-center gap-2 sm:bottom-6 sm:right-16 sm:gap-3 lg:right-24">
+        {!isFirst && (
+          <Button
+            variant="outline"
+            size="lg"
+            className="border-ink/40 text-base text-ink shadow-[var(--shadow-card)] hover:bg-ink/5"
+            onClick={() => setPageIndex((i) => i - 1)}
+            disabled={submitting}
+            aria-label={t.surveyFlow.previous}
+          >
+            <ChevronLeft size={20} />
+            <span className="hidden sm:inline">{t.surveyFlow.previous}</span>
+          </Button>
+        )}
+
         <Button
           variant="cta"
           size="lg"

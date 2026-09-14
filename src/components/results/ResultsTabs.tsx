@@ -87,31 +87,20 @@ export function ResultsTabs({
         )}
       </div>
 
+      {/* The constituency result page shows only its one primary result view —
+          no in-page "Summary / Party Comparison / Top issues / Voter profile /
+          Detailed Analysis" scroll-nav (those section ids still exist inside
+          PublicResultsView/StatewideResultsView for anchor links elsewhere,
+          e.g. the footer's "View methodology" link — this only removes the
+          pointless always-first-tab nav bar, not the sections themselves). */}
       {activeHasResults && (
-        <div className="mb-6 flex flex-col gap-3 border-b border-border pb-3 sm:flex-row sm:items-center sm:justify-between">
-          <nav aria-label="Results sections" className="flex min-w-0 gap-5 overflow-x-auto">
-            {SECTION_KEYS.map(({ id, get }, index) => (
-              <button
-                key={id}
-                type="button"
-                onClick={() => scrollToSection(id)}
-                className={cn(
-                  "-mb-px shrink-0 whitespace-nowrap border-b-2 pb-2 text-sm font-bold transition-colors",
-                  index === 0 ? "border-ink text-ink" : "border-transparent text-muted hover:text-ink"
-                )}
-              >
-                {get(t)}
-              </button>
-            ))}
-          </nav>
-          <div className="flex shrink-0 items-center gap-4 text-xs text-muted">
-            <span className="whitespace-nowrap">
-              {t.results.lastUpdated}: {activeLastResponseAt ? dateTimeFormatter.format(new Date(activeLastResponseAt)) : "—"}
-            </span>
-            <span className="flex items-center gap-1.5 whitespace-nowrap font-bold text-ink">
-              <Users size={14} /> {t.results.totalResponsesCard} {numberFormatter.format(activeValidResponseCount ?? 0)}
-            </span>
-          </div>
+        <div className="mb-6 flex justify-end border-b border-border pb-3 text-xs text-muted">
+          <span className="whitespace-nowrap">
+            {t.results.lastUpdated}: {activeLastResponseAt ? dateTimeFormatter.format(new Date(activeLastResponseAt)) : "—"}
+          </span>
+          <span className="ml-4 flex items-center gap-1.5 whitespace-nowrap font-bold text-ink">
+            <Users size={14} /> {t.results.totalResponsesCard} {numberFormatter.format(activeValidResponseCount ?? 0)}
+          </span>
         </div>
       )}
 
@@ -124,18 +113,6 @@ export function ResultsTabs({
       <SurveyTrustStrip />
     </div>
   );
-}
-
-const SECTION_KEYS: { id: string; get: (t: ReturnType<typeof useLocale>["t"]) => string }[] = [
-  { id: "summary", get: (t) => t.results.tabSummary },
-  { id: "party", get: (t) => t.results.tabPartyComparison },
-  { id: "issues", get: (t) => t.results.topIssues },
-  { id: "profile", get: (t) => t.results.voterProfile },
-  { id: "detailed", get: (t) => t.results.tabDetailedAnalysis },
-];
-
-function scrollToSection(id: string) {
-  document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function ScopeTabButton({

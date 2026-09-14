@@ -49,7 +49,7 @@ export const HOMEPAGE_SECTION_LABELS: Record<HomepageSectionKey, string> = {
   hero: "Hero",
   surveyCta: "Survey Entry / CTA (in Hero)",
   stats: "Statistics Bar",
-  featureCards: "Feature Cards (Take Survey / Results / Premium / Other States)",
+  featureCards: "Feature Cards (Take Survey / Results / Analysis / Other States)",
   issues: "Issues (मुद्दे जो मायने रखते हैं)",
   about: "About + Responsible Initiative (हमारा उद्देश्य / एक जिम्मेदार पहल)",
   states: "Current States",

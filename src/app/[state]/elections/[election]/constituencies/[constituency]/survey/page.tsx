@@ -15,7 +15,19 @@ import {
   DEFAULT_HERO_ELEMENTS_CONFIG,
 } from "@/lib/survey-hero-elements-config";
 
-export const metadata: Metadata = { title: "Take the Survey" };
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ state: string; election: string; constituency: string }>;
+}): Promise<Metadata> {
+  const { state: stateSlug, election: electionSlug, constituency: slug } = await params;
+  const c = await getConstituencyBySlug(stateSlug, slug, electionSlug);
+  if (!c) return {};
+  return {
+    title: `Take the Survey — ${c.name}`,
+    description: `Share your voter preference for ${c.name} assembly constituency, ${c.district.name}, ${c.state.name} — a 2-minute public opinion survey.`,
+  };
+}
 
 export default async function SurveyPage({
   params,

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { Menu, X, Search, Crown } from "lucide-react";
+import { Menu, X, Search } from "lucide-react";
 import { LocaleToggle } from "./LocaleToggle";
 import { SearchBox } from "@/components/search/SearchBox";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -13,11 +13,9 @@ interface SiteHeaderProps {
   resultsHref: string;
   /** Real route to the current state's "चुनाव विश्लेषण" analytics landing page. */
   analysisHref: string;
-  /** Real route to the current state's "प्रीमियम विश्लेषण" (Premium Analytics) landing page. */
-  premiumHref: string;
 }
 
-export function SiteHeader({ resultsHref, analysisHref, premiumHref }: SiteHeaderProps) {
+export function SiteHeader({ resultsHref, analysisHref }: SiteHeaderProps) {
   const { t } = useLocale();
   const [open, setOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -42,7 +40,7 @@ export function SiteHeader({ resultsHref, analysisHref, premiumHref }: SiteHeade
   const navItems = [
     { href: "/", label: t.nav.home },
     { href: "/#elections", label: t.nav.elections },
-    { href: "/states", label: t.siteHeader.constituency },
+    { href: "/find-constituency", label: t.siteHeader.constituency },
     { href: resultsHref, label: t.siteHeader.results },
     { href: analysisHref, label: t.siteHeader.analysis },
     { href: "/about", label: t.siteHeader.aboutUs },
@@ -50,7 +48,7 @@ export function SiteHeader({ resultsHref, analysisHref, premiumHref }: SiteHeade
 
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background">
-      <div className="mx-auto flex h-[60px] w-full max-w-7xl flex-nowrap items-center justify-between gap-2 px-7 lg:px-8">
+      <div className="mx-auto flex h-[60px] w-full max-w-7xl flex-nowrap items-center justify-between gap-2 px-4 sm:px-6 lg:px-8">
         {/* Logo & Brand */}
         <Link href="/" className="flex shrink-0 items-center gap-2">
           <span className="flex items-end gap-1">
@@ -60,7 +58,7 @@ export function SiteHeader({ resultsHref, analysisHref, premiumHref }: SiteHeade
           </span>
           <span className="flex flex-col justify-center leading-tight">
             <span className="font-display text-lg font-extrabold lowercase text-foreground">votersurvey.in</span>
-            <span className="text-[10.5px] font-medium text-muted">{t.siteHeader.tagline}</span>
+            <span className="hidden text-[10.5px] font-medium text-muted sm:block">{t.siteHeader.tagline}</span>
           </span>
         </Link>
 
@@ -82,7 +80,7 @@ export function SiteHeader({ resultsHref, analysisHref, premiumHref }: SiteHeade
         </nav>
 
         {/* Right Controls */}
-        <div className="flex shrink-0 items-center gap-2">
+        <div className="flex shrink-0 items-center gap-1 sm:gap-2">
           {/* Search - Desktop: icon only, opens a compact popover using the existing SearchBox */}
           <div ref={searchRef} className="relative hidden lg:block">
             <button
@@ -100,25 +98,7 @@ export function SiteHeader({ resultsHref, analysisHref, premiumHref }: SiteHeade
             )}
           </div>
 
-          {/* Search Icon - Mobile/Tablet (opens the mobile menu's inline search) */}
-          <button
-            onClick={() => setOpen(true)}
-            className="flex h-9 w-9 items-center justify-center rounded-lg text-foreground/60 transition-colors hover:bg-surface-2 hover:text-foreground lg:hidden"
-            aria-label={t.siteHeader.search}
-          >
-            <Search size={18} />
-          </button>
-
           <LocaleToggle />
-
-          {/* Premium Analytics CTA - Desktop */}
-          <Link
-            href={premiumHref}
-            className="hidden shrink-0 items-center gap-2 whitespace-nowrap rounded-lg bg-ink px-5 py-2.5 text-sm font-semibold text-white transition-all hover:bg-ink-2 lg:flex"
-          >
-            <Crown size={15} />
-            {t.siteHeader.premiumAnalysis}
-          </Link>
 
           {/* Mobile Menu Toggle */}
           <button
@@ -147,14 +127,6 @@ export function SiteHeader({ resultsHref, analysisHref, premiumHref }: SiteHeade
               </Link>
             ))}
           </div>
-          <Link
-            href={premiumHref}
-            onClick={() => setOpen(false)}
-            className="flex items-center justify-center gap-1.5 rounded-lg bg-ink px-4 py-2.5 text-sm font-semibold text-white transition-all hover:bg-ink-2"
-          >
-            <Crown size={14} />
-            {t.siteHeader.premiumAnalysis}
-          </Link>
         </div>
       )}
     </header>

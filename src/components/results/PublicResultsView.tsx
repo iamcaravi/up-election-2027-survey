@@ -157,7 +157,7 @@ export function PublicResultsView({ data, surveyHref }: { data: PublicSurveyResu
             </div>
           )}
 
-          <DisclaimerShareBar shareTitle={data.context.constituency.name} />
+          <DisclaimerShareBar shareTitle={data.context.constituency.name} electionYear={data.context.election.year} />
         </>
       )}
 

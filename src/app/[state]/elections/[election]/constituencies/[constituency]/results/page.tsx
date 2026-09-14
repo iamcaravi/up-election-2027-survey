@@ -7,8 +7,7 @@ import { getPublicStatewideResults } from "@/lib/public-statewide-results";
 import { ResultsTabs } from "@/components/results/ResultsTabs";
 import { SurveyHero } from "@/components/survey/SurveyHero";
 import { Container } from "@/components/ui/Container";
-import { electionPath, districtPath, statePath, premiumPath } from "@/lib/routes";
-import { PremiumAnalyticsBanner } from "@/components/premium/PremiumAnalyticsBanner";
+import { electionPath, districtPath, statePath } from "@/lib/routes";
 import {
   SURVEY_HERO_ELEMENTS_KEY,
   surveyHeroElementsOverrideKey,
@@ -16,7 +15,19 @@ import {
   DEFAULT_HERO_ELEMENTS_CONFIG,
 } from "@/lib/survey-hero-elements-config";
 
-export const metadata: Metadata = { title: "Survey Results" };
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ state: string; election: string; constituency: string }>;
+}): Promise<Metadata> {
+  const { state: stateSlug, election: electionSlug, constituency: slug } = await params;
+  const c = await getConstituencyBySlug(stateSlug, slug, electionSlug);
+  if (!c) return {};
+  return {
+    title: `Survey Results — ${c.name}`,
+    description: `Public survey results for ${c.name} assembly constituency, ${c.district.name}, ${c.state.name}.`,
+  };
+}
 export const dynamic = "force-dynamic";
 
 export default async function ResultsPage({
@@ -63,7 +74,6 @@ export default async function ResultsPage({
             surveyHref={`${basePath}/constituencies/${constituency.slug}/survey`}
           />
         </Suspense>
-        <PremiumAnalyticsBanner href={premiumPath(scopedElection.state.slug, scopedElection.election.slug)} />
       </Container>
     </div>
   );

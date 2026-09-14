@@ -207,6 +207,13 @@ export function Hero({
     locale === "en"
       ? "India's Largest Public Opinion Survey Platform — State Elections, the People's Mood"
       : "भारत का सबसे बड़ा जनमत सर्वे प्लेटफॉर्म — राज्यों का चुनाव, जनता का मूड";
+  // The public hero is a flat poster image with its heading baked into the
+  // pixels (see the desktop/mobile <Image> blocks below) — that alone would
+  // leave the page with no real <h1>, which breaks the document's heading
+  // hierarchy for screen readers and search engines. This mirrors the exact
+  // same text visually shown in the poster, so nothing new is communicated,
+  // it's just made available as real markup instead of only as pixels.
+  const heroHeadingText = `${heroText(config.mainHeadingLine1.text, locale)} ${heroText(config.mainHeadingLine2.text, locale)}`;
   const bannerRef = useRef<HTMLDivElement>(null);
   const [dragging, setDragging] = useState<HeroElementKey | null>(null);
   const lastPointerRef = useRef<{ x: number; y: number } | null>(null);
@@ -318,6 +325,12 @@ export function Hero({
     >
       {/* numeric/hex values only, sourced from heroConfigSchema-validated config */}
       <style dangerouslySetInnerHTML={{ __html: responsiveStyleCss }} />
+
+      {/* Real <h1> for the page — the poster image below shows this same text
+          visually, but a screen reader / search engine needs it as markup,
+          not only as pixels. Not rendered a second time in the admin editor,
+          which already has its own live <h1> in the canvas below. */}
+      {!editable && <h1 className="sr-only">{heroHeadingText}</h1>}
 
       {/* Admin-editable photo+live-text composition — ONLY ever rendered inside
           the /admin/hero editor (editable=true) now. The public homepage always

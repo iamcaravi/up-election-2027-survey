@@ -5,6 +5,7 @@ import { ArrowRight, Landmark } from "lucide-react";
 import Link from "next/link";
 import { displayStateName } from "@/lib/utils";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { DISTRICT_COLORS } from "@/lib/district-colors";
 
 interface StateItem {
   slug: string;
@@ -32,6 +33,7 @@ export function StatesSection({ states }: { states: StateItem[] }) {
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {states.map((state, i) => {
           const isOngoing = state.elections[0]?.status === "ONGOING";
+          const palette = DISTRICT_COLORS[i % DISTRICT_COLORS.length];
           return (
             <motion.div
               key={state.slug}
@@ -42,14 +44,14 @@ export function StatesSection({ states }: { states: StateItem[] }) {
               className={
                 isOngoing
                   ? "flex items-center gap-3 rounded-2xl border-2 border-orange-300 bg-orange-50 p-4 dark:border-orange-800 dark:bg-orange-950/30"
-                  : "flex items-center gap-3 rounded-2xl border border-border bg-surface-2 p-4"
+                  : `flex items-center gap-3 rounded-2xl border p-4 ${palette.bg} ${palette.border}`
               }
             >
               <span
                 className={
                   isOngoing
                     ? "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-orange-100 text-orange-600 dark:bg-orange-900/40"
-                    : "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-surface text-muted"
+                    : `flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${palette.icon}`
                 }
               >
                 <Landmark size={20} />

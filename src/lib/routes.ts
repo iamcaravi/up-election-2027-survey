@@ -32,7 +32,29 @@ export function analysisPath(stateSlug: string, electionSlug: string) {
   return `${electionPath(stateSlug, electionSlug)}/analysis`;
 }
 
-/** The "प्रीमियम विश्लेषण" (Premium Analytics) marketing/landing page — separate from the results page. */
-export function premiumPath(stateSlug: string, electionSlug: string) {
-  return `${electionPath(stateSlug, electionSlug)}/premium`;
+// The Results journey is a standalone flow independent of the State/Election
+// hierarchy above — Results → pick a state → that state's aggregate result
+// overview → pick a constituency → the canonical per-constituency result
+// page (still constituencyPath + "/results", reused as-is, never duplicated).
+export function resultsLandingPath() {
+  return "/results";
+}
+
+export function stateResultsPath(stateSlug: string) {
+  return `/results/${stateSlug}`;
+}
+
+// Analysis is likewise a standalone flow — Analysis → pick a state → that
+// state's analysis dashboard (analysisPath above). This landing page is the
+// state-agnostic entry point, mirroring resultsLandingPath.
+export function analysisLandingPath() {
+  return "/analysis";
+}
+
+// One state card's destination from the Analysis landing page — a thin
+// redirect (src/app/analysis/[state]/page.tsx) that resolves the state's
+// current active election server-side and forwards to analysisPath, so the
+// landing page's cards don't need an election slug up front.
+export function analysisLandingStatePath(stateSlug: string) {
+  return `/analysis/${stateSlug}`;
 }

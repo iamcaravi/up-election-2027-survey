@@ -3,6 +3,7 @@ import { Inter, Manrope, Noto_Sans_Devanagari } from "next/font/google";
 import { Providers } from "./providers";
 import { SiteChrome } from "@/components/layout/SiteChrome";
 import { getSiteSetting, getStates } from "@/lib/data";
+import { getSocialLinks } from "@/lib/social-links";
 import {
   DEFAULT_HOMEPAGE_SECTIONS_CONFIG,
   buildGlobalChromeStyleCss,
@@ -50,9 +51,10 @@ export const viewport: Viewport = {
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
-  const [states, sectionsConfigRaw] = await Promise.all([
+  const [states, sectionsConfigRaw, socialLinks] = await Promise.all([
     getStates(),
     getSiteSetting("HOMEPAGE_SECTIONS_CONFIG", DEFAULT_HOMEPAGE_SECTIONS_CONFIG),
+    getSocialLinks(),
   ]);
   // Every state's slug + current election slug — SiteChrome (a client
   // component) uses the current URL to resolve nav links to WHICHEVER
@@ -74,7 +76,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         {/* numeric values only, sourced from homepageSectionsConfigSchema-validated config */}
         <style dangerouslySetInnerHTML={{ __html: chromeStyleCss }} />
         <Providers>
-          <SiteChrome states={navStates}>
+          <SiteChrome states={navStates} socialLinks={socialLinks}>
             {children}
           </SiteChrome>
         </Providers>

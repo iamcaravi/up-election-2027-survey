@@ -21,10 +21,15 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>("hi");
 
   useEffect(() => {
+    let resolved: Locale = "hi";
     try {
       const stored = window.localStorage.getItem("locale") as Locale | null;
-      if (stored === "hi" || stored === "en") setLocaleState(stored);
+      if (stored === "hi" || stored === "en") {
+        resolved = stored;
+        setLocaleState(stored);
+      }
     } catch {}
+    document.documentElement.lang = resolved;
   }, []);
 
   const setLocale = (l: Locale) => {

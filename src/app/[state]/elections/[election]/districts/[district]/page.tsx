@@ -3,8 +3,8 @@ import type { Metadata } from "next";
 import { getStateAndElection, getDistrictBySlug } from "@/lib/data";
 import { Container } from "@/components/ui/Container";
 import { ConstituencyGrid } from "@/components/district/ConstituencyGrid";
-import { electionPath } from "@/lib/routes";
-import { formatNumber } from "@/lib/utils";
+import { DistrictHeroText } from "@/components/district/DistrictHeroText";
+import { districtsPath, electionPath, statePath } from "@/lib/routes";
 
 export async function generateMetadata({
   params,
@@ -44,13 +44,17 @@ export default async function DistrictPage({
     <div>
       <div className="border-b border-border bg-surface">
         <Container className="py-12">
-          <p className="text-xs font-semibold uppercase tracking-wider text-accent">{state.name} · District</p>
-          <h1 className="font-display text-3xl font-extrabold sm:text-5xl">{district.name}</h1>
-          <div className="mt-6 flex flex-wrap gap-6">
-            <Stat label="Constituencies" value={district.constituencies.length} />
-            <Stat label="Total Responses" value={totalResponses} />
-            <Stat label="Active Surveys" value={activeSurveys} />
-          </div>
+          <DistrictHeroText
+            stateName={state.name}
+            stateHref={statePath(state.slug)}
+            electionName={election.name}
+            electionHref={electionPath(state.slug, election.slug)}
+            districtsHref={districtsPath(state.slug, election.slug)}
+            districtName={district.name}
+            constituencyCount={district.constituencies.length}
+            totalResponses={totalResponses}
+            activeSurveys={activeSurveys}
+          />
         </Container>
       </div>
 
@@ -70,15 +74,6 @@ export default async function DistrictPage({
           }))}
         />
       </Container>
-    </div>
-  );
-}
-
-function Stat({ label, value }: { label: string; value: number }) {
-  return (
-    <div>
-      <p className="font-display text-2xl font-extrabold">{formatNumber(value)}</p>
-      <p className="text-xs text-muted">{label}</p>
     </div>
   );
 }

@@ -3,9 +3,9 @@
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 export function LocaleToggle() {
-  const { locale, setLocale } = useLocale();
+  const { locale, setLocale, t } = useLocale();
   return (
-    <div className="flex h-10 items-center rounded-lg border border-border p-0.5 text-sm font-medium" role="group" aria-label="Switch language">
+    <div className="flex h-10 items-center rounded-lg border border-border p-0.5 text-sm font-medium" role="group" aria-label={t.common.switchLanguage}>
       <button
         onClick={() => setLocale("hi")}
         aria-pressed={locale === "hi"}

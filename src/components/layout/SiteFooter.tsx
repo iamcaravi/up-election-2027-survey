@@ -4,77 +4,37 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { VisitorPresence } from "./VisitorPresence";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import type { SocialLinksConfig, SocialPlatform } from "@/lib/social-links";
+import { XIcon, FacebookIcon, InstagramIcon, YoutubeIcon, LinkedinIcon } from "@/components/ui/SocialIcons";
 
 interface SiteFooterProps {
   /** Real route to the current (URL-resolved) state's active election / results page. */
   resultsHref: string;
   /** Real route to the current state's "चुनाव विश्लेषण" analytics landing page. */
   analysisHref: string;
-  /** Real route to the current state's "प्रीमियम विश्लेषण" (Premium Analytics) landing page. */
-  premiumHref: string;
+  /** Admin-configured social URLs (src/lib/social-links.ts) — a platform with
+   *  no configured URL yet renders as a disabled icon, never a fake `href="#"`. */
+  socialLinks: SocialLinksConfig;
 }
 
-function XIcon({ size = 16 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d="M17.5 3h3l-7.3 8.34L21.5 21h-6.4l-5-6.5-5.7 6.5H1.4l7.8-8.9L1 3h6.5l4.5 5.9L17.5 3Zm-2.2 16.2h1.8L8.8 4.7H6.9l8.4 14.5Z" />
-    </svg>
-  );
-}
-
-function FacebookIcon({ size = 16 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d="M14 22v-8h2.7l.5-3.5H14V8.3c0-1 .3-1.7 1.8-1.7h1.5V3.4C16.8 3.3 15.6 3 14.3 3 11.5 3 9.6 4.7 9.6 7.9v2.6H7v3.5h2.6v8h4.4Z" />
-    </svg>
-  );
-}
-
-function InstagramIcon({ size = 16 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-      <rect x="3.5" y="3.5" width="17" height="17" rx="4.5" />
-      <circle cx="12" cy="12" r="4" />
-      <circle cx="17" cy="7" r="0.9" fill="currentColor" stroke="none" />
-    </svg>
-  );
-}
-
-function YoutubeIcon({ size = 16 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d="M21.6 7.6c-.2-1-1-1.8-2-2C17.9 5.2 12 5.2 12 5.2s-5.9 0-7.6.4c-1 .2-1.8 1-2 2C2 9.3 2 12 2 12s0 2.7.4 4.4c.2 1 1 1.8 2 2 1.7.4 7.6.4 7.6.4s5.9 0 7.6-.4c1-.2 1.8-1 2-2 .4-1.7.4-4.4.4-4.4s0-2.7-.4-4.4ZM10 15.3V8.7l5.7 3.3-5.7 3.3Z" />
-    </svg>
-  );
-}
-
-function LinkedinIcon({ size = 16 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d="M4.98 3.5a2.48 2.48 0 1 0 0 4.96 2.48 2.48 0 0 0 0-4.96ZM3 9.75h3.96V21H3V9.75ZM9.5 9.75h3.8v1.54h.05c.53-1 1.83-1.9 3.77-1.9 4.03 0 4.78 2.5 4.78 5.76V21h-3.96v-5.13c0-1.22-.02-2.8-1.7-2.8-1.7 0-1.97 1.34-1.97 2.71V21H9.5V9.75Z" />
-    </svg>
-  );
-}
-
-const SOCIAL_LINKS = [
-  { label: "X", href: "#", Icon: XIcon },
-  { label: "Facebook", href: "#", Icon: FacebookIcon },
-  { label: "Instagram", href: "#", Icon: InstagramIcon },
-  { label: "YouTube", href: "#", Icon: YoutubeIcon },
-  { label: "LinkedIn", href: "#", Icon: LinkedinIcon },
+const SOCIAL_PLATFORMS: { platform: SocialPlatform; label: string; Icon: (props: { size?: number }) => React.ReactElement }[] = [
+  { platform: "x", label: "X", Icon: XIcon },
+  { platform: "facebook", label: "Facebook", Icon: FacebookIcon },
+  { platform: "instagram", label: "Instagram", Icon: InstagramIcon },
+  { platform: "youtube", label: "YouTube", Icon: YoutubeIcon },
+  { platform: "linkedin", label: "LinkedIn", Icon: LinkedinIcon },
 ];
 
-export function SiteFooter({ resultsHref, analysisHref, premiumHref }: SiteFooterProps) {
+export function SiteFooter({ resultsHref, analysisHref, socialLinks }: SiteFooterProps) {
   const { t } = useLocale();
   const currentYear = new Date().getFullYear();
 
   const quickLinks = [
     { href: "/", label: t.siteFooter.home },
     { href: "/#elections", label: t.siteFooter.elections },
-    { href: "/states", label: t.siteHeader.constituency },
+    { href: "/find-constituency", label: t.siteHeader.constituency },
     { href: resultsHref, label: t.siteHeader.results },
     { href: analysisHref, label: t.siteHeader.analysis },
-    { href: premiumHref, label: t.siteHeader.premiumAnalysis },
   ];
 
   const helpLinks = [
@@ -103,18 +63,36 @@ export function SiteFooter({ resultsHref, analysisHref, premiumHref }: SiteFoote
                 <span className="font-display text-lg font-bold lowercase">votersurvey.in</span>
               </div>
               <p className="text-[15px] text-muted mb-2.5">{t.siteHeader.tagline}</p>
-              {/* Social Icons */}
+              {/* Social Icons — a platform with no configured URL (src/lib/social-links.ts)
+                  renders as a disabled, non-clickable icon rather than a dead `href="#"`. */}
               <div className="flex gap-3">
-                {SOCIAL_LINKS.map(({ label, href, Icon }) => (
-                  <a
-                    key={label}
-                    href={href}
-                    className="flex h-9 w-9 items-center justify-center rounded-lg bg-surface-2 text-muted hover:text-ink transition-colors"
-                    aria-label={label}
-                  >
-                    <Icon size={16} />
-                  </a>
-                ))}
+                {SOCIAL_PLATFORMS.map(({ platform, label, Icon }) => {
+                  const href = socialLinks[platform];
+                  if (!href) {
+                    return (
+                      <span
+                        key={platform}
+                        className="flex h-9 w-9 cursor-not-allowed items-center justify-center rounded-lg bg-surface-2 text-muted/40"
+                        aria-label={`${label} (${t.siteFooter.socialNotConfigured})`}
+                        aria-disabled="true"
+                      >
+                        <Icon size={16} />
+                      </span>
+                    );
+                  }
+                  return (
+                    <a
+                      key={platform}
+                      href={href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex h-9 w-9 items-center justify-center rounded-lg bg-surface-2 text-muted hover:text-ink transition-colors"
+                      aria-label={label}
+                    >
+                      <Icon size={16} />
+                    </a>
+                  );
+                })}
               </div>
             </div>
 
@@ -150,21 +128,26 @@ export function SiteFooter({ resultsHref, analysisHref, premiumHref }: SiteFoote
             <div>
               <p className="text-base font-bold mb-2">{t.siteFooter.newsletterHeading}</p>
               <p className="text-[15px] text-muted mb-2.5">{t.siteFooter.newsletterBody}</p>
-              <form className="flex gap-2" onSubmit={(e) => e.preventDefault()}>
+              {/* No subscription backend exists yet (see src/lib/social-links.ts's
+                  sibling reasoning) — the form is honestly disabled rather than
+                  silently accepting a submission that goes nowhere. */}
+              <div className="flex gap-2" aria-disabled="true">
                 <input
                   type="email"
+                  disabled
                   placeholder={t.siteFooter.emailPlaceholder}
-                  className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-[15px] placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/50"
+                  className="flex-1 cursor-not-allowed rounded-lg border border-border bg-background px-3 py-2 text-[15px] text-muted placeholder:text-muted/70 focus:outline-none"
                 />
                 <button
-                  type="submit"
-                  aria-label="Subscribe"
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-ink text-white hover:bg-ink/90 transition-colors"
+                  type="button"
+                  disabled
+                  aria-label={t.siteFooter.subscribe}
+                  className="flex h-9 w-9 shrink-0 cursor-not-allowed items-center justify-center rounded-lg bg-ink/40 text-white"
                 >
                   <ArrowRight size={16} />
                 </button>
-              </form>
-              <p className="mt-1.5 text-sm text-muted">{t.siteFooter.noSpam}</p>
+              </div>
+              <p className="mt-1.5 text-sm text-muted">{t.siteFooter.newsletterComingSoon}</p>
             </div>
           </div>
         </div>
@@ -183,7 +166,7 @@ export function SiteFooter({ resultsHref, analysisHref, premiumHref }: SiteFoote
               {t.siteFooter.adminLogin}
             </Link>
           </div>
-          <p className="whitespace-nowrap">
+          <p className="text-center sm:whitespace-nowrap">
             {t.siteFooter.madeWithLove}&nbsp;&nbsp;|&nbsp;&nbsp;{t.siteFooter.madeInIndia}
           </p>
         </div>

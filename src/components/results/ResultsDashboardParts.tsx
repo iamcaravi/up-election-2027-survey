@@ -9,11 +9,11 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { motion } from "framer-motion";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { FlaskConical, Info, Share2, ShieldCheck } from "lucide-react";
-import { ResultBars } from "./ResultBars";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { buildResultShareHook, buildResultShareMessage } from "@/lib/share-message";
+import { SocialShareButtons } from "./SocialShareButtons";
 import type { PublicAnalyticsBucket, PublicDistribution } from "@/lib/public-analytics-core";
 
 export const ISSUE_COLORS = ["#138a4b", "#2563eb", "#ff5a00", "#dc2626", "#7c3aed", "#78350f", "#94a3b8", "#0891b2"];
@@ -47,38 +47,63 @@ export function SummaryCard({
   );
 }
 
+// VERTICAL bar chart (not a donut, not horizontal bars) — Party Support and
+// Current Vote Share are two different visualizations of the same
+// underlying party distribution: Party Support is this vertical bar chart,
+// Current Vote Share is the donut (IssuesDonutChart, reused as-is below).
+// Bars sit in a left-aligned flex row (not a stretched grid), so 1–2
+// parties render as a couple of normal-width columns instead of stretching
+// to fill the container. A bucket without a party logo falls back to a
+// colored dot using its colorHex (or the shared ISSUE_COLORS rotation) —
+// never a random per-render color.
 export function PartySupportChart({ buckets, locale }: { buckets: PublicAnalyticsBucket[]; locale: "hi" | "en" }) {
-  const maxPct = Math.max(1, ...buckets.map((b) => (b.state === "available" ? b.percentage : 0)));
+  const { t } = useLocale();
+  const available = buckets.filter(
+    (bucket): bucket is Extract<PublicAnalyticsBucket, { state: "available" }> => bucket.state === "available"
+  );
+  const suppressed = buckets.filter((bucket) => bucket.state === "suppressed");
+
+  if (available.length === 0) {
+    return <InlineState>{t.results.resultsSuppressed}</InlineState>;
+  }
+
+  const maxPct = Math.max(1, ...available.map((b) => b.percentage));
+  const BAR_AREA_HEIGHT = 128;
+
   return (
-    <div className="flex min-w-max items-end gap-4 sm:gap-6">
-      {buckets.map((bucket, index) => {
-        const displayName = locale === "hi" && bucket.nameHindi ? bucket.nameHindi : bucket.label;
-        const logoUrl = bucket.logoUrl ?? null;
-        const pct = bucket.state === "available" ? bucket.percentage : null;
-        const barHeightPx = pct === null ? 4 : Math.max(6, (pct / maxPct) * 96);
+    <div className="flex flex-wrap items-end gap-4 overflow-x-auto pb-1 sm:gap-6">
+      {available.map((bucket, index) => {
+        const name = locale === "hi" && bucket.nameHindi ? bucket.nameHindi : bucket.label;
+        const color = bucket.colorHex ?? ISSUE_COLORS[index % ISSUE_COLORS.length];
+        const barHeight = Math.max(6, (bucket.percentage / maxPct) * BAR_AREA_HEIGHT);
         return (
-          <div key={bucket.key} className="flex w-16 shrink-0 flex-col items-center gap-2 text-center sm:w-[4.5rem]">
-            <span className="font-display text-lg font-extrabold tabular-nums text-ink">{pct === null ? "—" : `${pct}%`}</span>
-            <div className="flex h-24 w-full items-end justify-center">
-              <motion.div
-                initial={{ height: 0 }}
-                animate={{ height: barHeightPx }}
-                transition={{ duration: 0.6, delay: index * 0.04, ease: "easeOut" }}
-                className="w-8 rounded-t-md sm:w-10"
-                style={{ background: bucket.colorHex ?? "var(--ink)" }}
+          <div key={bucket.key} className="flex w-16 shrink-0 flex-col items-center gap-2 text-center sm:w-20">
+            <span className="font-display text-sm font-extrabold tabular-nums text-ink">{bucket.percentage}%</span>
+            <div className="flex items-end" style={{ height: BAR_AREA_HEIGHT }}>
+              <div
+                className="w-8 rounded-t-md transition-all duration-500 sm:w-10"
+                style={{ height: barHeight, background: color }}
               />
             </div>
-            {logoUrl ? (
-              <Image src={logoUrl} alt="" width={32} height={32} className="h-8 w-8 object-contain" />
+            {bucket.logoUrl ? (
+              <Image src={bucket.logoUrl} alt="" width={22} height={22} className="h-[22px] w-[22px] shrink-0 rounded-full object-contain" />
             ) : (
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-2 text-[10px] font-bold text-muted">
-                {displayName.slice(0, 3).toUpperCase()}
-              </span>
+              <span className="h-3 w-3 shrink-0 rounded-full" style={{ background: color }} />
             )}
-            <span className="text-[11px] font-bold leading-tight text-ink">{bucket.label}</span>
+            <span className="w-full truncate text-xs font-semibold text-ink">{name}</span>
           </div>
         );
       })}
+      {suppressed.map((bucket) => (
+        <div key={bucket.key} className="flex w-16 shrink-0 flex-col items-center gap-2 text-center text-muted sm:w-20">
+          <span className="text-xs">{t.results.suppressed}</span>
+          <div className="flex items-end" style={{ height: BAR_AREA_HEIGHT }}>
+            <div className="h-1.5 w-8 rounded-t-md bg-border sm:w-10" />
+          </div>
+          <span className="h-3 w-3 shrink-0 rounded-full bg-border" />
+          <span className="w-full truncate text-xs font-semibold">{bucket.label}</span>
+        </div>
+      ))}
     </div>
   );
 }
@@ -186,17 +211,19 @@ export function InlineState({ children }: { children: React.ReactNode }) {
   return <p className="rounded-xl border border-dashed border-border bg-surface-2 p-5 text-center text-sm text-muted">{children}</p>;
 }
 
+// Voter Profile (Age Group / Gender / Religion) uses the exact same donut +
+// legend visual language as Top Issues (IssuesDonutChart, reused as-is —
+// not a second chart implementation) so the whole "distribution of X" family
+// of charts on this dashboard reads as one consistent style. Only the
+// presentation changed here — the underlying distribution (counts,
+// percentages, privacy suppression) is untouched and comes from the exact
+// same aggregation this card always received.
 export function DistributionCard({ title, distribution }: { title: string; distribution: PublicDistribution }) {
-  const { t } = useLocale();
   return (
-    <div className="card-surface rounded-2xl p-5">
+    <div className="card-surface min-w-0 rounded-2xl p-5">
       <h3 className="font-display font-bold">{title}</h3>
       <div className="mt-4">
-        {distribution.state === "available" && distribution.buckets.length > 0 ? (
-          <ResultBars options={distribution.buckets} />
-        ) : (
-          <InlineState>{distribution.state === "suppressed" ? t.results.resultsSuppressed : t.results.noBreakdownData}</InlineState>
-        )}
+        <IssuesDonutChart distribution={distribution} centerLabel={title} />
       </div>
     </div>
   );
@@ -211,29 +238,34 @@ export function MethodItem({ label, value }: { label: string; value: string }) {
 // is always the page's own current URL (including whatever scope query the
 // results toggle has written to it), so sharing from "पूरा उत्तर प्रदेश"
 // never accidentally shares the constituency link, and vice versa.
-export function DisclaimerShareBar({ shareTitle }: { shareTitle: string }) {
-  const { t } = useLocale();
+// `electionYear` builds the same promotional hook text (never a bare URL —
+// see src/lib/share-message.ts) for both the generic Web-Share button and
+// the WhatsApp/Facebook/X/Instagram icons below it.
+export function DisclaimerShareBar({ shareTitle, electionYear }: { shareTitle: string; electionYear: number }) {
+  const { t, locale } = useLocale();
   const [shared, setShared] = useState(false);
+  const shareUrl = typeof window !== "undefined" ? window.location.href : "";
+  const hook = buildResultShareHook({ locale, electionYear, scopeName: shareTitle });
 
   async function handleShare() {
-    const shareUrl = typeof window !== "undefined" ? window.location.href : "";
+    const message = buildResultShareMessage({ locale, electionYear, scopeName: shareTitle, url: shareUrl });
     if (typeof navigator !== "undefined" && navigator.share) {
       try {
-        await navigator.share({ title: shareTitle, url: shareUrl });
+        await navigator.share({ title: shareTitle, text: message, url: shareUrl });
         return;
       } catch {
         // user cancelled or share failed — fall through to clipboard
       }
     }
     if (typeof navigator !== "undefined" && navigator.clipboard) {
-      await navigator.clipboard.writeText(shareUrl);
+      await navigator.clipboard.writeText(message);
       setShared(true);
       setTimeout(() => setShared(false), 2500);
     }
   }
 
   return (
-    <div className="mt-6 flex flex-col gap-3 rounded-2xl border border-blue-100 bg-blue-50/70 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between">
+    <div className="mt-6 flex flex-col gap-4 rounded-2xl border border-blue-100 bg-blue-50/70 px-4 py-3.5 sm:flex-row sm:items-start sm:justify-between">
       <div className="flex items-start gap-3">
         <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-700">
           <Info size={16} />
@@ -243,13 +275,16 @@ export function DisclaimerShareBar({ shareTitle }: { shareTitle: string }) {
           <p className="mt-0.5 text-xs leading-5 text-muted">{t.results.disclaimerBannerBody}</p>
         </div>
       </div>
-      <button
-        type="button"
-        onClick={handleShare}
-        className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-ink/40 bg-white px-4 py-2.5 text-sm font-bold text-ink transition-colors hover:bg-ink/5"
-      >
-        <Share2 size={16} /> {shared ? t.results.shareCopied : t.results.shareResults}
-      </button>
+      <div className="flex flex-col items-start gap-3 sm:items-end">
+        <button
+          type="button"
+          onClick={handleShare}
+          className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-ink/40 bg-white px-4 py-2.5 text-sm font-bold text-ink transition-colors hover:bg-ink/5"
+        >
+          <Share2 size={16} /> {shared ? t.results.shareCopied : t.results.shareResults}
+        </button>
+        <SocialShareButtons hook={hook} url={shareUrl} />
+      </div>
     </div>
   );
 }

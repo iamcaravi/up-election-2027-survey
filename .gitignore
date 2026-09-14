@@ -62,3 +62,19 @@ next-env.d.ts
 
 # Safe environment template
 !.env.example
+
+# Local database backups/snapshots (never ship a DB dump)
+*.db.backup
+*.sqlite.backup
+*.sqlite3.backup
+
+# Local design-tool cache (21st.dev component tool)
+/.21st/
+
+# Raw source assets supplied for design work — not read by the app at
+# runtime (served images live under public/images/); kept locally for
+# reference, never committed.
+/reference-images/
+
+# Scratch output from one-off data-migration scripts (scripts/phase19-*.ts)
+scripts/.out-*.json

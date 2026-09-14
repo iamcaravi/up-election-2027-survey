@@ -33,7 +33,15 @@ export default async function Home() {
   // guessing one, so the homepage never silently favors whichever state
   // happens to sort first (see SiteChrome for the equivalent header/footer
   // fix once a state IS in context).
-  const browseStatesHref = "/states";
+  // "Take the Survey" needs a specific constituency, so it goes to the
+  // dedicated Find Constituency flow (State → District → Constituency →
+  // Take Survey), not the generic state browser.
+  const takeSurveyHref = "/find-constituency";
+  // Results and Analysis are their own standalone journeys (src/app/results/**,
+  // src/app/analysis/**) — each homepage card picks a state there, not on
+  // the generic /states browser.
+  const browseResultsHref = "/results";
+  const browseAnalysisHref = "/analysis";
 
   const sections = normalizeHomepageSectionsConfig(sectionsConfigRaw);
   // Aggregated per-device visibility/padding CSS for every homepage section
@@ -61,7 +69,7 @@ export default async function Home() {
       </div>
 
       <div data-section="featureCards">
-        <FeatureCards surveyHref={browseStatesHref} resultsHref={browseStatesHref} analyticsHref={browseStatesHref} />
+        <FeatureCards surveyHref={takeSurveyHref} resultsHref={browseResultsHref} analyticsHref={browseAnalysisHref} />
       </div>
 
       <div data-section="issues">

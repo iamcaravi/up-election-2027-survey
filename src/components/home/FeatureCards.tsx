@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ArrowRight, Edit3, BarChart3, Crown, Globe } from "lucide-react";
+import { ArrowRight, Edit3, BarChart3, LineChart, Globe } from "lucide-react";
 import Link from "next/link";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 
@@ -35,13 +35,10 @@ export function FeatureCards({ surveyHref, resultsHref, analyticsHref }: Feature
       text: "text-blue-700 dark:text-blue-300",
     },
     {
-      icon: Crown,
-      title: t.featureCards.premium.title,
-      description: t.featureCards.premium.description,
+      icon: LineChart,
+      title: t.featureCards.analysis.title,
+      description: t.featureCards.analysis.description,
       href: analyticsHref,
-      // Premium Analysis is the site's navy-branded feature elsewhere (the
-      // header CTA is navy) — kept navy here too instead of an unrelated
-      // purple, matching the site's navy/saffron/green palette.
       iconBg: "bg-ink",
       cardBg: "bg-ink/5 dark:bg-ink/20",
       border: "border-ink/15 dark:border-ink/40",

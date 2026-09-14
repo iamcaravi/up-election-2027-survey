@@ -319,18 +319,23 @@ test("42. clients cannot request arbitrary hidden analytics", () => {
   assert.ok(!/searchParams\.get\(["'`](dimension|target)["'`]\)/.test(route));
 });
 
-test("UI zero/insufficient/party/candidate states are explicit and localized", () => {
+// The public results view is party/issue based, not candidate-popularity
+// based (a later, deliberate product decision than when this test was first
+// written — see the party-first survey redesign) — there is no per-party
+// candidate-preference selector in PublicResultsView.tsx, so these
+// assertions cover the zero/insufficient/party states that DO exist instead
+// of the retired candidate-selector UI.
+test("UI zero/insufficient/party states are explicit and localized", () => {
   const source = readSource("src/components/results/PublicResultsView.tsx");
-  for (const token of ["isZeroState", "isInsufficient", "partyPreference", "candidatePreferenceByParty", "candidateNotApplicable"]) {
+  for (const token of ["isZeroState", "isInsufficient", "partyPreference"]) {
     assert.ok(source.includes(token));
   }
-  assert.ok(hi.results.zeroTitle && hi.results.insufficientTitle && hi.results.candidateAmongParty);
-  assert.ok(en.results.zeroTitle && en.results.insufficientTitle && en.results.candidateAmongParty);
+  assert.ok(hi.results.zeroTitle && hi.results.insufficientTitle && hi.results.partySupport);
+  assert.ok(en.results.zeroTitle && en.results.insufficientTitle && en.results.partySupport);
 });
 
-test("UI uses a party selector and never embeds illustrative production percentages", () => {
+test("UI never embeds illustrative production percentages", () => {
   const source = readSource("src/components/results/PublicResultsView.tsx");
-  assert.match(source, /<select/);
   for (const fake of ["38.4%", "32.1%", "32,458"]) assert.ok(!source.includes(fake));
 });
 

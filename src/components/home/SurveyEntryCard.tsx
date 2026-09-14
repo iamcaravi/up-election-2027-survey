@@ -1,7 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ArrowRight, ChevronDown } from "lucide-react";
+import { ArrowRight, Building2, ChevronDown, MapPin, Users } from "lucide-react";
+import type { ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { displayStateName } from "@/lib/utils";
@@ -53,6 +54,8 @@ function FieldSelect<T extends { id: string }>({
   disabled,
   getLabel,
   onSelect,
+  icon,
+  iconClass,
 }: {
   label: string;
   placeholder: string;
@@ -61,6 +64,8 @@ function FieldSelect<T extends { id: string }>({
   disabled?: boolean;
   getLabel: (item: T) => string;
   onSelect: (item: T) => void;
+  icon: ReactNode;
+  iconClass: string;
 }) {
   const { t } = useLocale();
   const [open, setOpen] = useState(false);
@@ -118,10 +123,13 @@ function FieldSelect<T extends { id: string }>({
         onClick={() => setOpen((o) => !o)}
         onKeyDown={handleKeyDown}
         aria-label={label}
-        className="flex h-10 w-full min-w-[9rem] items-center justify-center gap-1.5 whitespace-nowrap rounded-full border border-[#101A3A]/15 bg-white px-4 text-center text-sm font-semibold text-[#101A3A] shadow-md transition-colors hover:border-[#101A3A]/25 hover:bg-[#F3F4F7] disabled:cursor-not-allowed sm:min-w-[10.5rem] sm:text-base lg:h-12 lg:min-w-[12rem] lg:gap-2 lg:px-5"
+        className="flex h-11 w-full min-w-[9.5rem] items-center justify-center gap-2 whitespace-nowrap rounded-full border border-[#101A3A]/12 bg-white px-3.5 text-center text-sm font-semibold text-[#101A3A] shadow-[0_1px_2px_rgba(16,26,58,0.06),0_6px_16px_-6px_rgba(16,26,58,0.18)] transition-all hover:border-[#101A3A]/20 hover:shadow-[0_1px_2px_rgba(16,26,58,0.08),0_10px_20px_-6px_rgba(16,26,58,0.22)] disabled:cursor-not-allowed disabled:border-[#101A3A]/8 disabled:text-[#101A3A]/40 disabled:shadow-[0_1px_2px_rgba(16,26,58,0.04)] disabled:hover:border-[#101A3A]/8 sm:min-w-[11rem] sm:text-base lg:h-12 lg:min-w-[12.5rem] lg:px-4"
       >
-        <span className="max-w-[9rem] truncate sm:max-w-[10.5rem] lg:max-w-[12rem]">{value ? getLabel(value) : placeholder}</span>
-        <ChevronDown size={14} className={`h-3.5 w-3.5 shrink-0 text-[#101A3A]/70 transition-transform sm:h-4 sm:w-4 lg:h-[17px] lg:w-[17px] ${open ? "rotate-180" : ""}`} />
+        <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${disabled ? "bg-[#101A3A]/5 text-[#101A3A]/30" : iconClass}`}>
+          {icon}
+        </span>
+        <span className="max-w-[7.5rem] truncate text-left sm:max-w-[9rem] lg:max-w-[10rem]">{value ? getLabel(value) : placeholder}</span>
+        <ChevronDown size={14} className={`h-3.5 w-3.5 shrink-0 transition-transform sm:h-4 sm:w-4 ${disabled ? "text-[#101A3A]/30" : "text-[#101A3A]/50"} ${open ? "rotate-180" : ""}`} />
       </button>
       {open && !disabled && (
         <>
@@ -214,10 +222,10 @@ export function SurveyEntryCard({ states, heading }: SurveyEntryCardProps) {
       className="z-20 flex flex-col items-center gap-2"
     >
       {(!heading || heading.visible) && (
-        <div className="rounded-2xl bg-white px-4 py-2 shadow-md sm:px-5 sm:py-2.5">
+        <div className="rounded-full border border-[#101A3A]/10 bg-white px-4 py-2 shadow-[0_1px_2px_rgba(16,26,58,0.06),0_6px_16px_-6px_rgba(16,26,58,0.18)] sm:px-5 sm:py-2.5">
           <p
             data-hero-text="surveyHeading"
-            className="text-center text-[10px] font-bold text-[#101A3A] sm:text-xs lg:text-sm"
+            className="text-center text-xs font-bold text-[#101A3A] sm:text-sm lg:text-base"
             style={{
               fontWeight: heading?.fontWeight,
               lineHeight: heading?.lineHeight,
@@ -237,6 +245,8 @@ export function SurveyEntryCard({ states, heading }: SurveyEntryCardProps) {
           items={states}
           getLabel={(s) => displayStateName(s.name, s.slug, locale)}
           onSelect={setSelectedState}
+          icon={<MapPin size={13} strokeWidth={2.5} />}
+          iconClass="bg-blue-100 text-blue-700"
         />
         <FieldSelect
           label={t.heroSurvey.selectDistrict}
@@ -246,6 +256,8 @@ export function SurveyEntryCard({ states, heading }: SurveyEntryCardProps) {
           disabled={!selectedState || loadingDistricts}
           getLabel={(d) => d.name}
           onSelect={setSelectedDistrict}
+          icon={<Building2 size={13} strokeWidth={2.5} />}
+          iconClass="bg-emerald-100 text-emerald-700"
         />
         <FieldSelect
           label={t.heroSurvey.selectConstituency}
@@ -255,6 +267,8 @@ export function SurveyEntryCard({ states, heading }: SurveyEntryCardProps) {
           disabled={!selectedDistrict || loadingConstituencies}
           getLabel={(c) => `${c.number}. ${c.name}`}
           onSelect={setSelectedConstituency}
+          icon={<Users size={13} strokeWidth={2.5} />}
+          iconClass="bg-rose-100 text-rose-700"
         />
 
         <motion.button
@@ -262,7 +276,7 @@ export function SurveyEntryCard({ states, heading }: SurveyEntryCardProps) {
           whileTap={canSubmit ? { scale: 0.98 } : undefined}
           onClick={handleSurveyStart}
           disabled={!canSubmit}
-          className="flex h-10 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full bg-orange-600 px-5 text-xs font-bold text-white shadow-lg transition-colors hover:bg-orange-700 disabled:cursor-not-allowed sm:text-sm lg:h-12 lg:gap-2 lg:px-7"
+          className="flex h-11 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full bg-orange-600 px-5 text-xs font-bold text-white shadow-[0_8px_20px_-6px_rgba(234,88,12,0.5)] transition-colors hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-60 disabled:shadow-none sm:text-sm lg:h-12 lg:gap-2 lg:px-7"
         >
           {t.heroSurvey.participate} <ArrowRight size={14} className="sm:h-4 sm:w-4 lg:h-[17px] lg:w-[17px]" />
         </motion.button>

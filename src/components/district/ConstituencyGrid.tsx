@@ -54,16 +54,18 @@ export function ConstituencyGrid({
             <p className="mt-3 font-display text-lg font-bold group-hover:text-ink">{c.name}</p>
 
             <p className="mt-1 text-sm text-muted">
-              {c.currentMlaName ? `${t.district.currentMla}: ${c.currentMlaName}` : "MLA not yet on record"}
+              {c.currentMlaName ? `${t.district.currentMla}: ${c.currentMlaName}` : t.hierarchy.mlaNotOnRecord}
               {c.currentMlaParty ? ` (${c.currentMlaParty})` : ""}
             </p>
 
             <div className="mt-auto flex items-center justify-between pt-4 text-sm">
               <span className="inline-flex items-center gap-1.5 text-muted">
-                <Users size={14} /> {c.candidateCount} candidates
+                <Users size={14} /> {c.candidateCount} {t.hierarchy.candidatesLabel}
               </span>
               <span className="font-medium">
-                {c.responseCount > 0 ? `${formatNumber(c.responseCount)} responses` : "No responses yet"}
+                {c.responseCount > 0
+                  ? `${formatNumber(c.responseCount)} ${t.hierarchy.responsesCountSuffix}`
+                  : t.hierarchy.noResponsesYetShort}
               </span>
             </div>
 

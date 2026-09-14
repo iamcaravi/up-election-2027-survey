@@ -18,6 +18,11 @@ type StatewideDemographicKey = (typeof STATEWIDE_DEMOGRAPHIC_KEYS)[number];
 export interface PublicStatewideResultsDto {
   election: { name: string; slug: string; year: number };
   state: { name: string; slug: string };
+  /** Present only when this DTO was scoped to one district (see the
+   *  `district` param of getPublicStatewideResults) — every count/
+   *  distribution below is then pooled across just that district's
+   *  constituencies instead of the whole state. */
+  district: { id: string; name: string; slug: string } | null;
   sample: {
     validResponseCount: number;
     resultsAvailable: boolean;
@@ -39,24 +44,41 @@ export interface PublicStatewideResultsDto {
   demographics: Record<StatewideDemographicKey, PublicDistribution>;
 }
 
-export async function getPublicStatewideResults(electionId: string): Promise<PublicStatewideResultsDto | null> {
+export async function getPublicStatewideResults(
+  electionId: string,
+  district?: { id: string; name: string; slug: string }
+): Promise<PublicStatewideResultsDto | null> {
   const election = await prisma.election.findUnique({ where: { id: electionId }, include: { state: true } });
   if (!election) return null;
 
-  // Same as public-survey-results.ts: statewide results show from the first
-  // valid response, with no minimum-sample-size gate.
+  // Same as public-survey-results.ts: statewide (or district-scoped) results
+  // show from the first valid response, with no minimum-sample-size gate.
   const minRequired = 1;
   const isSynthetic = await getSiteSetting<boolean>(SYNTHETIC_DATA_MODE_KEY, false);
   const activeDataSource = isSynthetic ? SYNTHETIC_DATA_SOURCE : REAL_DATA_SOURCE;
+  // When `district` is passed, every query below narrows from "every
+  // constituency in the state" to "every constituency in that one district" —
+  // the same aggregation logic, just pooled over a smaller constituency set.
+  const constituencyScope = district ? { districtId: district.id } : undefined;
 
   const [responses, partyAnswers, demographicAnswers, totalConstituencies, respondingSurveys] = await Promise.all([
     prisma.surveyResponse.findMany({
-      where: { status: ELIGIBLE_RESPONSE_STATUS, dataSource: activeDataSource, survey: { electionId } },
+      where: {
+        status: ELIGIBLE_RESPONSE_STATUS,
+        dataSource: activeDataSource,
+        survey: { electionId },
+        constituency: constituencyScope,
+      },
       select: { createdAt: true },
     }),
     prisma.surveyAnswer.findMany({
       where: {
-        response: { status: ELIGIBLE_RESPONSE_STATUS, dataSource: activeDataSource, survey: { electionId } },
+        response: {
+          status: ELIGIBLE_RESPONSE_STATUS,
+          dataSource: activeDataSource,
+          survey: { electionId },
+          constituency: constituencyScope,
+        },
         question: { key: "party_preference" },
         optionId: { not: null },
       },
@@ -74,7 +96,12 @@ export async function getPublicStatewideResults(electionId: string): Promise<Pub
     }),
     prisma.surveyAnswer.findMany({
       where: {
-        response: { status: ELIGIBLE_RESPONSE_STATUS, dataSource: activeDataSource, survey: { electionId } },
+        response: {
+          status: ELIGIBLE_RESPONSE_STATUS,
+          dataSource: activeDataSource,
+          survey: { electionId },
+          constituency: constituencyScope,
+        },
         question: { key: { in: [...STATEWIDE_DEMOGRAPHIC_KEYS] } },
         optionId: { not: null },
       },
@@ -83,9 +110,13 @@ export async function getPublicStatewideResults(electionId: string): Promise<Pub
         option: { select: { key: true, label: true, order: true } },
       },
     }),
-    prisma.constituency.count({ where: { stateId: election.stateId } }),
+    prisma.constituency.count({ where: { stateId: election.stateId, ...constituencyScope } }),
     prisma.survey.findMany({
-      where: { electionId, responses: { some: { status: ELIGIBLE_RESPONSE_STATUS, dataSource: activeDataSource } } },
+      where: {
+        electionId,
+        responses: { some: { status: ELIGIBLE_RESPONSE_STATUS, dataSource: activeDataSource } },
+        constituency: constituencyScope,
+      },
       select: { constituencyId: true },
       distinct: ["constituencyId"],
     }),
@@ -119,6 +150,7 @@ export async function getPublicStatewideResults(electionId: string): Promise<Pub
   return {
     election: { name: election.name, slug: election.slug, year: election.year },
     state: { name: election.state.name, slug: election.state.slug },
+    district: district ?? null,
     sample: {
       validResponseCount,
       resultsAvailable: validResponseCount > 0,

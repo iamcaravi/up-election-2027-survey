@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { ChevronRight, Landmark } from "lucide-react";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { displayStateName, cn } from "@/lib/utils";
-import { statePath } from "@/lib/routes";
+import { statePath, stateResultsPath, analysisLandingStatePath } from "@/lib/routes";
 import {
   PunjabGlyph,
   UttarakhandGlyph,
@@ -53,18 +53,40 @@ const CARD_PALETTE = [
   { bg: "bg-cyan-50", border: "border-cyan-200", hoverBorder: "hover:border-cyan-400", icon: "bg-white text-cyan-600", accent: "bg-cyan-600 text-white", text: "text-cyan-900" },
 ] as const;
 
-export function StatesGrid({ states }: { states: StatesGridItem[] }) {
+export function StatesGrid({
+  states,
+  variant = "states",
+}: {
+  states: StatesGridItem[];
+  /** "results"/"analysis" swap both the heading/eyebrow copy AND each card's
+   *  destination (`/results/[state]` or `/analysis/[state]` instead of
+   *  `/[state]`) for the Results/Analysis landing pages' "select a state"
+   *  framing — same grid, same cards, different intent, so there's still
+   *  only one state-grid implementation.
+   *  (A function prop here would cross the Server→Client Component boundary
+   *  uncleanly, so this stays a plain string flag instead of a hrefFor callback.) */
+  variant?: "states" | "results" | "analysis";
+}) {
   const { t, locale } = useLocale();
   const count = states.length;
   const subtitleTemplate = count === 1 ? t.statesPage.subtitleOne : t.statesPage.subtitleMany;
-  const subtitle = subtitleTemplate.replace("{count}", String(count));
+  const subtitle =
+    variant === "results"
+      ? t.resultsHub.subtitle
+      : variant === "analysis"
+        ? t.analysisHub.subtitle
+        : subtitleTemplate.replace("{count}", String(count));
 
   return (
     <div>
       <div className="mb-10 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-accent">{t.statesPage.eyebrow}</p>
-          <h1 className="font-display text-4xl font-extrabold sm:text-5xl">{t.statesPage.heading}</h1>
+          <p className="text-xs font-semibold uppercase tracking-wider text-accent">
+            {variant === "results" ? t.resultsHub.eyebrow : variant === "analysis" ? t.analysisHub.eyebrow : t.statesPage.eyebrow}
+          </p>
+          <h1 className="font-display text-4xl font-extrabold sm:text-5xl">
+            {variant === "results" ? t.resultsHub.heading : variant === "analysis" ? t.analysisHub.heading : t.statesPage.heading}
+          </h1>
           <p className="mt-2 text-sm text-muted">{subtitle}</p>
         </div>
 
@@ -112,7 +134,13 @@ export function StatesGrid({ states }: { states: StatesGridItem[] }) {
                 transition={{ duration: 0.35, delay: (i % 12) * 0.04 }}
               >
                 <Link
-                  href={statePath(s.slug)}
+                  href={
+                    variant === "results"
+                      ? stateResultsPath(s.slug)
+                      : variant === "analysis"
+                        ? analysisLandingStatePath(s.slug)
+                        : statePath(s.slug)
+                  }
                   className={cn(
                     "group flex h-full items-center gap-4 rounded-2xl border p-5 shadow-sm transition-all duration-200",
                     "hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/40",

@@ -3,7 +3,8 @@ import type { Metadata } from "next";
 import { getStateAndElection, getConstituenciesForElection } from "@/lib/data";
 import { Container } from "@/components/ui/Container";
 import { ConstituencyGrid } from "@/components/district/ConstituencyGrid";
-import { electionPath } from "@/lib/routes";
+import { ConstituenciesListingText, NoConstituenciesNotice } from "@/components/election/ConstituenciesListingText";
+import { electionPath, statePath } from "@/lib/routes";
 
 export async function generateMetadata({
   params,
@@ -36,15 +37,17 @@ export default async function ConstituenciesPage({
   return (
     <Container className="py-14">
       <div className="mb-10">
-        <p className="text-xs font-semibold uppercase tracking-wider text-accent">{state.name} · {election.name}</p>
-        <h1 className="font-display text-3xl font-extrabold sm:text-4xl">All Assembly Constituencies</h1>
-        <p className="mt-2 text-sm text-muted">{constituencies.length} constituencies contesting this election</p>
+        <ConstituenciesListingText
+          stateName={state.name}
+          stateHref={statePath(state.slug)}
+          electionName={election.name}
+          electionHref={electionPath(state.slug, election.slug)}
+          constituencyCount={constituencies.length}
+        />
       </div>
 
       {constituencies.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border bg-surface-2 p-10 text-center text-sm text-muted">
-          No constituencies linked to this election yet.
-        </div>
+        <NoConstituenciesNotice />
       ) : (
         <ConstituencyGrid
           basePath={electionPath(state.slug, election.slug)}

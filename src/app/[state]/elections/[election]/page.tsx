@@ -3,9 +3,9 @@ import type { Metadata } from "next";
 import { getStateAndElection } from "@/lib/data";
 import { prisma } from "@/lib/prisma";
 import { Container } from "@/components/ui/Container";
-import { LinkButton } from "@/components/ui/Button";
-import { districtsPath } from "@/lib/routes";
-import { formatNumber } from "@/lib/utils";
+import { Breadcrumb } from "@/components/ui/Breadcrumb";
+import { ElectionEyebrow, ElectionHeroText, ElectionDisclaimer } from "@/components/election/ElectionHeroText";
+import { districtsPath, statePath, stateResultsPath, analysisPath } from "@/lib/routes";
 
 export async function generateMetadata({
   params,
@@ -43,42 +43,26 @@ export default async function ElectionPage({
     <div>
       <div className="border-b border-border bg-surface">
         <Container className="py-12">
-          <p className="text-xs font-semibold uppercase tracking-wider text-accent">
-            {state.name} · {election.electionType.replace("_", " ")} · {election.year}
-          </p>
+          <Breadcrumb items={[{ label: state.name, href: statePath(state.slug) }, { label: election.name }]} />
+          <ElectionEyebrow stateName={state.name} electionType={election.electionType} year={election.year} />
           <h1 className="font-display text-3xl font-extrabold sm:text-5xl">{election.name}</h1>
           {election.description && <p className="mt-3 max-w-2xl text-sm text-muted">{election.description}</p>}
 
-          <div className="mt-6 flex flex-wrap gap-6">
-            <Stat label="Status" value={election.status} />
-            <Stat label="Districts" value={String(districtCount)} />
-            <Stat label="Constituencies" value={String(constituencyCount)} />
-            <Stat label="Survey Responses" value={formatNumber(responseCount)} />
-          </div>
-
-          <div className="mt-8">
-            <LinkButton href={districtsPath(state.slug, election.slug)} size="lg" variant="cta">
-              Explore Districts &amp; Take the Survey
-            </LinkButton>
-          </div>
+          <ElectionHeroText
+            status={election.status}
+            districtCount={districtCount}
+            constituencyCount={constituencyCount}
+            responseCount={responseCount}
+            districtsHref={districtsPath(state.slug, election.slug)}
+            resultsHref={stateResultsPath(state.slug)}
+            analysisHref={analysisPath(state.slug, election.slug)}
+          />
         </Container>
       </div>
 
       <Container className="py-12">
-        <p className="rounded-xl border border-border bg-surface-2 p-4 text-xs leading-relaxed text-muted">
-          Survey results shown for this election reflect voluntary respondent participation only. They are not an
-          official election result and must not be read as a prediction of the actual outcome.
-        </p>
+        <ElectionDisclaimer />
       </Container>
-    </div>
-  );
-}
-
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <p className="font-display text-2xl font-extrabold">{value}</p>
-      <p className="text-xs text-muted">{label}</p>
     </div>
   );
 }

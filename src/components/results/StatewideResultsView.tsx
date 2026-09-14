@@ -114,7 +114,10 @@ export function StatewideResultsView({ data }: { data: PublicStatewideResultsDto
             </div>
           </div>
 
-          <DisclaimerShareBar shareTitle={t.surveyFlow.stateWideHeading.replace("{state}", data.state.name)} />
+          <DisclaimerShareBar
+            shareTitle={t.surveyFlow.stateWideHeading.replace("{state}", data.state.name)}
+            electionYear={data.election.year}
+          />
         </>
       )}
 
