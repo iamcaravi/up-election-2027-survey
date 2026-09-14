@@ -3,18 +3,19 @@
 import Link from "next/link";
 import { BarChart3, CalendarDays, EyeOff, LockKeyhole, MapPin, Building2, Users } from "lucide-react";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { analysisPath } from "@/lib/routes";
 import type { PublicSurveyResultsDto } from "@/lib/public-survey-results";
 import {
   SummaryCard,
   PartySupportChart,
-  IssuesDonutChart,
+  KeyIssuesPanel,
   StateCard,
   PrivacyPill,
   InlineState,
-  DistributionCard,
   MethodItem,
   DisclaimerShareBar,
   SyntheticDataBanner,
+  DetailedAnalysisCta,
 } from "./ResultsDashboardParts";
 
 export function PublicResultsView({ data, surveyHref }: { data: PublicSurveyResultsDto; surveyHref: string }) {
@@ -107,55 +108,41 @@ export function PublicResultsView({ data, surveyHref }: { data: PublicSurveyResu
 
       {data.visibility.state === "visible" && !isZeroState && (
         <>
-          <div className="mt-6 grid gap-4 lg:grid-cols-2">
-            <section id="party" className="card-surface scroll-mt-24 rounded-2xl p-5 sm:p-6" aria-labelledby="party-results-heading">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <h2 id="party-results-heading" className="font-display text-xl font-bold">{t.results.partySupport}</h2>
-                  <p className="mt-1 text-xs text-muted">{t.results.partyDenominator}</p>
-                </div>
-                <PrivacyPill />
+          <section id="party" className="card-surface scroll-mt-24 mt-6 rounded-2xl p-5 sm:p-6" aria-labelledby="party-results-heading">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h2 id="party-results-heading" className="font-display text-xl font-bold">{t.results.partySupport}</h2>
+                <p className="mt-1 text-xs text-muted">{t.results.partyDenominator}</p>
               </div>
-              <div className="mt-5 overflow-x-auto pb-1">
-                {data.analytics?.partyPreference.state === "available" ? (
-                  <PartySupportChart buckets={data.analytics.partyPreference.buckets} locale={locale} />
-                ) : (
-                  <InlineState>{isZeroState ? t.results.zeroParty : t.results.resultsSuppressed}</InlineState>
-                )}
-              </div>
-            </section>
-
-            <section id="issues" className="card-surface scroll-mt-24 rounded-2xl p-5 sm:p-6" aria-labelledby="issues-heading">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <h2 id="issues-heading" className="font-display text-xl font-bold">{t.results.topIssues}</h2>
-                  <p className="mt-1 text-xs text-muted">{t.results.amongRespondents}</p>
-                </div>
-                <PrivacyPill />
-              </div>
-              <div className="mt-5">
-                <IssuesDonutChart
-                  distribution={data.analytics?.demographics.top_issue ?? { state: "unavailable", reason: "no_answers", minRequired: data.sample.minCellSize }}
-                  centerLabel={t.results.topIssues}
-                />
-              </div>
-            </section>
-          </div>
-
-          {data.analytics && data.sample.resultsAvailable && (
-            <div id="profile" className="mt-6 scroll-mt-24">
-              <div className="flex flex-wrap items-end justify-between gap-3">
-                <h2 className="font-display text-xl font-bold">{t.results.voterProfile}</h2>
-                <PrivacyPill />
-              </div>
-              <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                <DistributionCard title={t.results.ageGroup} distribution={data.analytics.demographics.age_group} />
-                <DistributionCard title={t.results.gender} distribution={data.analytics.demographics.gender} />
-                <DistributionCard title={t.results.socialCategory} distribution={data.analytics.demographics.social_category} />
-                <DistributionCard title={t.results.religion} distribution={data.analytics.demographics.religion} />
-              </div>
+              <PrivacyPill />
             </div>
-          )}
+            <div className="mt-5 overflow-x-auto pb-1">
+              {data.analytics?.partyPreference.state === "available" ? (
+                <PartySupportChart buckets={data.analytics.partyPreference.buckets} locale={locale} />
+              ) : (
+                <InlineState>{isZeroState ? t.results.zeroParty : t.results.resultsSuppressed}</InlineState>
+              )}
+            </div>
+          </section>
+
+          <section id="issues" className="card-surface scroll-mt-24 mt-6 rounded-2xl p-5 sm:p-6" aria-labelledby="issues-heading">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h2 id="issues-heading" className="font-display text-xl font-bold">{t.results.topIssues}</h2>
+                <p className="mt-1 text-xs text-muted">{t.results.amongRespondents}</p>
+              </div>
+              <PrivacyPill />
+            </div>
+            <div className="mt-5">
+              <KeyIssuesPanel
+                distribution={data.analytics?.demographics.top_issue ?? { state: "unavailable", reason: "no_answers", minRequired: data.sample.minCellSize }}
+                centerLabel={t.results.topIssues}
+                topIssuesLabel={t.analysisHub.topIssuesRankingLabel}
+              />
+            </div>
+          </section>
+
+          <DetailedAnalysisCta analysisHref={analysisPath(data.context.state.slug, data.context.election.slug)} />
 
           <DisclaimerShareBar shareTitle={data.context.constituency.name} electionYear={data.context.election.year} />
         </>

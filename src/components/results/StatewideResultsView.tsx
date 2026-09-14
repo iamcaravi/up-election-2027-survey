@@ -2,18 +2,19 @@
 
 import { BarChart3, CalendarDays, Globe, MapPin, Users } from "lucide-react";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { analysisPath } from "@/lib/routes";
 import type { PublicStatewideResultsDto } from "@/lib/public-statewide-results";
 import {
   SummaryCard,
   PartySupportChart,
-  IssuesDonutChart,
+  KeyIssuesPanel,
   StateCard,
   PrivacyPill,
   InlineState,
-  DistributionCard,
   MethodItem,
   DisclaimerShareBar,
   SyntheticDataBanner,
+  DetailedAnalysisCta,
 } from "./ResultsDashboardParts";
 
 export function StatewideResultsView({ data }: { data: PublicStatewideResultsDto }) {
@@ -70,49 +71,37 @@ export function StatewideResultsView({ data }: { data: PublicStatewideResultsDto
 
       {!isZeroState && (
         <>
-          <div className="mt-6 grid gap-4 lg:grid-cols-2">
-            <section id="party" className="card-surface scroll-mt-24 rounded-2xl p-5 sm:p-6" aria-labelledby="statewide-party-heading">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <h2 id="statewide-party-heading" className="font-display text-xl font-bold">{t.results.partySupport}</h2>
-                  <p className="mt-1 text-xs text-muted">{t.results.partyDenominator}</p>
-                </div>
-                <PrivacyPill />
+          <section id="party" className="card-surface scroll-mt-24 mt-6 rounded-2xl p-5 sm:p-6" aria-labelledby="statewide-party-heading">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h2 id="statewide-party-heading" className="font-display text-xl font-bold">{t.results.partySupport}</h2>
+                <p className="mt-1 text-xs text-muted">{t.results.partyDenominator}</p>
               </div>
-              <div className="mt-5 overflow-x-auto pb-1">
-                {data.partyPreference.state === "available" ? (
-                  <PartySupportChart buckets={data.partyPreference.buckets} locale={locale} />
-                ) : (
-                  <InlineState>{t.results.zeroParty}</InlineState>
-                )}
-              </div>
-            </section>
-
-            <section id="issues" className="card-surface scroll-mt-24 rounded-2xl p-5 sm:p-6" aria-labelledby="statewide-issues-heading">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <h2 id="statewide-issues-heading" className="font-display text-xl font-bold">{t.results.topIssues}</h2>
-                  <p className="mt-1 text-xs text-muted">{t.surveyFlow.stateWideNote.replace("{state}", data.state.name)}</p>
-                </div>
-                <PrivacyPill />
-              </div>
-              <div className="mt-5">
-                <IssuesDonutChart distribution={data.demographics.top_issue} centerLabel={t.results.topIssues} />
-              </div>
-            </section>
-          </div>
-
-          <div id="profile" className="mt-6 scroll-mt-24">
-            <div className="flex flex-wrap items-end justify-between gap-3">
-              <h2 className="font-display text-xl font-bold">{t.results.voterProfile}</h2>
               <PrivacyPill />
             </div>
-            <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              <DistributionCard title={t.results.ageGroup} distribution={data.demographics.age_group} />
-              <DistributionCard title={t.results.gender} distribution={data.demographics.gender} />
-              <DistributionCard title={t.results.religion} distribution={data.demographics.religion} />
+            <div className="mt-5 overflow-x-auto pb-1">
+              {data.partyPreference.state === "available" ? (
+                <PartySupportChart buckets={data.partyPreference.buckets} locale={locale} />
+              ) : (
+                <InlineState>{t.results.zeroParty}</InlineState>
+              )}
             </div>
-          </div>
+          </section>
+
+          <section id="issues" className="card-surface scroll-mt-24 mt-6 rounded-2xl p-5 sm:p-6" aria-labelledby="statewide-issues-heading">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h2 id="statewide-issues-heading" className="font-display text-xl font-bold">{t.results.topIssues}</h2>
+                <p className="mt-1 text-xs text-muted">{t.surveyFlow.stateWideNote.replace("{state}", data.state.name)}</p>
+              </div>
+              <PrivacyPill />
+            </div>
+            <div className="mt-5">
+              <KeyIssuesPanel distribution={data.demographics.top_issue} centerLabel={t.results.topIssues} topIssuesLabel={t.analysisHub.topIssuesRankingLabel} />
+            </div>
+          </section>
+
+          <DetailedAnalysisCta analysisHref={analysisPath(data.state.slug, data.election.slug)} />
 
           <DisclaimerShareBar
             shareTitle={t.surveyFlow.stateWideHeading.replace("{state}", data.state.name)}

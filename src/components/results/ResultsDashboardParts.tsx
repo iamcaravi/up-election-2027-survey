@@ -14,6 +14,7 @@ import type { TooltipContentProps } from "recharts";
 import { FlaskConical, Info, Share2, ShieldCheck } from "lucide-react";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { buildResultShareHook, buildResultShareMessage } from "@/lib/share-message";
+import { LinkButton } from "@/components/ui/Button";
 import { SocialShareButtons } from "./SocialShareButtons";
 import type { PublicAnalyticsBucket, PublicDistribution } from "@/lib/public-analytics-core";
 
@@ -220,6 +221,99 @@ export function IssuesDonutChart({
   );
 }
 
+// The Key Issues section as it appears on the public Results page and the
+// state Analysis dashboard: a large donut (40%), the full issue list (25%),
+// and the top-3 ranked issues (35%) side by side. Built once here so both
+// pages share one implementation instead of drifting apart; falls back to
+// IssuesDonutChart's own unavailable/suppressed placeholder when there's
+// nothing to rank.
+export function KeyIssuesPanel({
+  distribution,
+  centerLabel,
+  topIssuesLabel,
+}: {
+  distribution: PublicDistribution;
+  centerLabel: string;
+  topIssuesLabel: string;
+}) {
+  const { locale } = useLocale();
+  const available =
+    distribution.state === "available"
+      ? distribution.buckets.filter((b): b is Extract<PublicAnalyticsBucket, { state: "available" }> => b.state === "available")
+      : [];
+
+  if (available.length === 0) {
+    return <IssuesDonutChart distribution={distribution} centerLabel={centerLabel} />;
+  }
+
+  const sorted = available
+    .map((b, index) => ({
+      key: b.key,
+      label: locale === "hi" && b.nameHindi ? b.nameHindi : b.label,
+      percentage: b.percentage,
+      color: b.colorHex ?? ISSUE_COLORS[index % ISSUE_COLORS.length],
+    }))
+    .sort((a, b) => b.percentage - a.percentage);
+
+  return (
+    <div className="grid gap-4 lg:grid-cols-[40fr_25fr_35fr] lg:items-start">
+      <div className="flex min-w-0 justify-center lg:col-span-1">
+        <IssuesDonutChart distribution={distribution} centerLabel={centerLabel} size="lg" hideLegend tooltip />
+      </div>
+      <div className="min-w-0 border-t border-border pt-4 lg:col-span-1 lg:border-l lg:border-t-0 lg:pl-4 lg:pt-0">
+        <ul className="space-y-1.5">
+          {sorted.map((issue) => (
+            <li key={issue.key} className="flex items-center justify-between gap-2 text-sm">
+              <span className="flex min-w-0 items-center gap-1.5 text-foreground">
+                <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: issue.color }} />
+                <span className="truncate">{issue.label}</span>
+              </span>
+              <span className="shrink-0 font-display font-bold tabular-nums text-ink">{issue.percentage}%</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+      <div className="min-w-0 border-t border-border pt-4 lg:col-span-1 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
+        <h3 className="font-display text-xs font-bold uppercase tracking-wide text-muted">{topIssuesLabel}</h3>
+        <ol className="mt-3 space-y-2">
+          {sorted.slice(0, 3).map((issue, index) => (
+            <li key={issue.key} className="flex items-center justify-between gap-2 rounded-lg border border-border bg-surface-2 px-3 py-2">
+              <span className="flex min-w-0 items-center gap-2 text-sm text-foreground">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-ink text-[11px] font-bold text-white">
+                  {index + 1}
+                </span>
+                <span className="truncate">{issue.label}</span>
+              </span>
+              <span className="shrink-0 font-display font-bold tabular-nums text-ink">{issue.percentage}%</span>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </div>
+  );
+}
+
+// The single CTA that sends a public Results-page visitor from the
+// simplified summary here into the full Analysis dashboard for the same
+// state/election — always built from analysisHref (routes.ts's
+// analysisPath), never a hardcoded "/analysis" path, so it stays correct
+// for whichever state/election context the results page is currently in.
+export function DetailedAnalysisCta({ analysisHref }: { analysisHref: string }) {
+  const { t } = useLocale();
+  return (
+    <div className="mt-6 flex flex-col items-start justify-between gap-4 rounded-2xl border border-border bg-surface p-5 shadow-[var(--shadow-card)] sm:flex-row sm:items-center sm:p-6">
+      <div className="min-w-0">
+        <p className="font-display text-lg font-bold text-ink sm:text-xl">{t.results.detailedAnalysisCtaTitle}</p>
+        <p className="mt-1 text-sm text-muted">{t.results.detailedAnalysisCtaBody}</p>
+      </div>
+      <LinkButton href={analysisHref} variant="cta" className="w-full shrink-0 sm:w-auto">
+        {t.results.detailedAnalysisCtaButton}
+        <span aria-hidden="true">→</span>
+      </LinkButton>
+    </div>
+  );
+}
+
 export function StateCard({
   icon,
   title,
@@ -283,17 +377,6 @@ export function InlineState({ children }: { children: React.ReactNode }) {
 // presentation changed here — the underlying distribution (counts,
 // percentages, privacy suppression) is untouched and comes from the exact
 // same aggregation this card always received.
-export function DistributionCard({ title, distribution }: { title: string; distribution: PublicDistribution }) {
-  return (
-    <div className="card-surface min-w-0 rounded-2xl p-5">
-      <h3 className="font-display font-bold">{title}</h3>
-      <div className="mt-4">
-        <IssuesDonutChart distribution={distribution} centerLabel={title} />
-      </div>
-    </div>
-  );
-}
-
 export function MethodItem({ label, value }: { label: string; value: string }) {
   return <div><dt className="text-xs text-muted">{label}</dt><dd className="mt-1 font-semibold">{value}</dd></div>;
 }

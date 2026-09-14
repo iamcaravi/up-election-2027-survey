@@ -88,11 +88,11 @@ export function ResultsTabs({
       </div>
 
       {/* The constituency result page shows only its one primary result view —
-          no in-page "Summary / Party Comparison / Top issues / Voter profile /
-          Detailed Analysis" scroll-nav (those section ids still exist inside
-          PublicResultsView/StatewideResultsView for anchor links elsewhere,
-          e.g. the footer's "View methodology" link — this only removes the
-          pointless always-first-tab nav bar, not the sections themselves). */}
+          no in-page "Summary / Party / Issues / Detailed Analysis" scroll-nav
+          (those section ids still exist inside PublicResultsView/
+          StatewideResultsView for anchor links elsewhere, e.g. the footer's
+          "View methodology" link — this only removes the pointless
+          always-first-tab nav bar, not the sections themselves). */}
       {activeHasResults && (
         <div className="mb-6 flex justify-end border-b border-border pb-3 text-xs text-muted">
           <span className="whitespace-nowrap">
