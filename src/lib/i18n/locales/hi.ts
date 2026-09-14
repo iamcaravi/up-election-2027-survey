@@ -514,7 +514,6 @@ const hi = {
     successTrustNoPersonalValue: "सार्वजनिक नहीं की जाती",
     viewResults: "वर्तमान परिणाम देखें",
     shareSurvey: "इस सर्वे को शेयर करें",
-    shareText: "मैंने अपने विधानसभा क्षेत्र के चुनावी सर्वे में अपनी राय दी। आप भी अपनी राय दें।",
     shareCopied: "लिंक कॉपी हो गया है।",
     nextStepsHeading: "अब आगे क्या?",
     nextStepsSubtitle: "आप नीचे दिए गए विकल्पों के माध्यम से और जान सकते हैं।",

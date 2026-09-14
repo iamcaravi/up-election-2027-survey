@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
@@ -28,6 +28,8 @@ import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { getDeviceFingerprint } from "@/lib/fingerprint";
 import { cn } from "@/lib/utils";
 import { SurveyStepper, type SurveyStepDef } from "./SurveyStepper";
+import { buildSurveyCompletionShareMessage } from "@/lib/share-message";
+import { SITE_URL } from "@/lib/seo";
 import * as Icons from "lucide-react";
 
 export interface SurveyOptionItem {
@@ -168,7 +170,6 @@ export function SurveyExperience({
       <SuccessScreen
         steps={steps}
         constituencyName={constituencyName}
-        resultsHref={resultsHref}
         onViewResults={() => router.push(resultsHref)}
       />
     );
@@ -531,20 +532,28 @@ function ChipGroup({
 function SuccessScreen({
   steps,
   constituencyName,
-  resultsHref,
   onViewResults,
 }: {
   steps: SurveyStepDef[];
   constituencyName: string;
-  resultsHref: string;
   onViewResults: () => void;
 }) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const [copied, setCopied] = useState(false);
-  const shareUrl = useMemo(() => (typeof window !== "undefined" ? window.location.origin + resultsHref : resultsHref), [resultsHref]);
+  // Deliberately the site's homepage, not the results page for this
+  // specific constituency+party breakdown — the share text below already
+  // names the constituency (which is fine to disclose), but the link
+  // itself stays generic so nothing about it points at any particular
+  // result. resultsHref is still used for the "View Results" button next
+  // to Share, just not for what gets shared.
+  const shareUrl = SITE_URL;
 
   async function handleShare() {
-    const shareData = { title: constituencyName, text: t.surveyFlow.shareText, url: shareUrl };
+    // Never derived from the respondent's actual answers (party/candidate/
+    // issue/etc. never reach this function) — see buildSurveyCompletionShareMessage's
+    // own doc comment for why every share surface must go through it.
+    const shareText = buildSurveyCompletionShareMessage({ locale, constituencyName });
+    const shareData = { text: shareText, url: shareUrl };
     if (typeof navigator !== "undefined" && navigator.share) {
       try {
         await navigator.share(shareData);
@@ -554,7 +563,7 @@ function SuccessScreen({
       }
     }
     if (typeof navigator !== "undefined" && navigator.clipboard) {
-      await navigator.clipboard.writeText(`${t.surveyFlow.shareText} ${shareUrl}`);
+      await navigator.clipboard.writeText(shareText);
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
     }

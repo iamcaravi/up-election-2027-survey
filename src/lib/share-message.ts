@@ -23,3 +23,25 @@ export function buildResultShareHook({
 export function buildResultShareMessage(args: { locale: "hi" | "en"; electionYear: number; scopeName: string; url: string }): string {
   return `${buildResultShareHook(args)}\n${args.url}`;
 }
+
+// Post-submission "I just took the survey" share text (survey completion
+// screen's Share button — see SurveyExperience.tsx's handleShare()).
+// Deliberately contains ONLY the constituency name and a generic invite —
+// never the party/candidate/option the respondent actually picked, which
+// this function has no access to in the first place by design. Every
+// share surface (native Web Share, WhatsApp, clipboard fallback) must
+// route through this one function rather than building its own text, so
+// there is exactly one place that decides what a completed survey is
+// allowed to say when shared.
+export function buildSurveyCompletionShareMessage({
+  locale,
+  constituencyName,
+}: {
+  locale: "hi" | "en";
+  constituencyName: string;
+}): string {
+  if (locale === "hi") {
+    return `🗳️ मैंने VoterSurvey पर अपनी राय दी!\n📍 मेरी विधानसभा: ${constituencyName}\n\nअब देखिए आपके क्षेत्र में जनता का मूड क्या है।\nआप भी अपनी राय दें।\n\n👉 VoterSurvey.in`;
+  }
+  return `🗳️ I shared my opinion on VoterSurvey!\n📍 My Constituency: ${constituencyName}\n\nSee what people in your constituency are thinking.\nShare your opinion too.\n\n👉 VoterSurvey.in`;
+}

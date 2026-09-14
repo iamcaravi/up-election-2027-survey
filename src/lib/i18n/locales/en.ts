@@ -516,7 +516,6 @@ const en: typeof hi = {
     successTrustNoPersonalValue: "is ever made public",
     viewResults: "View Current Results",
     shareSurvey: "Share This Survey",
-    shareText: "I shared my opinion in my constituency's election survey. You should too.",
     shareCopied: "Link copied.",
     nextStepsHeading: "What's next?",
     nextStepsSubtitle: "You can learn more through the options below.",
