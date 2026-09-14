@@ -11,7 +11,7 @@ import type { PartyMomentumItem } from "@/lib/state-analysis";
 // computePartyMomentum, a pure function over the last two qualifying
 // months). This is a description of an already-observed change, never a
 // prediction: no "will win"/"leading towards victory" language anywhere.
-export function PartyMomentum({ items }: { items: PartyMomentumItem[] }) {
+export function PartyMomentum({ items, vsLabel }: { items: PartyMomentumItem[]; vsLabel?: string }) {
   const { t, locale } = useLocale();
 
   if (items.length === 0) {
@@ -33,6 +33,11 @@ export function PartyMomentum({ items }: { items: PartyMomentumItem[] }) {
               <Icon size={12} />
               {item.changePp === null ? t.analysisHub.momentumNew : `${item.changePp > 0 ? "+" : ""}${item.changePp} pp`}
             </span>
+            {/* Secondary "vs {month}" caption — only shown for a non-default
+                (older) selected month, so it's clear the pp change is
+                relative to that month's own previous month, not "last
+                month" from today. */}
+            {vsLabel && <p className="mt-1.5 truncate text-[10px] text-muted">{vsLabel}</p>}
           </div>
         );
       })}

@@ -1,6 +1,6 @@
 "use client";
 
-import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, Legend, ResponsiveContainer, CartesianGrid, LabelList } from "recharts";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { ISSUE_COLORS, InlineState } from "@/components/results/ResultsDashboardParts";
 import type { DemographicGroupPartyRow } from "@/lib/state-analysis";
@@ -11,11 +11,13 @@ import type { DemographicGroupPartyRow } from "@/lib/state-analysis";
 // colorHex. Every percentage comes straight from state-analysis.ts's
 // buildDemographicPartyRows; a group whose sample size is below the
 // platform's privacy threshold is shown with an honest low-data note instead
-// of a chart that implies a reliable split. `showLeaderTakeaways` adds one
-// data-derived sentence per group ("Among surveyed 18–24 respondents, BJP
-// has the highest reported support.") — only meaningful for genuine
-// demographic groups, so Section H's issue-rows reuse leaves it off.
-export function DemographicPartyChart({ rows, showLeaderTakeaways }: { rows: DemographicGroupPartyRow[]; showLeaderTakeaways?: boolean }) {
+// of a chart that implies a reliable split. No hover tooltip — every value
+// this chart can show is already permanently visible via the LabelList above
+// each bar, so a tooltip would only repeat what's already on screen. The
+// data-derived "who leads which group" reading lives in the caller
+// (buildDemographicPartyReading in analysis-summaries.ts) so it can sit in
+// a dedicated summary column next to the chart instead of underneath it.
+export function DemographicPartyChart({ rows }: { rows: DemographicGroupPartyRow[] }) {
   const { t, locale } = useLocale();
 
   const usable = rows.filter((r) => !r.lowData && r.sampleSize > 0);
@@ -42,18 +44,13 @@ export function DemographicPartyChart({ rows, showLeaderTakeaways }: { rows: Dem
     <div>
       <div className="h-72 w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={chartData} margin={{ top: 8, right: 8, bottom: 0, left: -16 }}>
+          <BarChart data={chartData} margin={{ top: 20, right: 8, bottom: 0, left: 4 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
             <XAxis dataKey="group" tick={{ fontSize: 12 }} stroke="var(--muted)" />
-            <YAxis tick={{ fontSize: 12 }} stroke="var(--muted)" unit="%" width={40} />
-            <Tooltip
-              contentStyle={{ borderRadius: 12, border: "1px solid var(--border)", fontSize: 13 }}
-              formatter={(value, key) => {
-                const meta = partyMeta.find((p) => p.key === key);
-                const name = meta ? (locale === "hi" && meta.nameHindi ? meta.nameHindi : meta.label) : String(key);
-                return [`${value}%`, name];
-              }}
-            />
+            {/* width=44 + no negative margin so the "100%" Y-axis label never
+                loses its leading digit — the old `left: -16` margin pulled
+                the whole chart (axis included) past the container edge. */}
+            <YAxis tick={{ fontSize: 12 }} stroke="var(--muted)" unit="%" width={44} allowDecimals={false} />
             <Legend
               formatter={(key: string) => {
                 const meta = partyMeta.find((p) => p.key === key);
@@ -62,25 +59,25 @@ export function DemographicPartyChart({ rows, showLeaderTakeaways }: { rows: Dem
               wrapperStyle={{ fontSize: 12 }}
             />
             {partyMeta.map((p) => (
-              <Bar key={p.key} dataKey={p.key} fill={p.color} radius={[4, 4, 0, 0]} />
+              <Bar key={p.key} dataKey={p.key} fill={p.color} radius={[4, 4, 0, 0]} isAnimationActive={false}>
+                {/* Percentage always visible above each bar — never
+                    hover-only; the tooltip stays as secondary detail. */}
+                <LabelList
+                  dataKey={p.key}
+                  position="top"
+                  fontSize={10}
+                  fill="var(--ink)"
+                  formatter={(v: unknown) => {
+                    const n = typeof v === "number" ? v : Number(v);
+                    return n > 0 ? `${n}%` : "";
+                  }}
+                />
+              </Bar>
             ))}
           </BarChart>
         </ResponsiveContainer>
       </div>
-      {showLeaderTakeaways && (
-        <ul className="mt-4 space-y-1.5 border-t border-border pt-3 text-xs text-foreground">
-          {usable.map((row) => {
-            const leader = row.parties.reduce((a, b) => (b.percentage > a.percentage ? b : a));
-            if (leader.percentage <= 0) return null;
-            const leaderName = locale === "hi" && leader.nameHindi ? leader.nameHindi : leader.label;
-            return (
-              <li key={row.groupKey}>
-                {t.analysisHub.groupLeaderNote.replace("{group}", row.groupLabel).replace("{party}", leaderName).replace("{percentage}", String(leader.percentage))}
-              </li>
-            );
-          })}
-        </ul>
-      )}
+      <p className="mt-3 text-[11px] text-muted">{t.analysisHub.withinGroupNote}</p>
       {lowDataGroups.length > 0 && (
         <p className="mt-3 text-xs text-muted">
           {t.analysisHub.lowDataGroupsNote}: {lowDataGroups.join(", ")}

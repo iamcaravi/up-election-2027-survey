@@ -9,7 +9,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
+import type { TooltipContentProps } from "recharts";
 import { FlaskConical, Info, Share2, ShieldCheck } from "lucide-react";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { buildResultShareHook, buildResultShareMessage } from "@/lib/share-message";
@@ -71,13 +72,13 @@ export function PartySupportChart({ buckets, locale }: { buckets: PublicAnalytic
   const BAR_AREA_HEIGHT = 128;
 
   return (
-    <div className="flex flex-wrap items-end gap-4 overflow-x-auto pb-1 sm:gap-6">
+    <div className="flex flex-nowrap items-end gap-3 overflow-x-auto pb-1 sm:gap-4">
       {available.map((bucket, index) => {
         const name = locale === "hi" && bucket.nameHindi ? bucket.nameHindi : bucket.label;
         const color = bucket.colorHex ?? ISSUE_COLORS[index % ISSUE_COLORS.length];
         const barHeight = Math.max(6, (bucket.percentage / maxPct) * BAR_AREA_HEIGHT);
         return (
-          <div key={bucket.key} className="flex w-16 shrink-0 flex-col items-center gap-2 text-center sm:w-20">
+          <div key={bucket.key} className="flex w-14 shrink-0 flex-col items-center gap-1.5 text-center sm:w-[4.5rem]">
             <span className="font-display text-sm font-extrabold tabular-nums text-ink">{bucket.percentage}%</span>
             <div className="flex items-end" style={{ height: BAR_AREA_HEIGHT }}>
               <div
@@ -95,7 +96,7 @@ export function PartySupportChart({ buckets, locale }: { buckets: PublicAnalytic
         );
       })}
       {suppressed.map((bucket) => (
-        <div key={bucket.key} className="flex w-16 shrink-0 flex-col items-center gap-2 text-center text-muted sm:w-20">
+        <div key={bucket.key} className="flex w-14 shrink-0 flex-col items-center gap-1.5 text-center text-muted sm:w-[4.5rem]">
           <span className="text-xs">{t.results.suppressed}</span>
           <div className="flex items-end" style={{ height: BAR_AREA_HEIGHT }}>
             <div className="h-1.5 w-8 rounded-t-md bg-border sm:w-10" />
@@ -108,7 +109,53 @@ export function PartySupportChart({ buckets, locale }: { buckets: PublicAnalytic
   );
 }
 
-export function IssuesDonutChart({ distribution, centerLabel }: { distribution: PublicDistribution; centerLabel: string }) {
+function DonutTooltip({ active, payload }: TooltipContentProps) {
+  if (!active || !payload || payload.length === 0) return null;
+  const entry = payload[0].payload as { name?: string; value?: number; count?: number } | undefined;
+  if (!entry) return null;
+  return (
+    <div className="rounded-md border border-border bg-surface px-2 py-1 text-xs shadow-sm">
+      <span className="font-semibold text-ink">{entry.name}</span>
+      <span className="text-muted">
+        {" "}
+        — {entry.value}%{typeof entry.count === "number" ? ` · ${entry.count}` : ""}
+      </span>
+    </div>
+  );
+}
+
+export function IssuesDonutChart({
+  distribution,
+  centerLabel,
+  stacked,
+  size = "md",
+  hideLegend,
+  tooltip,
+}: {
+  distribution: PublicDistribution;
+  centerLabel: string;
+  /** Always stack donut above legend, even at sm:+ widths — for callers
+   *  placed inside a narrow grid column (e.g. a 4-up card grid) where the
+   *  default side-by-side layout leaves the legend too little width and
+   *  category names truncate to nothing. Every other caller keeps the
+   *  existing side-by-side layout unchanged. */
+  stacked?: boolean;
+  /** "lg" for a caller with real room to spare (e.g. a 70%-width column),
+   *  "xl" for a caller centering the donut alone with no side legend —
+   *  every other existing caller keeps the original "md" size unchanged. */
+  size?: "md" | "lg" | "xl";
+  /** Skip the built-in side/below legend entirely — for a caller that
+   *  already renders the same issue+percentage list itself in its own
+   *  layout (e.g. a data grid below the chart), where the built-in legend
+   *  would just be a second, redundant copy of the same list. */
+  hideLegend?: boolean;
+  /** Opt-in hover/focus tooltip (name, percentage, and response count when
+   *  the distribution provides one) — off by default because most callers
+   *  already show every value permanently via the legend, which makes a
+   *  tooltip redundant; a caller that hides the legend (hideLegend) has no
+   *  other on-chart way to read one slice's exact numbers, so it opts in. */
+  tooltip?: boolean;
+}) {
   const { locale, t } = useLocale();
   if (distribution.state !== "available" || distribution.buckets.length === 0) {
     return <InlineState>{distribution.state === "suppressed" ? t.results.resultsSuppressed : t.results.noBreakdownData}</InlineState>;
@@ -121,12 +168,15 @@ export function IssuesDonutChart({ distribution, centerLabel }: { distribution: 
   const chartData = available.map((bucket, index) => ({
     name: locale === "hi" && bucket.nameHindi ? bucket.nameHindi : bucket.label,
     value: bucket.percentage,
+    count: bucket.count,
     color: bucket.colorHex ?? ISSUE_COLORS[index % ISSUE_COLORS.length],
   }));
 
+  const sizeClass = size === "xl" ? "h-64 w-64 sm:h-80 sm:w-80" : size === "lg" ? "h-56 w-56 sm:h-64 sm:w-64" : "h-40 w-40 sm:h-44 sm:w-44";
+
   return (
-    <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-center">
-      <div className="relative h-40 w-40 shrink-0 sm:h-44 sm:w-44">
+    <div className={`flex flex-col items-center gap-6 ${stacked || hideLegend ? "" : "sm:flex-row sm:items-center"}`}>
+      <div className={`relative shrink-0 ${sizeClass}`}>
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie data={chartData} dataKey="value" nameKey="name" innerRadius="62%" outerRadius="100%" paddingAngle={2} stroke="none">
@@ -134,23 +184,38 @@ export function IssuesDonutChart({ distribution, centerLabel }: { distribution: 
                 <Cell key={index} fill={entry.color} />
               ))}
             </Pie>
+            {tooltip && <Tooltip content={(props) => <DonutTooltip {...props} />} />}
           </PieChart>
         </ResponsiveContainer>
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center px-6 text-center">
-          <span className="font-display text-sm font-bold leading-tight text-ink">{centerLabel}</span>
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+          {/* max-w matched to the donut's own inner-hole size (innerRadius
+              62% above) rather than just outer padding — a longer label
+              (e.g. a full party name) now wraps to 2 lines within the hole
+              instead of overflowing past the ring. text-center keeps a
+              2-line label visually centered instead of ragged-left, which
+              is what made short center labels look off-center before. */}
+          <span
+            className={`max-w-[62%] whitespace-pre-line break-words text-center font-display font-bold leading-tight text-ink ${
+              size === "xl" ? "text-base sm:text-lg" : size === "lg" ? "text-sm sm:text-base" : "text-[11px] sm:text-xs"
+            }`}
+          >
+            {centerLabel}
+          </span>
         </div>
       </div>
-      <ul className="w-full min-w-0 space-y-2">
-        {chartData.map((entry) => (
-          <li key={entry.name} className="flex items-center justify-between gap-3 text-sm">
-            <span className="flex min-w-0 items-center gap-2">
-              <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: entry.color }} />
-              <span className="truncate">{entry.name}</span>
-            </span>
-            <span className="shrink-0 font-bold tabular-nums text-ink">{entry.value}%</span>
-          </li>
-        ))}
-      </ul>
+      {!hideLegend && (
+        <ul className="w-full min-w-0 space-y-2">
+          {chartData.map((entry) => (
+            <li key={entry.name} className="flex items-center justify-between gap-3 text-sm">
+              <span className="flex min-w-0 items-center gap-2">
+                <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: entry.color }} />
+                <span className="truncate">{entry.name}</span>
+              </span>
+              <span className="shrink-0 font-bold tabular-nums text-ink">{entry.value}%</span>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

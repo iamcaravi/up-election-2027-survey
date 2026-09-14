@@ -8,6 +8,7 @@ import { getPublicStatewideResults, type PublicStatewideResultsDto } from "./pub
 import { protectPublicCells, type PublicDistribution } from "./public-analytics-core";
 import { REAL_DATA_SOURCE, SYNTHETIC_DATA_MODE_KEY, SYNTHETIC_DATA_SOURCE } from "./synthetic-data";
 import { ANALYSIS_CONFIG } from "./analysis-config";
+import { computeMomentumForMonthIndex } from "./analysis-summaries";
 
 // State-level Analysis dashboard data layer. Reuses getPublicStatewideResults
 // (already computes partySupport + demographics + sample for the whole
@@ -310,29 +311,12 @@ async function computeVotePreferenceTrend(electionId: string, dataSource: string
 // ---------------------------------------------------------------------------
 function computePartyMomentum(trend: VotePreferenceTrend): PartyMomentumItem[] {
   if (!trend.hasEnoughData || trend.months.length < 2) return [];
-  const months = trend.months;
-  const current = months[months.length - 1];
-  const previous = months[months.length - 2];
-  const prevByKey = new Map(previous.parties.map((p) => [p.key, p]));
-
-  return current.parties
-    .map((p) => {
-      const prev = prevByKey.get(p.key);
-      const changePp = prev ? Math.round((p.percentage - prev.percentage) * 10) / 10 : null;
-      const direction: PartyMomentumItem["direction"] =
-        changePp === null ? "new" : changePp > 0.5 ? "up" : changePp < -0.5 ? "down" : "stable";
-      return {
-        partyKey: p.key,
-        label: p.label,
-        nameHindi: p.nameHindi,
-        colorHex: p.colorHex,
-        currentPct: p.percentage,
-        previousPct: prev ? prev.percentage : null,
-        changePp,
-        direction,
-      };
-    })
-    .sort((a, b) => b.currentPct - a.currentPct);
+  // Delegates to the same month-indexed calculation the client-side Party
+  // Momentum month picker uses (analysis-summaries.ts, which is safe to
+  // import from a server module) — the latest month is just index
+  // `months.length - 1`, so there is exactly one implementation of this
+  // formula instead of two that could drift apart.
+  return computeMomentumForMonthIndex(trend, trend.months.length - 1);
 }
 
 // ---------------------------------------------------------------------------

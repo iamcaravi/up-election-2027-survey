@@ -1,34 +1,36 @@
 "use client";
 
-import { Users, MapPin } from "lucide-react";
 import { LinkButton } from "@/components/ui/Button";
-import { SummaryCard, PartySupportChart, IssuesDonutChart, PrivacyPill, SyntheticDataBanner, DistributionCard } from "@/components/results/ResultsDashboardParts";
+import { PartySupportChart, IssuesDonutChart, PrivacyPill, SyntheticDataBanner, ISSUE_COLORS } from "@/components/results/ResultsDashboardParts";
 import { VotePreferenceTrendChart } from "@/components/analysis/VotePreferenceTrendChart";
-import { PartyMomentum } from "@/components/analysis/PartyMomentum";
+import { PartyMomentumSection } from "@/components/analysis/PartyMomentumSection";
 import { KeyIssuesByParty } from "@/components/analysis/KeyIssuesByParty";
 import { PartyIssueComparisonChart } from "@/components/analysis/PartyIssueComparisonChart";
 import { IssuePartyHeatmap } from "@/components/analysis/IssuePartyHeatmap";
 import { DemographicPartyChart } from "@/components/analysis/DemographicPartyChart";
+import { CastePartyHorizontalChart } from "@/components/analysis/CastePartyHorizontalChart";
 import { DemographicIssueAnalysis } from "@/components/analysis/DemographicIssueAnalysis";
+import { RespondentProfileCard } from "@/components/analysis/RespondentProfileCard";
 import { IntersectionAnalysis } from "@/components/analysis/IntersectionAnalysis";
 import { KeyTakeaways } from "@/components/analysis/KeyTakeaways";
-import { WhatChangedStrip } from "@/components/analysis/WhatChangedStrip";
 import { VoterVoices } from "@/components/analysis/VoterVoices";
 import { MethodologyCard } from "@/components/analysis/MethodologyCard";
 import { AnalysisFilterBar, type AnalysisFilterState, type AnalysisFilterConstituency } from "@/components/analysis/AnalysisFilterBar";
+import { KeyReading } from "@/components/analysis/KeyReading";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
-import { formatNumber } from "@/lib/utils";
 import { ANALYSIS_CONFIG } from "@/lib/analysis-config";
+import { buildPartySupportReading, buildHeatmapReading, buildDemographicPartyReading } from "@/lib/analysis-summaries";
 import type { StateAnalysisData } from "@/lib/state-analysis";
 
-function SectionHeader({ title, subtitle }: { title: string; subtitle?: string }) {
+function SectionHeader({ eyebrow, title, subtitle, hideBadge }: { eyebrow?: string; title: string; subtitle?: string; hideBadge?: boolean }) {
   return (
     <div className="flex flex-wrap items-start justify-between gap-3">
       <div>
+        {eyebrow && <p className="text-[11px] font-bold uppercase tracking-wide text-accent">{eyebrow}</p>}
         <h2 className="font-display text-xl font-bold">{title}</h2>
-        {subtitle && <p className="mt-1 text-xs text-muted">{subtitle}</p>}
+        {subtitle && <p className="mt-0.5 text-xs text-muted">{subtitle}</p>}
       </div>
-      <PrivacyPill />
+      {!hideBadge && <PrivacyPill />}
     </div>
   );
 }
@@ -68,14 +70,49 @@ export function AnalysisResultsView({
   const hasResults = statewide.sample.validResponseCount > 0;
   const hasReligion = data.religionPartyRows.length > 0;
   const hasCaste = data.castePartyRows.length > 0;
+  // Same key→color assignment IssuesDonutChart computes internally for this
+  // exact distribution (available buckets in their original order, index
+  // fallback into the shared ISSUE_COLORS palette) — kept in sync here so
+  // the Top Issues ranking badges visually match their donut segment
+  // instead of picking an unrelated color.
+  const issueColorByKey = new Map<string, string>();
+  if (statewide.demographics.top_issue.state === "available") {
+    statewide.demographics.top_issue.buckets
+      .filter((b): b is Extract<typeof b, { state: "available" }> => b.state === "available")
+      .forEach((b, index) => issueColorByKey.set(b.key, b.colorHex ?? ISSUE_COLORS[index % ISSUE_COLORS.length]));
+  }
   const overallTopIssues =
     statewide.demographics.top_issue.state === "available"
       ? statewide.demographics.top_issue.buckets
           .filter((b): b is Extract<typeof b, { state: "available" }> => b.state === "available")
           .sort((a, b) => b.percentage - a.percentage)
           .slice(0, 5)
-          .map((b) => ({ key: b.key, label: locale === "hi" && b.nameHindi ? b.nameHindi : b.label, percentage: b.percentage }))
+          .map((b) => ({
+            key: b.key,
+            label: locale === "hi" && b.nameHindi ? b.nameHindi : b.label,
+            percentage: b.percentage,
+            color: issueColorByKey.get(b.key) ?? ISSUE_COLORS[0],
+          }))
       : [];
+  // Every available issue (not sliced to 5) for the Key Issues data grid —
+  // same sort, same source, same colors as overallTopIssues above; this is
+  // just the unsliced version so the grid shows every category the survey
+  // actually has, whatever that count happens to be for this state.
+  const allIssuesForGrid =
+    statewide.demographics.top_issue.state === "available"
+      ? statewide.demographics.top_issue.buckets
+          .filter((b): b is Extract<typeof b, { state: "available" }> => b.state === "available")
+          .sort((a, b) => b.percentage - a.percentage)
+          .map((b) => ({
+            key: b.key,
+            label: locale === "hi" && b.nameHindi ? b.nameHindi : b.label,
+            percentage: b.percentage,
+            color: issueColorByKey.get(b.key) ?? ISSUE_COLORS[0],
+          }))
+      : [];
+  const partySupportBuckets = statewide.partyPreference.state === "available" ? statewide.partyPreference.buckets : [];
+  const partySupportReading = buildPartySupportReading(partySupportBuckets, t, locale);
+  const heatmapReading = buildHeatmapReading(data.issuePartyMatrix, data.partySegments, t, locale);
 
   return (
     <>
@@ -87,25 +124,6 @@ export function AnalysisResultsView({
         electionName={electionName}
       />
 
-      {/* Section B — Survey Response Overview */}
-      <div className="mt-8">
-        <h2 className="font-display text-lg font-bold">{t.analysisHub.responseOverviewHeading}</h2>
-        <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <SummaryCard
-            icon={<Users size={17} />}
-            iconClass="bg-blue-100 text-blue-700"
-            label={t.surveyFlow.totalResponsesLabel}
-            value={formatNumber(statewide.sample.validResponseCount)}
-          />
-          <SummaryCard
-            icon={<MapPin size={17} />}
-            iconClass="bg-positive/10 text-positive"
-            label={t.results.constituenciesSurveyed}
-            value={`${formatNumber(statewide.respondingConstituencyCount)} / ${formatNumber(statewide.totalConstituencies)}`}
-          />
-        </div>
-      </div>
-
       {statewide.isSynthetic && (
         <div className="mt-6">
           <SyntheticDataBanner />
@@ -114,26 +132,6 @@ export function AnalysisResultsView({
 
       {hasResults ? (
         <>
-          {/* Respondent demographics — sample composition (distinct from the
-              party-crossed breakdowns further down). */}
-          <section className="mt-8">
-            <div className="flex flex-wrap items-end justify-between gap-3">
-              <h2 className="font-display text-xl font-bold">{t.analysisHub.demographicsHeading}</h2>
-              <PrivacyPill />
-            </div>
-            {/* lg: (not sm:) — at sm:/tablet width, three donut+legend cards
-                side by side don't leave the legend enough room next to
-                IssuesDonutChart's fixed-size donut, which was overflowing
-                each card at ~768px. One column comfortably fits a donut +
-                legend until there's truly enough width for three. */}
-            <div className={`mt-4 grid gap-4 lg:grid-cols-3 ${hasCaste ? "xl:grid-cols-4" : ""}`}>
-              <DistributionCard title={t.results.ageGroup} distribution={statewide.demographics.age_group} />
-              <DistributionCard title={t.results.gender} distribution={statewide.demographics.gender} />
-              <DistributionCard title={t.results.religion} distribution={statewide.demographics.religion} />
-              {hasCaste && <DistributionCard title={t.results.socialCategory} distribution={data.casteDistribution} />}
-            </div>
-          </section>
-
           {/* Section C — Party Landscape: Party Support (bar) and Current
               Vote Share (donut) are two views of the exact same underlying
               party distribution, so they live side by side in one unified
@@ -144,19 +142,23 @@ export function AnalysisResultsView({
               statewide.partyPreference distribution; no formula changed. */}
           <section className="mt-8 card-surface rounded-2xl p-5 sm:p-6">
             <div className="flex flex-wrap items-start justify-between gap-3">
-              <h2 className="font-display text-xl font-bold">{t.analysisHub.partyLandscapeHeading}</h2>
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-wide text-accent">{t.analysisHub.partyLandscapeEyebrow}</p>
+                <h2 className="font-display text-xl font-bold">{t.analysisHub.partyLandscapeHeading}</h2>
+                <p className="mt-0.5 text-xs text-muted">{t.analysisHub.partyLandscapeSubtitle}</p>
+              </div>
               <PrivacyPill />
             </div>
-            <div className="mt-5 grid gap-6 lg:grid-cols-2">
-              <div className="min-w-0">
+            <div className="mt-5 grid gap-5 lg:grid-cols-5">
+              <div className="min-w-0 lg:col-span-3">
                 <h3 className="font-display text-sm font-bold text-ink">{t.analysisHub.partySupportHeading}</h3>
                 <p className="mt-0.5 text-xs text-muted">{t.analysisHub.partySupportSubtitle}</p>
                 <div className="mt-4">
-                  <PartySupportChart buckets={statewide.partyPreference.state === "available" ? statewide.partyPreference.buckets : []} locale={locale} />
+                  <PartySupportChart buckets={partySupportBuckets} locale={locale} />
                 </div>
               </div>
               {ANALYSIS_CONFIG.currentVoteShare && (
-                <div className="min-w-0 border-t border-border pt-5 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
+                <div className="min-w-0 border-t border-border pt-5 lg:col-span-2 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
                   <h3 className="font-display text-sm font-bold text-ink">{t.analysisHub.currentVoteShareHeading}</h3>
                   <p className="mt-0.5 text-xs text-muted">{t.analysisHub.currentVoteShareSubtitle}</p>
                   <div className="mt-4">
@@ -165,6 +167,7 @@ export function AnalysisResultsView({
                 </div>
               )}
             </div>
+            <KeyReading lines={partySupportReading} />
           </section>
 
           {/* Section D — Vote Preference Trend */}
@@ -192,42 +195,67 @@ export function AnalysisResultsView({
             </section>
           )}
 
-          {/* Section E — Party Momentum */}
-          {ANALYSIS_CONFIG.advancedMomentum && (
-            <section className="mt-8 card-surface rounded-2xl p-5 sm:p-6">
-              <SectionHeader title={t.analysisHub.partyMomentumHeading} subtitle={t.analysisHub.partyMomentumSubtitle} />
-              <div className="mt-5">
-                <PartyMomentum items={data.partyMomentum} />
-              </div>
-            </section>
-          )}
+          {/* Section E — Party Momentum + What Changed, as ONE dashboard
+              module: momentum cards on top, the movement-only insight strip
+              (a filtered reuse of the same Key Takeaways engine — no second
+              computation) directly beneath, separated by a hairline rather
+              than living in two separate stacked cards. A month picker lets
+              the visitor re-point both at an older month/previous-month
+              transition; see PartyMomentumSection for that logic. */}
+          <PartyMomentumSection data={data} />
 
-          {/* "What Changed?" — a compact, movement-only reuse of the Key
-              Takeaways insight engine, placed right beside Trend/Momentum. */}
-          {ANALYSIS_CONFIG.advancedInsights && <WhatChangedStrip data={data} />}
-
-          {/* Section F — Key Issues Overall: compact donut on the left,
-              ranked top-3 + multi-select disclosure on the right, instead of
-              one oversized donut+giant-legend card. Same distribution, same
-              numbers — just a denser layout. */}
+          {/* Section F — Key Issues Overall: one vertically-stacked module —
+              a large, centered donut on top (size="xl", legend hidden since
+              the grid below already lists every issue) and a compact
+              3-column issue+percentage grid underneath, replacing the
+              earlier side-by-side chart+ranking-panel layout. Each grid
+              cell's dot is colored via issueColorByKey (computed above from
+              the same distribution the donut reads), so a cell's color
+              always matches its own donut slice. allIssuesForGrid is the
+              same sorted list as overallTopIssues, just not sliced to 5 —
+              same distribution, same numbers, only the presentation
+              changed. */}
           {ANALYSIS_CONFIG.keyIssues && (
             <section className="mt-8 card-surface rounded-2xl p-5 sm:p-6">
-              <SectionHeader title={t.analysisHub.keyIssuesOverallHeading} subtitle={t.analysisHub.keyIssuesOverallSubtitle} />
-              <div className="mt-5 grid gap-6 lg:grid-cols-2">
-                <div className="min-w-0">
-                  <IssuesDonutChart distribution={statewide.demographics.top_issue} centerLabel={t.analysisHub.keyIssuesOverallHeading} />
+              <SectionHeader eyebrow={t.analysisHub.keyIssuesEyebrow} title={t.analysisHub.keyIssuesOverallHeading} subtitle={t.analysisHub.keyIssuesOverallSubtitle} />
+              <div className="mt-5 grid gap-4 lg:grid-cols-[40fr_25fr_35fr] lg:items-start">
+                <div className="flex min-w-0 justify-center lg:col-span-1">
+                  <IssuesDonutChart
+                    distribution={statewide.demographics.top_issue}
+                    centerLabel={t.analysisHub.keyIssuesOverallHeading}
+                    size="lg"
+                    hideLegend
+                    tooltip
+                  />
                 </div>
-                <div className="min-w-0 border-t border-border pt-5 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
-                  <h3 className="font-display text-xs font-bold uppercase tracking-wide text-muted">{t.analysisHub.topTakeawaysLabel}</h3>
+                <div className="min-w-0 border-t border-border pt-4 lg:col-span-1 lg:border-l lg:border-t-0 lg:pl-4 lg:pt-0">
+                  {allIssuesForGrid.length > 0 ? (
+                    <ul className="space-y-1.5">
+                      {allIssuesForGrid.map((issue) => (
+                        <li key={issue.key} className="flex items-center justify-between gap-2 text-sm">
+                          <span className="flex min-w-0 items-center gap-1.5 text-foreground">
+                            <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: issue.color }} />
+                            <span className="truncate">{issue.label}</span>
+                          </span>
+                          <span className="shrink-0 font-display font-bold tabular-nums text-ink">{issue.percentage}%</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-xs text-muted">{t.analysisHub.notEnoughTakeaways}</p>
+                  )}
+                </div>
+                <div className="min-w-0 border-t border-border pt-4 lg:col-span-1 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
+                  <h3 className="font-display text-xs font-bold uppercase tracking-wide text-muted">{t.analysisHub.topIssuesRankingLabel}</h3>
                   {overallTopIssues.length > 0 ? (
                     <ol className="mt-3 space-y-2">
                       {overallTopIssues.slice(0, 3).map((issue, index) => (
-                        <li key={issue.key} className="flex items-center justify-between gap-2 text-sm">
-                          <span className="min-w-0 truncate text-foreground">
-                            <span className="mr-1.5 text-xs font-semibold text-muted">
-                              {index === 0 ? t.analysisHub.keyIssuesTopLabel : index === 1 ? t.analysisHub.keyIssuesSecondLabel : t.analysisHub.keyIssuesThirdLabel}:
+                        <li key={issue.key} className="flex items-center justify-between gap-2 rounded-lg border border-border bg-surface-2 px-3 py-2">
+                          <span className="flex min-w-0 items-center gap-2 text-sm text-foreground">
+                            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-ink text-[11px] font-bold text-white">
+                              {index + 1}
                             </span>
-                            {issue.label}
+                            <span className="truncate">{issue.label}</span>
                           </span>
                           <span className="shrink-0 font-display font-bold tabular-nums text-ink">{issue.percentage}%</span>
                         </li>
@@ -259,6 +287,7 @@ export function AnalysisResultsView({
               <div className="mt-5">
                 <PartyIssueComparisonChart rows={data.issuePartyMatrix} segments={data.partySegments} />
               </div>
+              <KeyReading lines={heatmapReading} />
             </section>
           )}
 
@@ -269,48 +298,74 @@ export function AnalysisResultsView({
               <div className="mt-5">
                 <IssuePartyHeatmap rows={data.issuePartyMatrix} segments={data.partySegments} />
               </div>
+              <KeyReading lines={heatmapReading} />
             </section>
           )}
 
-          {/* Section J — Age Group x Party */}
+          {/* Sections J, K, L, L2 — Support by Demographics: party
+              preference within each Age/Gender/Religion/Caste group. Each
+              dimension is its own full-width module with the chart at ~60%
+              and its data-derived reading at ~40% alongside it (same
+              col-span-3/col-span-2 pattern the Party Landscape module above
+              already uses for chart+donut) rather than four small 2x2 cards
+              — at four-up, the chart itself was too cramped to read and the
+              reading had nowhere to live but underneath it. */}
           {ANALYSIS_CONFIG.demographicAnalysis && (
-            <section className="mt-8 card-surface rounded-2xl p-5 sm:p-6">
-              <SectionHeader title={t.analysisHub.agePartyHeading} />
-              <div className="mt-5">
-                <DemographicPartyChart rows={data.agePartyRows} showLeaderTakeaways />
-              </div>
-            </section>
-          )}
-
-          {/* Section K — Gender x Party */}
-          {ANALYSIS_CONFIG.demographicAnalysis && (
-            <section className="mt-8 card-surface rounded-2xl p-5 sm:p-6">
-              <SectionHeader title={t.analysisHub.genderPartyHeading} />
-              <div className="mt-5">
-                <DemographicPartyChart rows={data.genderPartyRows} showLeaderTakeaways />
-              </div>
-            </section>
-          )}
-
-          {/* Section L — Religion/Community x Party (only when the survey
-              actually collects religion — never fabricated categories). */}
-          {ANALYSIS_CONFIG.demographicAnalysis && hasReligion && (
-            <section className="mt-8 card-surface rounded-2xl p-5 sm:p-6">
-              <SectionHeader title={t.analysisHub.religionPartyHeading} />
-              <div className="mt-5">
-                <DemographicPartyChart rows={data.religionPartyRows} showLeaderTakeaways />
-              </div>
-            </section>
-          )}
-
-          {/* Section L2 — Caste/Social Category x Party (same "social_category"
-              question every state's survey already collects — only rendered
-              when the state's survey actually has answers for it). */}
-          {ANALYSIS_CONFIG.castePartyAnalysis && hasCaste && (
-            <section className="mt-8 card-surface rounded-2xl p-5 sm:p-6">
-              <SectionHeader title={t.analysisHub.castePartyHeading} />
-              <div className="mt-5">
-                <DemographicPartyChart rows={data.castePartyRows} showLeaderTakeaways />
+            <section className="mt-8">
+              <SectionHeader eyebrow={t.analysisHub.demographicsEyebrow} title={t.analysisHub.supportByDemographicsHeading} subtitle={t.analysisHub.supportByDemographicsSubtitle} />
+              <div className="mt-4 space-y-4">
+                <div className="card-surface min-w-0 rounded-2xl p-4 sm:p-5">
+                  <h3 className="font-display text-sm font-bold text-ink">{t.analysisHub.agePartyHeading}</h3>
+                  <p className="mt-0.5 text-xs text-muted">{t.analysisHub.demographicPartySubtitle}</p>
+                  <div className="mt-4 grid gap-5 lg:grid-cols-10 lg:items-start">
+                    <div className="min-w-0 lg:col-span-7">
+                      <DemographicPartyChart rows={data.agePartyRows} />
+                    </div>
+                    <div className="min-w-0 border-t border-border pt-4 lg:col-span-3 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
+                      <KeyReading lines={buildDemographicPartyReading(data.agePartyRows, t, locale)} />
+                    </div>
+                  </div>
+                </div>
+                <div className="card-surface min-w-0 rounded-2xl p-4 sm:p-5">
+                  <h3 className="font-display text-sm font-bold text-ink">{t.analysisHub.genderPartyHeading}</h3>
+                  <p className="mt-0.5 text-xs text-muted">{t.analysisHub.demographicPartySubtitle}</p>
+                  <div className="mt-4 grid gap-5 lg:grid-cols-10 lg:items-start">
+                    <div className="min-w-0 lg:col-span-7">
+                      <DemographicPartyChart rows={data.genderPartyRows} />
+                    </div>
+                    <div className="min-w-0 border-t border-border pt-4 lg:col-span-3 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
+                      <KeyReading lines={buildDemographicPartyReading(data.genderPartyRows, t, locale)} />
+                    </div>
+                  </div>
+                </div>
+                {hasReligion && (
+                  <div className="card-surface min-w-0 rounded-2xl p-4 sm:p-5">
+                    <h3 className="font-display text-sm font-bold text-ink">{t.analysisHub.religionPartyHeading}</h3>
+                    <p className="mt-0.5 text-xs text-muted">{t.analysisHub.demographicPartySubtitle}</p>
+                    <div className="mt-4 grid gap-5 lg:grid-cols-10 lg:items-start">
+                      <div className="min-w-0 lg:col-span-7">
+                        <DemographicPartyChart rows={data.religionPartyRows} />
+                      </div>
+                      <div className="min-w-0 border-t border-border pt-4 lg:col-span-3 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
+                        <KeyReading lines={buildDemographicPartyReading(data.religionPartyRows, t, locale)} />
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {ANALYSIS_CONFIG.castePartyAnalysis && hasCaste && (
+                  <div className="card-surface min-w-0 rounded-2xl p-4 sm:p-5">
+                    <h3 className="font-display text-sm font-bold text-ink">{t.analysisHub.castePartyHeading}</h3>
+                    <p className="mt-0.5 text-xs text-muted">{t.analysisHub.demographicPartySubtitle}</p>
+                    <div className="mt-4 grid gap-5 lg:grid-cols-10 lg:items-start">
+                      <div className="min-w-0 lg:col-span-7">
+                        <CastePartyHorizontalChart rows={data.castePartyRows} />
+                      </div>
+                      <div className="min-w-0 border-t border-border pt-4 lg:col-span-3 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
+                        <KeyReading lines={buildDemographicPartyReading(data.castePartyRows, t, locale)} />
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </section>
           )}
@@ -396,6 +451,33 @@ export function AnalysisResultsView({
           <div className="mt-8">
             <MethodologyCard statewide={statewide} />
           </div>
+
+          {/* Respondent Profile — sample composition (distinct from the
+              party-crossed breakdowns above). Deliberately the LAST section
+              on the page: every other section answers "what do voters
+              think"; this one answers "who took this survey", which reads
+              better as a closing appendix than as the second thing a visitor
+              sees. */}
+          <section className="mt-8">
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <h2 className="font-display text-xl font-bold">{t.analysisHub.demographicsHeading}</h2>
+                <p className="mt-0.5 text-xs text-muted">{t.analysisHub.demographicsSubtitle}</p>
+              </div>
+              <PrivacyPill />
+            </div>
+            {/* lg: (not sm:) — at sm:/tablet width, three donut+legend cards
+                side by side don't leave the legend enough room next to
+                IssuesDonutChart's fixed-size donut, which was overflowing
+                each card at ~768px. One column comfortably fits a donut +
+                legend until there's truly enough width for three. */}
+            <div className={`mt-4 grid gap-4 lg:grid-cols-3 ${hasCaste ? "xl:grid-cols-4" : ""}`}>
+              <RespondentProfileCard title={t.results.ageGroup} distribution={statewide.demographics.age_group} />
+              <RespondentProfileCard title={t.results.gender} distribution={statewide.demographics.gender} />
+              <RespondentProfileCard title={t.results.religion} distribution={statewide.demographics.religion} />
+              {hasCaste && <RespondentProfileCard title={t.results.socialCategory} distribution={data.casteDistribution} />}
+            </div>
+          </section>
         </>
       ) : (
         <section className="mt-8 rounded-2xl border border-dashed border-border bg-surface-2 p-10 text-center text-sm text-muted">

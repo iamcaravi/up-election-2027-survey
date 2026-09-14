@@ -6,6 +6,7 @@ import { getUpConstituencyExplorer } from "@/lib/up-analytics";
 import { Container } from "@/components/ui/Container";
 import { AnalysisStateHeading } from "@/components/analysis/AnalysisStateHeading";
 import { AnalysisResultsView } from "@/components/analysis/AnalysisResultsView";
+import { SurveyResponseOverview } from "@/components/analysis/SurveyResponseOverview";
 import { SurveyTrustStrip } from "@/components/survey/SurveyTrustStrip";
 import { statePath } from "@/lib/routes";
 import { displayStateName } from "@/lib/utils";
@@ -57,18 +58,29 @@ export default async function AnalysisPage({
   return (
     <div>
       <Container className="py-8 sm:py-10">
-        <AnalysisStateHeading
-          stateNameRaw={state.name}
-          stateSlug={state.slug}
-          electionName={`${election.name} · ${election.year}`}
-          validResponseCount={analysisData.statewide.sample.validResponseCount}
-          respondingConstituencyCount={analysisData.statewide.respondingConstituencyCount}
-          totalConstituencies={analysisData.statewide.totalConstituencies}
-          historicalMonthsAvailable={analysisData.historicalMonthsAvailable}
-          lastUpdated={analysisData.statewide.sample.lastResponseAt}
-        />
+        <div className="grid gap-6 lg:grid-cols-[1fr_300px] lg:items-center">
+          <div>
+            <AnalysisStateHeading
+              stateNameRaw={state.name}
+              stateSlug={state.slug}
+              electionName={`${election.name} · ${election.year}`}
+              validResponseCount={analysisData.statewide.sample.validResponseCount}
+              respondingConstituencyCount={analysisData.statewide.respondingConstituencyCount}
+              totalConstituencies={analysisData.statewide.totalConstituencies}
+              historicalMonthsAvailable={analysisData.historicalMonthsAvailable}
+              lastUpdated={analysisData.statewide.sample.lastResponseAt}
+            />
+          </div>
+          <div>
+            <SurveyResponseOverview
+              validResponseCount={analysisData.statewide.sample.validResponseCount}
+              respondingConstituencyCount={analysisData.statewide.respondingConstituencyCount}
+              totalConstituencies={analysisData.statewide.totalConstituencies}
+            />
+          </div>
+        </div>
 
-        <div className="mt-8">
+        <div className="mt-6">
           <AnalysisResultsView
             data={analysisData}
             currentStateSlug={state.slug}

@@ -23,13 +23,13 @@ export function VoterVoices({ voices }: { voices: VoterVoice[] }) {
 
   return (
     <div>
-      <span className="mb-3 inline-block rounded-full border border-accent/25 bg-accent/10 px-2.5 py-1 text-[11px] font-semibold text-accent">
-        {t.analysisHub.voterVoicesDataLabel}
+      <span className="mb-3 inline-block rounded-full border border-accent/25 bg-accent/10 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-accent">
+        {t.analysisHub.dataDerivedBadge}
       </span>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {voices.map((voice, index) => (
-          <div key={`${voice.kind}-${voice.issueKey}-${index}`} className="card-surface rounded-2xl p-5">
-            <Quote size={20} className="text-accent" />
+          <div key={`${voice.kind}-${voice.issueKey}-${index}`} className="card-surface rounded-2xl p-4">
+            <Quote size={18} className="text-accent" />
             <p className="mt-2 font-display text-sm font-semibold leading-relaxed text-foreground">
               {voice.kind === "issue"
                 ? t.analysisHub.voiceIssueTemplate.replace("{issue}", voice.issueLabel)

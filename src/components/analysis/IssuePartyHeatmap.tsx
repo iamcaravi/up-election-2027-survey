@@ -44,11 +44,6 @@ export function IssuePartyHeatmap({ rows, segments }: { rows: IssuePartyMatrixRo
                 return (
                   <td
                     key={cell.partyKey}
-                    title={
-                      cell.lowData
-                        ? t.results.suppressed
-                        : `${row.issueLabel} · ${segment ? (locale === "hi" && segment.nameHindi ? segment.nameHindi : segment.label) : cell.partyKey} · ${cell.percentage}% · ${cell.count}`
-                    }
                     className="rounded-lg p-1.5 text-center font-bold tabular-nums"
                     style={
                       cell.lowData
