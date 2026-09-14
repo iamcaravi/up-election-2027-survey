@@ -2,13 +2,13 @@ import type { Metadata } from "next";
 import { Container } from "@/components/ui/Container";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { buildPageMetadata } from "@/lib/seo";
+import { resolveStaticSeoBase } from "@/lib/seo-catalog";
+import { applySeoOverride } from "@/lib/seo-overrides";
 
-export const metadata: Metadata = buildPageMetadata({
-  title: "Privacy Policy",
-  description:
-    "How VoterSurvey.in handles survey data — what is collected, how duplicate detection works, and what is never asked for or published.",
-  path: "/privacy",
-});
+export async function generateMetadata(): Promise<Metadata> {
+  const base = resolveStaticSeoBase("privacy");
+  return applySeoOverride(buildPageMetadata({ title: base.title, description: base.description, path: base.path }), base.path);
+}
 
 export default function PrivacyPage() {
   return (

@@ -3,12 +3,13 @@ import { Container } from "@/components/ui/Container";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { MIN_ANALYTICS_GROUP_SIZE_DEFAULT } from "@/lib/enums";
 import { buildPageMetadata } from "@/lib/seo";
+import { resolveStaticSeoBase } from "@/lib/seo-catalog";
+import { applySeoOverride } from "@/lib/seo-overrides";
 
-export const metadata: Metadata = buildPageMetadata({
-  title: "Methodology",
-  description: "How VoterSurvey.in collects, validates and aggregates public survey responses.",
-  path: "/methodology",
-});
+export async function generateMetadata(): Promise<Metadata> {
+  const base = resolveStaticSeoBase("methodology");
+  return applySeoOverride(buildPageMetadata({ title: base.title, description: base.description, path: base.path }), base.path);
+}
 
 export default function MethodologyPage() {
   return (

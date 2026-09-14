@@ -10,6 +10,7 @@ import { ResultsStateHeading, NoElectionForResultsNotice } from "@/components/re
 import { analysisPath, stateResultsPath } from "@/lib/routes";
 import { displayStateName } from "@/lib/utils";
 import { buildPageMetadata } from "@/lib/seo";
+import { applySeoOverride } from "@/lib/seo-overrides";
 
 export async function generateMetadata({
   params,
@@ -20,11 +21,13 @@ export async function generateMetadata({
   const result = await getStateAndElection(stateSlug);
   if (!result) return {};
   const stateName = displayStateName(result.state.name, result.state.slug, "hi");
-  return buildPageMetadata({
+  const path = stateResultsPath(result.state.slug);
+  const base = buildPageMetadata({
     title: `${stateName} — परिणाम`,
     description: `${stateName} के जनमत सर्वे के परिणाम — पार्टी समर्थन, मुख्य मुद्दे और जिला/विधानसभा क्षेत्रवार परिणाम।`,
-    path: stateResultsPath(result.state.slug),
+    path,
   });
+  return applySeoOverride(base, path);
 }
 
 export const revalidate = 60;

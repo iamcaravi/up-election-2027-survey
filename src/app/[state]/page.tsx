@@ -9,6 +9,7 @@ import { TrendingConstituencies } from "@/components/home/TrendingConstituencies
 import { StateEyebrow, StateHeroText, NoElectionNotice, TrendingSectionHeading, MethodologyLink } from "@/components/state/StateHeroText";
 import { electionPath, districtsPath, stateResultsPath, statePath } from "@/lib/routes";
 import { buildPageMetadata } from "@/lib/seo";
+import { applySeoOverride } from "@/lib/seo-overrides";
 
 export async function generateMetadata({
   params,
@@ -18,13 +19,15 @@ export async function generateMetadata({
   const { state: slug } = await params;
   const result = await getStateAndElection(slug);
   if (!result) return {};
-  return buildPageMetadata({
+  const path = statePath(result.state.slug);
+  const base = buildPageMetadata({
     title: `${result.state.name} Election Survey`,
     description: `${result.state.name}: districts, assembly constituencies, candidates and public survey${
       result.election ? ` for the ${result.election.name}` : ""
     }.`,
-    path: statePath(result.state.slug),
+    path,
   });
+  return applySeoOverride(base, path);
 }
 
 export const revalidate = 60;

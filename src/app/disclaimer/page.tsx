@@ -3,16 +3,16 @@ import Link from "next/link";
 import { Container } from "@/components/ui/Container";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { buildPageMetadata } from "@/lib/seo";
+import { getSiteBranding } from "@/lib/site-branding";
+import { resolveStaticSeoBase } from "@/lib/seo-catalog";
+import { applySeoOverride } from "@/lib/seo-overrides";
 
-const CONTACT_EMAIL = "votersurveyindia@gmail.com";
 const LAST_UPDATED = "14 September 2026";
 
-export const metadata: Metadata = buildPageMetadata({
-  title: "Disclaimer",
-  description:
-    "VoterSurvey.in is an independent opinion/survey platform. Survey results are not official election results and are not affiliated with the Election Commission of India.",
-  path: "/disclaimer",
-});
+export async function generateMetadata(): Promise<Metadata> {
+  const base = resolveStaticSeoBase("disclaimer");
+  return applySeoOverride(buildPageMetadata({ title: base.title, description: base.description, path: base.path }), base.path);
+}
 
 function Section({ n, title, children }: { n: number; title: string; children: React.ReactNode }) {
   return (
@@ -25,7 +25,9 @@ function Section({ n, title, children }: { n: number; title: string; children: R
   );
 }
 
-export default function DisclaimerPage() {
+export default async function DisclaimerPage() {
+  const { contactEmail: CONTACT_EMAIL } = await getSiteBranding();
+
   return (
     <Container className="max-w-3xl py-14">
       <Breadcrumb items={[{ label: "Legal" }, { label: "Disclaimer" }]} />

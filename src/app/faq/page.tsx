@@ -2,24 +2,28 @@ import type { Metadata } from "next";
 import { Container } from "@/components/ui/Container";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { FaqAccordion } from "@/components/faq/FaqAccordion";
-import { FAQ_CATEGORIES } from "@/lib/faq-data";
+import { loadPublishedFaqCategories } from "@/lib/faq-content";
 import { buildPageMetadata } from "@/lib/seo";
+import { resolveStaticSeoBase } from "@/lib/seo-catalog";
+import { applySeoOverride } from "@/lib/seo-overrides";
 
-export const metadata: Metadata = buildPageMetadata({
-  title: "Frequently Asked Questions",
-  description:
-    "Answers about how VoterSurvey.in's survey works, how results and issue percentages are calculated, privacy protections, and the platform's relationship with the Election Commission of India.",
-  path: "/faq",
-});
+export async function generateMetadata(): Promise<Metadata> {
+  const base = resolveStaticSeoBase("faq");
+  return applySeoOverride(buildPageMetadata({ title: base.title, description: base.description, path: base.path }), base.path);
+}
 
-export default function FaqPage() {
-  // FAQPage structured data built from the exact same FAQ_CATEGORIES array
-  // the visible <FaqAccordion> renders below — never a hand-maintained
-  // duplicate that could drift from what a visitor actually sees.
+export const revalidate = 60;
+
+export default async function FaqPage() {
+  const categories = await loadPublishedFaqCategories();
+
+  // FAQPage structured data built from the exact same, exact-order data the
+  // visible <FaqAccordion> renders below — never a hand-maintained duplicate
+  // that could drift from what a visitor actually sees.
   const faqJsonLd = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
-    mainEntity: FAQ_CATEGORIES.flatMap((category) =>
+    mainEntity: categories.flatMap((category) =>
       category.items.map((item) => ({
         "@type": "Question",
         name: item.q,
@@ -40,7 +44,11 @@ export default function FaqPage() {
       </p>
 
       <div className="mt-8">
-        <FaqAccordion categories={FAQ_CATEGORIES} />
+        {categories.length > 0 ? (
+          <FaqAccordion categories={categories} />
+        ) : (
+          <p className="mt-8 text-sm text-muted">No published questions yet.</p>
+        )}
       </div>
     </Container>
   );

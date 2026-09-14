@@ -4,12 +4,13 @@ import { Users, ShieldCheck, Scale, FileBarChart } from "lucide-react";
 import { Container } from "@/components/ui/Container";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { buildPageMetadata } from "@/lib/seo";
+import { resolveStaticSeoBase } from "@/lib/seo-catalog";
+import { applySeoOverride } from "@/lib/seo-overrides";
 
-export const metadata: Metadata = buildPageMetadata({
-  title: "हमारे बारे में",
-  description: "votersurvey.in एक स्वतंत्र, स्वैच्छिक जनमत सर्वे मंच है — किसी भी राजनीतिक दल से स्वतंत्र।",
-  path: "/about",
-});
+export async function generateMetadata(): Promise<Metadata> {
+  const base = resolveStaticSeoBase("about");
+  return applySeoOverride(buildPageMetadata({ title: base.title, description: base.description, path: base.path }), base.path);
+}
 
 const PRINCIPLES = [
   { icon: Users, title: "जनता की भागीदारी", text: "कोई भी अपने विधानसभा क्षेत्र के सर्वे में स्वेच्छा से भाग ले सकता है।" },

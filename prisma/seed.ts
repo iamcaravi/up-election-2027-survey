@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { STATE_SEEDS, type StateSeedConfig } from "./data/state-seeds";
+import { FAQ_CATEGORIES } from "../src/lib/faq-data";
 import { CANONICAL_SPECIAL_PARTIES, DEFAULT_ISSUES, MIN_ANALYTICS_GROUP_SIZE_DEFAULT } from "../src/lib/enums";
 import { slugify } from "../src/lib/slugify";
 import { createDefaultSurveyQuestions } from "../src/lib/survey-template-data";
@@ -149,6 +150,33 @@ async function main() {
   // --- States ---------------------------------------------------------------
   for (const config of STATE_SEEDS) {
     await seedState(config);
+  }
+
+  // --- FAQ content (Admin → FAQ) ---------------------------------------------
+  // Idempotent and one-way: only runs when the table is empty, so re-running
+  // `npm run seed` never overwrites content an admin has since edited through
+  // the FAQ manager. src/lib/faq-data.ts stays the canonical *initial*
+  // question set (the same 50 questions authored during the launch-readiness
+  // pass) — the live public /faq page reads from FaqItem rows, not this file.
+  const existingFaqCount = await prisma.faqItem.count();
+  if (existingFaqCount === 0) {
+    let seededFaqCount = 0;
+    for (const category of FAQ_CATEGORIES) {
+      for (const [index, item] of category.items.entries()) {
+        await prisma.faqItem.create({
+          data: {
+            category: category.id,
+            categoryLabel: category.label,
+            question: item.q,
+            answer: item.a,
+            displayOrder: index,
+            published: true,
+          },
+        });
+        seededFaqCount += 1;
+      }
+    }
+    console.log(`Seeded ${seededFaqCount} FAQ items across ${FAQ_CATEGORIES.length} categories.`);
   }
 
   // --- Default admin account ------------------------------------------------

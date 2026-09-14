@@ -25,6 +25,11 @@ import {
   BarChart3,
   FileDown,
   FileBarChart,
+  HelpCircle,
+  Palette,
+  Layers,
+  Images,
+  Search,
   X,
 } from "lucide-react";
 
@@ -46,6 +51,17 @@ const SURVEYS_DATA_NAV = [
   { href: "/admin/analytics", label: "Analytics", icon: FileBarChart },
   { href: "/admin/synthetic-data", label: "Demo Data Mode", icon: FlaskConical },
   { href: "/admin/imports", label: "Export / Import Data", icon: FileDown },
+];
+
+const CONTENT_NAV = [
+  { href: "/admin/branding", label: "Branding & Contact", icon: Palette },
+  { href: "/admin/faq", label: "FAQ", icon: HelpCircle },
+];
+
+const WEBSITE_CONTROL_NAV = [
+  { href: "/admin/content-blocks", label: "Content Blocks", icon: Layers },
+  { href: "/admin/media", label: "Media Library", icon: Images },
+  { href: "/admin/seo", label: "SEO", icon: Search },
 ];
 
 const SYSTEM_NAV = [
@@ -113,6 +129,8 @@ export function AdminSidebar({
 
           <NavGroup title="Manage Elections" items={MANAGE_ELECTIONS_NAV} pathname={pathname} onNavigate={onCloseMobile} />
           <NavGroup title="Surveys & Data" items={SURVEYS_DATA_NAV} pathname={pathname} onNavigate={onCloseMobile} />
+          <NavGroup title="Content" items={CONTENT_NAV} pathname={pathname} onNavigate={onCloseMobile} />
+          <NavGroup title="Website Control" items={WEBSITE_CONTROL_NAV} pathname={pathname} onNavigate={onCloseMobile} />
           <NavGroup title="System" items={SYSTEM_NAV} pathname={pathname} onNavigate={onCloseMobile} />
 
           <Link

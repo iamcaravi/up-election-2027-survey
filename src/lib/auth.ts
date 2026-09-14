@@ -58,6 +58,16 @@ export async function getAdminSession(): Promise<AdminSession | null> {
   }
 }
 
+// Small, reusable role check for routes that need more than "is logged in"
+// (getAdminSession() already covers that) — e.g. content-mutating CMS
+// routes that shouldn't be reachable by a MODERATOR account whose role
+// exists for survey-response moderation, not site content. Every existing
+// route keeps checking `!session` itself exactly as before; this is purely
+// additive for new call sites that opt in.
+export function hasAdminRole(session: AdminSession | null, allowed: readonly AdminRole[]): boolean {
+  return !!session && allowed.includes(session.role);
+}
+
 export async function verifyAdminCredentials(email: string, password: string) {
   const user = await prisma.adminUser.findUnique({ where: { email } });
   if (!user || !user.isActive) return null;

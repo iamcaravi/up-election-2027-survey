@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { getHomeStats, getSiteSetting, getStates } from "@/lib/data";
 import { getHomepageIssueStats } from "@/lib/analytics";
 import { DEFAULT_HERO_CONFIG, normalizeHeroConfig } from "@/lib/hero-config";
@@ -14,8 +15,22 @@ import { HomeIssuesHeading } from "@/components/home/HomeIssuesHeading";
 import { LowerCardsSection } from "@/components/home/LowerCardsSection";
 import { StatesSection } from "@/components/home/StatesSection";
 import { Container } from "@/components/ui/Container";
+import { buildPageMetadata } from "@/lib/seo";
+import { resolveStaticSeoBase } from "@/lib/seo-catalog";
+import { applySeoOverride } from "@/lib/seo-overrides";
 
 export const revalidate = 60;
+
+// The homepage previously had no page-specific metadata at all (it inherited
+// the root layout's site-wide title/description/OG verbatim). This adds the
+// exact same buildPageMetadata() treatment every other page already has —
+// same title/description text as the layout default, so the rendered
+// <title>/<meta> are unchanged when no admin override exists (Admin → SEO)
+// — plus a canonical URL for "/", consistent with every other page.
+export async function generateMetadata(): Promise<Metadata> {
+  const base = resolveStaticSeoBase("home");
+  return applySeoOverride(buildPageMetadata({ title: base.title, description: base.description, path: base.path }), base.path);
+}
 
 export default async function Home() {
   const [stats, states, heroConfig, sectionsConfigRaw, issueStats] = await Promise.all([

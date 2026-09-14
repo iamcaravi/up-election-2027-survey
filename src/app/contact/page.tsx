@@ -3,15 +3,14 @@ import { Mail } from "lucide-react";
 import { Container } from "@/components/ui/Container";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { buildPageMetadata } from "@/lib/seo";
+import { getSiteBranding } from "@/lib/site-branding";
+import { resolveStaticSeoBase } from "@/lib/seo-catalog";
+import { applySeoOverride } from "@/lib/seo-overrides";
 
-const CONTACT_EMAIL = "votersurveyindia@gmail.com";
-
-export const metadata: Metadata = buildPageMetadata({
-  title: "Contact Us",
-  description:
-    "Get in touch with VoterSurvey.in for general enquiries, survey or data questions, technical support, privacy requests, or election/regulatory communication.",
-  path: "/contact",
-});
+export async function generateMetadata(): Promise<Metadata> {
+  const base = resolveStaticSeoBase("contact");
+  return applySeoOverride(buildPageMetadata({ title: base.title, description: base.description, path: base.path }), base.path);
+}
 
 const CONTACT_CATEGORIES = [
   {
@@ -36,7 +35,9 @@ const CONTACT_CATEGORIES = [
   },
 ];
 
-export default function ContactPage() {
+export default async function ContactPage() {
+  const { contactEmail: CONTACT_EMAIL } = await getSiteBranding();
+
   return (
     <Container className="max-w-3xl py-14">
       <Breadcrumb items={[{ label: "Help" }, { label: "Contact Us" }]} />

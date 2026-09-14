@@ -440,3 +440,119 @@ model VisitorPresence {
   @@index([lastSeenAt])
   @@map("visitor_presence")
 }
+
+// Admin-managed public FAQ content (see src/app/faq/page.tsx and
+// src/app/admin/faq). Separate from SiteSetting's generic key/value blobs
+// because FAQ needs real per-row querying/ordering (filter by published,
+// order by category + displayOrder) rather than one opaque JSON document.
+// categoryLabel is intentionally denormalized onto each row (no separate
+// FaqCategory table) — the category list here is small and admin-curated,
+// not worth a second table + join for this scale.
+model FaqItem {
+  id            String   @id @default(cuid())
+  category      String
+  categoryLabel String
+  question      String
+  answer        String
+  displayOrder  Int      @default(0)
+  published     Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  updatedBy     String?
+
+  @@index([category, displayOrder])
+  @@map("faq_items")
+}
+
+// A snapshot taken immediately before every FaqItem update/delete — the
+// lightweight version history required for admin rollback. Rows survive
+// their parent FaqItem's deletion (faqItemId then points at nothing live),
+// which is intentional: it's still a legitimate historical record of what
+// that question/answer used to say.
+model FaqItemVersion {
+  id        String   @id @default(cuid())
+  faqItemId String
+  category  String
+  question  String
+  answer    String
+  createdAt DateTime @default(now())
+  createdBy String?
+
+  @@index([faqItemId, createdAt])
+  @@map("faq_item_versions")
+}
+
+// Generalizes FaqItem/FaqItemVersion's draft/publish/version pattern to any
+// single-identity editable content "slot" (a legal page, a nav label, a
+// homepage text block) instead of hand-rolling a new model pair per content
+// type — see src/lib/content-blocks.ts. publishedValue is always what the
+// public site renders; draftValue is only ever visible through an
+// admin-only preview and is never read by a public page directly.
+// contentType is a free-form discriminator ("plainText" | "richText" |
+// "structuredSections" | "json") interpreted by the admin UI/consumer, not
+// enforced at the DB layer.
+model ContentBlock {
+  id             String    @id @default(cuid())
+  slotKey        String    @unique
+  contentType    String
+  draftValue     String?
+  publishedValue String
+  status         String    @default("PUBLISHED") // DRAFT_ONLY | PUBLISHED | HAS_DRAFT
+  updatedAt      DateTime  @updatedAt
+  updatedBy      String?
+  publishedAt    DateTime?
+
+  @@map("content_blocks")
+}
+
+// A snapshot of publishedValue taken at PUBLISH time (not on every draft
+// save — avoids version-spam from autosave/iterative editing). Rows survive
+// their parent ContentBlock (there isn't a hard FK) for the same reason
+// FaqItemVersion survives a deleted FaqItem: it's still a legitimate
+// historical record.
+model ContentBlockVersion {
+  id        String   @id @default(cuid())
+  slotKey   String
+  value     String
+  createdAt DateTime @default(now())
+  createdBy String?
+
+  @@index([slotKey, createdAt])
+  @@map("content_block_versions")
+}
+
+// Generic admin media library (Admin → Media Library) — additive, does not
+// replace any existing feature-specific upload route (Hero background,
+// Survey Hero elements, candidate ImageSource). Files live under
+// public/uploads/media/<generated-name> with the same magic-number
+// validation pattern already used by those existing upload routes.
+model MediaAsset {
+  id         String   @id @default(cuid())
+  url        String
+  fileName   String
+  mimeType   String
+  sizeBytes  Int
+  altText    String?
+  caption    String?
+  uploadedBy String?
+  createdAt  DateTime @default(now())
+
+  @@map("media_assets")
+}
+
+// Per-page SEO overrides, keyed by the exact relative path buildPageMetadata()
+// already builds canonical/OG URLs from (src/lib/seo.ts). A missing row for
+// a path means "use the generated default" — see src/lib/seo-overrides.ts's
+// applySeoOverride(), which only replaces fields explicitly set here and
+// never touches canonical-URL construction itself.
+model SeoOverride {
+  path           String    @id
+  title          String?
+  description    String?
+  ogImageAssetId String?
+  noindex        Boolean   @default(false)
+  updatedAt      DateTime  @updatedAt
+  updatedBy      String?
+
+  @@map("seo_overrides")
+}
