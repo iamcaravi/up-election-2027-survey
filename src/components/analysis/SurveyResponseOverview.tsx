@@ -26,13 +26,13 @@ export function SurveyResponseOverview({
       <div className="mt-3 grid grid-cols-2 gap-3">
         <SummaryCard
           icon={<Users size={17} />}
-          iconClass="bg-blue-100 text-blue-700"
+          tone="blue"
           label={t.surveyFlow.totalResponsesLabel}
           value={formatNumber(validResponseCount)}
         />
         <SummaryCard
           icon={<MapPin size={17} />}
-          iconClass="bg-positive/10 text-positive"
+          tone="green"
           label={t.results.constituenciesSurveyed}
           value={`${formatNumber(respondingConstituencyCount)} / ${formatNumber(totalConstituencies)}`}
         />

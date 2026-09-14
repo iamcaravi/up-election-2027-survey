@@ -154,7 +154,7 @@ export function AnalysisResultsView({
                 <h3 className="font-display text-sm font-bold text-ink">{t.analysisHub.partySupportHeading}</h3>
                 <p className="mt-0.5 text-xs text-muted">{t.analysisHub.partySupportSubtitle}</p>
                 <div className="mt-4">
-                  <PartySupportChart buckets={partySupportBuckets} locale={locale} />
+                  <PartySupportChart buckets={partySupportBuckets} locale={locale} variant="bars" />
                 </div>
               </div>
               {ANALYSIS_CONFIG.currentVoteShare && (
@@ -247,9 +247,9 @@ export function AnalysisResultsView({
                 </div>
                 <div className="min-w-0 border-t border-border pt-4 lg:col-span-1 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
                   <h3 className="font-display text-xs font-bold uppercase tracking-wide text-muted">{t.analysisHub.topIssuesRankingLabel}</h3>
-                  {overallTopIssues.length > 0 ? (
+                  {allIssuesForGrid.length > 0 ? (
                     <ol className="mt-3 space-y-2">
-                      {overallTopIssues.slice(0, 3).map((issue, index) => (
+                      {allIssuesForGrid.slice(0, 6).map((issue, index) => (
                         <li key={issue.key} className="flex items-center justify-between gap-2 rounded-lg border border-border bg-surface-2 px-3 py-2">
                           <span className="flex min-w-0 items-center gap-2 text-sm text-foreground">
                             <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-ink text-[11px] font-bold text-white">

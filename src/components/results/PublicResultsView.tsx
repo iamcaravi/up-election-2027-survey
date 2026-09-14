@@ -59,38 +59,38 @@ export function PublicResultsView({
         <div id="summary" className="grid scroll-mt-24 grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
           <SummaryCard
             icon={<Users size={17} />}
-            iconClass="bg-blue-100 text-blue-700"
+            tone="blue"
             label={t.results.totalResponsesCard}
             value={numberFormatter.format(validResponseCount ?? 0)}
           />
           <SummaryCard
             icon={<BarChart3 size={17} />}
-            iconClass="bg-positive/10 text-positive"
+            tone="green"
             label={t.results.newResponsesThisWeek}
             value={numberFormatter.format(data.sample.newResponsesLast7Days ?? 0)}
             delta={weeklyDelta}
           />
           <SummaryCard
             icon={<CalendarDays size={17} />}
-            iconClass="bg-orange-100 text-orange-700"
+            tone="orange"
             label={t.results.electionYear}
             value={String(data.context.election.year)}
           />
           <SummaryCard
             icon={<MapPin size={17} />}
-            iconClass="bg-blue-100 text-blue-700"
+            tone="blue"
             label={t.surveyFlow.statState}
             value={data.context.state.name}
           />
           <SummaryCard
             icon={<Building2 size={17} />}
-            iconClass="bg-blue-100 text-blue-700"
+            tone="purple"
             label={t.surveyFlow.statDistrict}
             value={data.context.district.name}
           />
           <SummaryCard
             icon={<Building2 size={17} />}
-            iconClass="bg-positive/10 text-positive"
+            tone="green"
             label={t.surveyFlow.statConstituency}
             value={data.context.constituency.name}
           />

@@ -6,11 +6,11 @@
 // प्रदेश" render as the same dashboard design with only the underlying data
 // differing, instead of two independently-maintained layouts drifting apart.
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
-import type { TooltipContentProps } from "recharts";
+import type { TooltipContentProps, PieLabelRenderProps } from "recharts";
 import { FlaskConical, Info, Share2, ShieldCheck } from "lucide-react";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { buildResultShareHook, buildResultShareMessage } from "@/lib/share-message";
@@ -20,21 +20,38 @@ import type { PublicAnalyticsBucket, PublicDistribution } from "@/lib/public-ana
 
 export const ISSUE_COLORS = ["#138a4b", "#2563eb", "#ff5a00", "#dc2626", "#7c3aed", "#78350f", "#94a3b8", "#0891b2"];
 
+// One tone per metric identity, defined once here rather than as ad-hoc
+// className strings at each call site, so "the same metric keeps the same
+// color wherever it appears" is enforced by the type system instead of by
+// convention. Each tone pairs a very light tinted card background + matching
+// soft border with a slightly stronger icon-tile fill — the "positive" tones
+// reuse the app's existing --color-positive token (same green already used
+// for delta-up indicators elsewhere) rather than introducing an unrelated
+// emerald palette.
+const SUMMARY_CARD_TONES = {
+  blue: { bg: "bg-blue-50/70", border: "border-blue-100", icon: "bg-blue-100 text-blue-700" },
+  green: { bg: "bg-positive/5", border: "border-positive/15", icon: "bg-positive/10 text-positive" },
+  orange: { bg: "bg-orange-50/70", border: "border-orange-100", icon: "bg-orange-100 text-orange-700" },
+  purple: { bg: "bg-purple-50/70", border: "border-purple-100", icon: "bg-purple-100 text-purple-700" },
+  teal: { bg: "bg-teal-50/70", border: "border-teal-100", icon: "bg-teal-100 text-teal-700" },
+} as const;
+
 export function SummaryCard({
   icon,
-  iconClass,
+  tone,
   label,
   value,
   delta,
 }: {
   icon: React.ReactNode;
-  iconClass: string;
+  tone: keyof typeof SUMMARY_CARD_TONES;
   label: string;
   value: string;
   delta?: number | null;
 }) {
+  const { bg, border, icon: iconClass } = SUMMARY_CARD_TONES[tone];
   return (
-    <div className="rounded-2xl border border-border bg-surface px-4 py-3.5 shadow-[var(--shadow-card)]">
+    <div className={`rounded-2xl border ${border} ${bg} px-4 py-3.5 shadow-[var(--shadow-card)]`}>
       <span className={`flex h-9 w-9 items-center justify-center rounded-xl ${iconClass}`}>{icon}</span>
       <p className="mt-2.5 truncate font-display text-2xl font-extrabold text-ink">{value}</p>
       <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-muted">
@@ -49,17 +66,65 @@ export function SummaryCard({
   );
 }
 
-// VERTICAL bar chart (not a donut, not horizontal bars) — Party Support and
-// Current Vote Share are two different visualizations of the same
-// underlying party distribution: Party Support is this vertical bar chart,
-// Current Vote Share is the donut (IssuesDonutChart, reused as-is below).
-// Bars sit in a left-aligned flex row (not a stretched grid), so 1–2
-// parties render as a couple of normal-width columns instead of stretching
-// to fill the container. A bucket without a party logo falls back to a
-// colored dot using its colorHex (or the shared ISSUE_COLORS rotation) —
-// never a random per-render color.
-export function PartySupportChart({ buckets, locale }: { buckets: PublicAnalyticsBucket[]; locale: "hi" | "en" }) {
+function usePrefersReducedMotion(): boolean {
+  const [reduced, setReduced] = useState(false);
+  useEffect(() => {
+    const query = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReduced(query.matches);
+    const listener = (event: MediaQueryListEvent) => setReduced(event.matches);
+    query.addEventListener("change", listener);
+    return () => query.removeEventListener("change", listener);
+  }, []);
+  return reduced;
+}
+
+function PartySupportTooltip({ active, payload }: TooltipContentProps) {
+  if (!active || !payload || payload.length === 0) return null;
+  const entry = payload[0].payload as { name?: string; value?: number; count?: number } | undefined;
+  if (!entry) return null;
+  return (
+    <div className="rounded-md border border-border bg-surface px-2.5 py-1.5 text-xs shadow-sm">
+      <p className="font-semibold text-ink">{entry.name}</p>
+      <p className="text-muted">
+        {entry.value}% {typeof entry.count === "number" ? `· ${entry.count}` : ""}
+      </p>
+    </div>
+  );
+}
+
+const SEMICIRCLE_RADIAN = Math.PI / 180;
+
+// News-channel-style semicircular gauge (left/main, ~65–70% width) + a
+// compact party table (right, ~30–35%) — same underlying PublicAnalyticsBucket[]
+// the old vertical bar chart read, same percentages/counts/order/colors/logos,
+// just a different visual treatment. Segment angle is proportional to each
+// bucket's own `percentage` (recharts normalizes slice angle by the sum of
+// values passed in, same as every other pie/donut already in this app —
+// the displayed labels are always the raw, unmodified bucket.percentage).
+// `stacked` forces chart-above-table even on wide viewports, for a caller
+// placed in a narrower grid column (e.g. the Analysis page's Party
+// Landscape module) where the side-by-side layout would be too cramped —
+// same escape hatch IssuesDonutChart's own `stacked` prop already uses.
+export function PartySupportChart({
+  buckets,
+  locale,
+  stacked,
+  variant = "semiDonut",
+}: {
+  buckets: PublicAnalyticsBucket[];
+  locale: "hi" | "en";
+  stacked?: boolean;
+  /** "semiDonut" (default) is the large TV-news-style half-circle + party
+   *  table used on the public Results page. "bars" is the original vertical
+   *  bar chart, kept for the Analysis page's Party Landscape module, which
+   *  already shows a full donut (Current Vote Share) right next to this —
+   *  two semi-/full-donuts side by side read as duplicated charts, so that
+   *  page keeps the bars instead. Same data, same colors, same order,
+   *  purely a different chart type per caller. */
+  variant?: "semiDonut" | "bars";
+}) {
   const { t } = useLocale();
+  const reducedMotion = usePrefersReducedMotion();
   const available = buckets.filter(
     (bucket): bucket is Extract<PublicAnalyticsBucket, { state: "available" }> => bucket.state === "available"
   );
@@ -69,43 +134,189 @@ export function PartySupportChart({ buckets, locale }: { buckets: PublicAnalytic
     return <InlineState>{t.results.resultsSuppressed}</InlineState>;
   }
 
-  const maxPct = Math.max(1, ...available.map((b) => b.percentage));
-  const BAR_AREA_HEIGHT = 128;
+  if (variant === "bars") {
+    const maxPct = Math.max(1, ...available.map((b) => b.percentage));
+    const BAR_AREA_HEIGHT = 128;
+    return (
+      <div className="flex flex-nowrap items-end gap-3 overflow-x-auto pb-1 sm:gap-4">
+        {available.map((bucket, index) => {
+          const name = locale === "hi" && bucket.nameHindi ? bucket.nameHindi : bucket.label;
+          const color = bucket.colorHex ?? ISSUE_COLORS[index % ISSUE_COLORS.length];
+          const barHeight = Math.max(6, (bucket.percentage / maxPct) * BAR_AREA_HEIGHT);
+          return (
+            <div key={bucket.key} className="flex w-14 shrink-0 flex-col items-center gap-1.5 text-center sm:w-[4.5rem]">
+              <span className="font-display text-sm font-extrabold tabular-nums text-ink">{bucket.percentage}%</span>
+              <div className="flex items-end" style={{ height: BAR_AREA_HEIGHT }}>
+                <div
+                  className="w-8 rounded-t-md transition-all duration-500 sm:w-10"
+                  style={{ height: barHeight, background: color }}
+                />
+              </div>
+              {bucket.logoUrl ? (
+                <Image src={bucket.logoUrl} alt="" width={22} height={22} className="h-[22px] w-[22px] shrink-0 rounded-full object-contain" />
+              ) : (
+                <span className="h-3 w-3 shrink-0 rounded-full" style={{ background: color }} />
+              )}
+              <span className="w-full truncate text-xs font-semibold text-ink">{name}</span>
+            </div>
+          );
+        })}
+        {suppressed.map((bucket) => (
+          <div key={bucket.key} className="flex w-14 shrink-0 flex-col items-center gap-1.5 text-center text-muted sm:w-[4.5rem]">
+            <span className="text-xs">{t.results.suppressed}</span>
+            <div className="flex items-end" style={{ height: BAR_AREA_HEIGHT }}>
+              <div className="h-1.5 w-8 rounded-t-md bg-border sm:w-10" />
+            </div>
+            <span className="h-3 w-3 shrink-0 rounded-full bg-border" />
+            <span className="w-full truncate text-xs font-semibold">{bucket.label}</span>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  const rows = available.map((bucket, index) => ({
+    key: bucket.key,
+    name: locale === "hi" && bucket.nameHindi ? bucket.nameHindi : bucket.label,
+    value: bucket.percentage,
+    count: bucket.count,
+    color: bucket.colorHex ?? ISSUE_COLORS[index % ISSUE_COLORS.length],
+    logoUrl: bucket.logoUrl,
+  }));
+  const totalResponses = available.reduce((sum, bucket) => sum + bucket.count, 0);
+  const numberFormatter = new Intl.NumberFormat(locale === "hi" ? "hi-IN" : "en-IN");
+
+  const renderSemicircleLabel = (props: PieLabelRenderProps) => {
+    const cx = Number(props.cx);
+    const cy = Number(props.cy);
+    const midAngle = Number(props.midAngle);
+    const outerRadius = Number(props.outerRadius);
+    const index = props.index ?? -1;
+    const entry = rows[index];
+    if (!entry) return null;
+    const small = entry.value < 5;
+    const labelRadius = outerRadius + (small ? 32 : 16);
+    const x = cx + labelRadius * Math.cos(-midAngle * SEMICIRCLE_RADIAN);
+    const y = cy + labelRadius * Math.sin(-midAngle * SEMICIRCLE_RADIAN);
+    return (
+      <g>
+        {small && (
+          <line
+            x1={cx + (outerRadius + 3) * Math.cos(-midAngle * SEMICIRCLE_RADIAN)}
+            y1={cy + (outerRadius + 3) * Math.sin(-midAngle * SEMICIRCLE_RADIAN)}
+            x2={x}
+            y2={y - (y > cy ? 0 : 8)}
+            stroke="#94a3b8"
+            strokeWidth={1}
+          />
+        )}
+        <text
+          x={x}
+          y={y}
+          textAnchor="middle"
+          dominantBaseline="central"
+          className={`fill-ink font-display font-extrabold tabular-nums ${small ? "text-[11px]" : "text-sm sm:text-base"}`}
+        >
+          {entry.value}%
+        </text>
+      </g>
+    );
+  };
+
+  const leaderKey = rows[0]?.key;
 
   return (
-    <div className="flex flex-nowrap items-end gap-3 overflow-x-auto pb-1 sm:gap-4">
-      {available.map((bucket, index) => {
-        const name = locale === "hi" && bucket.nameHindi ? bucket.nameHindi : bucket.label;
-        const color = bucket.colorHex ?? ISSUE_COLORS[index % ISSUE_COLORS.length];
-        const barHeight = Math.max(6, (bucket.percentage / maxPct) * BAR_AREA_HEIGHT);
-        return (
-          <div key={bucket.key} className="flex w-14 shrink-0 flex-col items-center gap-1.5 text-center sm:w-[4.5rem]">
-            <span className="font-display text-sm font-extrabold tabular-nums text-ink">{bucket.percentage}%</span>
-            <div className="flex items-end" style={{ height: BAR_AREA_HEIGHT }}>
-              <div
-                className="w-8 rounded-t-md transition-all duration-500 sm:w-10"
-                style={{ height: barHeight, background: color }}
-              />
-            </div>
-            {bucket.logoUrl ? (
-              <Image src={bucket.logoUrl} alt="" width={22} height={22} className="h-[22px] w-[22px] shrink-0 rounded-full object-contain" />
-            ) : (
-              <span className="h-3 w-3 shrink-0 rounded-full" style={{ background: color }} />
-            )}
-            <span className="w-full truncate text-xs font-semibold text-ink">{name}</span>
-          </div>
-        );
-      })}
-      {suppressed.map((bucket) => (
-        <div key={bucket.key} className="flex w-14 shrink-0 flex-col items-center gap-1.5 text-center text-muted sm:w-[4.5rem]">
-          <span className="text-xs">{t.results.suppressed}</span>
-          <div className="flex items-end" style={{ height: BAR_AREA_HEIGHT }}>
-            <div className="h-1.5 w-8 rounded-t-md bg-border sm:w-10" />
-          </div>
-          <span className="h-3 w-3 shrink-0 rounded-full bg-border" />
-          <span className="w-full truncate text-xs font-semibold">{bucket.label}</span>
+    <div className={`flex flex-col gap-6 ${stacked ? "" : "md:flex-row md:items-stretch"}`}>
+      <div className={`relative flex min-w-0 flex-col items-center justify-center ${stacked ? "" : "md:w-[58%]"}`}>
+        <div className="h-72 w-full sm:h-80 lg:h-96">
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart margin={{ top: 24, right: 48, bottom: 0, left: 48 }}>
+              <Pie
+                data={rows}
+                dataKey="value"
+                nameKey="name"
+                cx="50%"
+                cy="92%"
+                startAngle={180}
+                endAngle={0}
+                innerRadius="55%"
+                outerRadius="100%"
+                paddingAngle={2}
+                stroke="var(--color-surface, #fff)"
+                strokeWidth={3}
+                isAnimationActive={!reducedMotion}
+                animationDuration={700}
+                label={renderSemicircleLabel}
+                labelLine={false}
+              >
+                {rows.map((entry) => (
+                  <Cell key={entry.key} fill={entry.color} tabIndex={0} aria-label={`${entry.name} ${entry.value}% · ${entry.count}`} />
+                ))}
+              </Pie>
+              <Tooltip content={(props) => <PartySupportTooltip {...props} />} />
+            </PieChart>
+          </ResponsiveContainer>
         </div>
-      ))}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 flex flex-col items-center pb-2 text-center sm:pb-4">
+          <span className="font-display text-4xl font-extrabold tabular-nums text-ink sm:text-5xl">
+            {numberFormatter.format(totalResponses)}
+          </span>
+          <span className="text-xs font-semibold text-muted sm:text-sm">{t.results.totalResponsesCard}</span>
+        </div>
+      </div>
+
+      <div className={`min-w-0 md:self-center ${stacked ? "" : "md:w-[42%]"}`}>
+        <table className="w-full border-collapse text-sm">
+          <thead>
+            <tr className="border-b border-border text-left text-[11px] font-semibold uppercase tracking-wide text-muted">
+              <th className="pb-2 font-semibold">{t.results.partySupportTableParty}</th>
+              <th className="pb-2 text-right font-semibold">{t.results.partySupportTablePercent}</th>
+              {/* Two right-aligned numeric headers collide at 320–375px with
+                  no room between them — drop the response-count column below
+                  `sm:` rather than let it clip; the percentage alone stays
+                  meaningful and readable at that width. */}
+              <th className="hidden pb-2 text-right font-semibold sm:table-cell">{t.results.partySupportTableResponses}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((entry) => {
+              const isLeader = entry.key === leaderKey;
+              return (
+                <tr
+                  key={entry.key}
+                  className={`border-b border-border/60 last:border-0 ${isLeader ? "bg-surface-2/60" : ""}`}
+                >
+                  <td className="min-w-0 py-2.5 pr-2">
+                    <div className="flex min-w-0 items-center gap-2">
+                      <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: entry.color }} />
+                      {entry.logoUrl ? (
+                        <Image src={entry.logoUrl} alt="" width={18} height={18} className="h-[18px] w-[18px] shrink-0 rounded-full object-contain" />
+                      ) : null}
+                      <span className={`truncate text-ink ${isLeader ? "font-extrabold" : "font-semibold"}`}>{entry.name}</span>
+                    </div>
+                  </td>
+                  <td className={`py-2.5 text-right font-display tabular-nums text-ink ${isLeader ? "text-base font-extrabold" : "font-bold"}`}>
+                    {entry.value}%
+                  </td>
+                  <td className="hidden py-2.5 text-right tabular-nums text-muted sm:table-cell">{numberFormatter.format(entry.count)}</td>
+                </tr>
+              );
+            })}
+            {suppressed.map((bucket) => (
+              <tr key={bucket.key} className="border-b border-border/60 text-muted last:border-0">
+                <td className="min-w-0 py-2.5 pr-2">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-border" />
+                    <span className="truncate font-semibold">{bucket.label}</span>
+                  </div>
+                </td>
+                <td className="py-2.5 text-right">{t.results.suppressed}</td>
+                <td className="hidden sm:table-cell" />
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
@@ -276,7 +487,7 @@ export function KeyIssuesPanel({
       <div className="min-w-0 border-t border-border pt-4 lg:col-span-1 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
         <h3 className="font-display text-xs font-bold uppercase tracking-wide text-muted">{topIssuesLabel}</h3>
         <ol className="mt-3 space-y-2">
-          {sorted.slice(0, 3).map((issue, index) => (
+          {sorted.slice(0, 6).map((issue, index) => (
             <li key={issue.key} className="flex items-center justify-between gap-2 rounded-lg border border-border bg-surface-2 px-3 py-2">
               <span className="flex min-w-0 items-center gap-2 text-sm text-foreground">
                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-ink text-[11px] font-bold text-white">
