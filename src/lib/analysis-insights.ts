@@ -162,7 +162,30 @@ export function buildAnalysisInsights(data: StateAnalysisData, t: T, locale: "hi
     }
   }
 
-  // 9. Undecided share.
+  // 9. Caste/social-category group with the single highest reported support
+  // for any one party (mirrors the religion-leader check above).
+  const usableCasteRows = data.castePartyRows.filter((r) => !r.lowData && r.sampleSize > 0);
+  if (usableCasteRows.length > 0) {
+    let best: { group: string; party: (typeof usableCasteRows)[number]["parties"][number] } | null = null;
+    for (const row of usableCasteRows) {
+      for (const party of row.parties) {
+        if (!best || party.percentage > best.party.percentage) best = { group: row.groupLabel, party };
+      }
+    }
+    if (best && best.party.percentage > 0) {
+      candidates.push({
+        id: "caste-leader",
+        headline: fmt(t.analysisHub.takeawayCasteLeader, {
+          group: best.group,
+          party: name(best.party.label, best.party.nameHindi),
+          percentage: best.party.percentage,
+        }),
+        percentage: best.party.percentage,
+      });
+    }
+  }
+
+  // 10. Undecided share.
   if (data.statewide.partyPreference.state === "available") {
     const undecided = data.statewide.partyPreference.buckets.find((b) => b.key === "undecided" && b.state === "available");
     if (undecided && undecided.state === "available") {

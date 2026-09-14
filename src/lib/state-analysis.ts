@@ -73,6 +73,7 @@ export interface PartyTopIssues {
   genderComposition: CompositionCell[];
   ageComposition: CompositionCell[];
   religionComposition: CompositionCell[];
+  casteComposition: CompositionCell[];
 }
 
 export type VoterVoice =
@@ -133,7 +134,7 @@ export interface IssueByDemographicSeries {
   values: IssueByDemographicValue[];
 }
 
-export type IntersectionDimension = "age_group" | "gender" | "religion";
+export type IntersectionDimension = "age_group" | "gender" | "religion" | "social_category";
 
 export interface IntersectionCell {
   dimension: IntersectionDimension;
@@ -157,9 +158,16 @@ export interface StateAnalysisData {
   agePartyRows: DemographicGroupPartyRow[];
   genderPartyRows: DemographicGroupPartyRow[];
   religionPartyRows: DemographicGroupPartyRow[];
+  castePartyRows: DemographicGroupPartyRow[];
   issueByAge: IssueByDemographicSeries[];
   issueByGender: IssueByDemographicSeries[];
   issueByReligion: IssueByDemographicSeries[];
+  issueByCaste: IssueByDemographicSeries[];
+  /** Caste/social-category composition of the whole state (for the "Support
+   *  by Demographics" overview, alongside age/gender/religion) — computed
+   *  here (not in public-statewide-results.ts, which doesn't collect this
+   *  dimension) using the exact same protectPublicCells privacy policy. */
+  casteDistribution: PublicDistribution;
   intersections: IntersectionCell[];
   voterVoices: VoterVoice[];
   /** Number of distinct real months with enough party_preference answers to
@@ -200,9 +208,12 @@ export async function getStateAnalysis(electionId: string): Promise<StateAnalysi
     agePartyRows: ANALYSIS_CONFIG.demographicAnalysis ? crosstabs.agePartyRows : [],
     genderPartyRows: ANALYSIS_CONFIG.demographicAnalysis ? crosstabs.genderPartyRows : [],
     religionPartyRows: ANALYSIS_CONFIG.demographicAnalysis ? crosstabs.religionPartyRows : [],
+    castePartyRows: ANALYSIS_CONFIG.castePartyAnalysis ? crosstabs.castePartyRows : [],
     issueByAge: ANALYSIS_CONFIG.issueByDemographic ? crosstabs.issueByAge : [],
     issueByGender: ANALYSIS_CONFIG.issueByDemographic ? crosstabs.issueByGender : [],
     issueByReligion: ANALYSIS_CONFIG.issueByDemographic ? crosstabs.issueByReligion : [],
+    issueByCaste: ANALYSIS_CONFIG.casteIssueAnalysis ? crosstabs.issueByCaste : [],
+    casteDistribution: ANALYSIS_CONFIG.castePartyAnalysis ? crosstabs.casteDistribution : { state: "unavailable", reason: "not_applicable", minRequired: minCellSize },
     intersections: ANALYSIS_CONFIG.intersectionAnalysis ? crosstabs.intersections : [],
     voterVoices,
     historicalMonthsAvailable: votePreferenceTrend.hasEnoughData ? votePreferenceTrend.months.length : 0,
@@ -340,9 +351,12 @@ interface CrosstabResult {
   agePartyRows: DemographicGroupPartyRow[];
   genderPartyRows: DemographicGroupPartyRow[];
   religionPartyRows: DemographicGroupPartyRow[];
+  castePartyRows: DemographicGroupPartyRow[];
   issueByAge: IssueByDemographicSeries[];
   issueByGender: IssueByDemographicSeries[];
   issueByReligion: IssueByDemographicSeries[];
+  issueByCaste: IssueByDemographicSeries[];
+  casteDistribution: PublicDistribution;
   intersections: IntersectionCell[];
 }
 
@@ -366,7 +380,7 @@ async function computeCrosstabAnalysis(electionId: string, dataSource: string, m
   const rows = await prisma.surveyAnswer.findMany({
     where: {
       response: { status: ELIGIBLE_RESPONSE_STATUS, dataSource, survey: { electionId } },
-      question: { key: { in: ["party_preference", "top_issue", "age_group", "gender", "religion"] } },
+      question: { key: { in: ["party_preference", "top_issue", "age_group", "gender", "religion", "social_category"] } },
       optionId: { not: null },
     },
     select: {
@@ -387,6 +401,7 @@ async function computeCrosstabAnalysis(electionId: string, dataSource: string, m
   const ageGroups = new Map<string, DemoGroup>();
   const genderGroups = new Map<string, DemoGroup>();
   const religionGroups = new Map<string, DemoGroup>();
+  const casteGroups = new Map<string, DemoGroup>();
   const issuesByResponse = new Map<string, { key: string; label: string }[]>();
   const partyByResponse = new Map<string, string>();
 
@@ -426,6 +441,8 @@ async function computeCrosstabAnalysis(electionId: string, dataSource: string, m
       addToGroup(genderGroups, option.key, option.label, row.responseId);
     } else if (questionKey === "religion") {
       addToGroup(religionGroups, option.key, option.label, row.responseId);
+    } else if (questionKey === "social_category") {
+      addToGroup(casteGroups, option.key, option.label, row.responseId);
     } else if (questionKey === "top_issue") {
       // MULTIPLE_CHOICE — one response can carry several issue answers, so
       // each response id must map to a LIST, not a single overwritten value.
@@ -503,6 +520,7 @@ async function computeCrosstabAnalysis(electionId: string, dataSource: string, m
         genderComposition: [],
         ageComposition: [],
         religionComposition: [],
+        casteComposition: [],
       };
     }
     const issueCounts = new Map<string, { label: string; count: number }>();
@@ -531,6 +549,7 @@ async function computeCrosstabAnalysis(electionId: string, dataSource: string, m
       genderComposition: buildComposition(group.responseIds, genderGroups),
       ageComposition: buildComposition(group.responseIds, ageGroups),
       religionComposition: buildComposition(group.responseIds, religionGroups),
+      casteComposition: buildComposition(group.responseIds, casteGroups),
     };
   });
 
@@ -612,6 +631,7 @@ async function computeCrosstabAnalysis(electionId: string, dataSource: string, m
   const agePartyRows = buildDemographicPartyRows(ageGroups);
   const genderPartyRows = buildDemographicPartyRows(genderGroups);
   const religionPartyRows = buildDemographicPartyRows(religionGroups);
+  const castePartyRows = buildDemographicPartyRows(casteGroups);
 
   // ---- Issue importance by demographic (Sections M, N, O) — for each top
   // issue, what share of each demographic group's OWN members selected it.
@@ -641,6 +661,27 @@ async function computeCrosstabAnalysis(electionId: string, dataSource: string, m
   const issueByAge = buildIssueByDemographic(ageGroups);
   const issueByGender = buildIssueByDemographic(genderGroups);
   const issueByReligion = buildIssueByDemographic(religionGroups);
+  const issueByCaste = buildIssueByDemographic(casteGroups);
+
+  // ---- Caste/social-category overview distribution (for the "Support by
+  // Demographics" donut, alongside age/gender/religion) — same
+  // protectPublicCells privacy policy as every other published distribution
+  // on this platform, computed here since public-statewide-results.ts does
+  // not collect this dimension for the statewide DTO. ----
+  const casteTotal = Array.from(casteGroups.values()).reduce((sum, g) => sum + g.responseIds.size, 0);
+  const casteDistribution: PublicDistribution =
+    casteTotal === 0
+      ? { state: "unavailable", reason: "no_answers", minRequired: minCellSize }
+      : {
+          state: "available",
+          denominator: casteTotal,
+          minRequired: minCellSize,
+          buckets: protectPublicCells(
+            Array.from(casteGroups.entries()).map(([key, g], index) => ({ key, label: g.label, displayOrder: index, count: g.responseIds.size })),
+            casteTotal,
+            minCellSize
+          ),
+        };
 
   // ---- Cross-demographic intersection analysis (Section P) — demographic
   // group x party, top issues within that intersected set only. Limited to
@@ -655,6 +696,7 @@ async function computeCrosstabAnalysis(electionId: string, dataSource: string, m
     { dimension: "age_group", groups: ageGroups },
     { dimension: "gender", groups: genderGroups },
     { dimension: "religion", groups: religionGroups },
+    { dimension: "social_category", groups: casteGroups },
   ];
   for (const { dimension, groups } of dimensionGroups) {
     for (const [groupKey, group] of groups) {
@@ -706,9 +748,12 @@ async function computeCrosstabAnalysis(electionId: string, dataSource: string, m
     agePartyRows,
     genderPartyRows,
     religionPartyRows,
+    castePartyRows,
     issueByAge,
     issueByGender,
     issueByReligion,
+    issueByCaste,
+    casteDistribution,
     intersections,
   };
 }

@@ -96,6 +96,22 @@ const RELIGION_WEIGHTS: Record<StateSlug, Record<string, number>> = {
   uttarakhand: { hindu: 0.78, muslim: 0.14, sikh: 0.03, christian: 0.02, jain: 0.01, buddhist: 0.01, other: 0.005, prefer_not_to_say: 0.005 },
 };
 
+// Caste/social-category — same option keys the survey's own "social_category"
+// question already collects (general/obc/sc/st/prefer_not_to_say). Kept
+// modest and state-differentiated, never a 90%+/identical shape.
+const CASTE_WEIGHTS: Record<StateSlug, Record<string, number>> = {
+  "uttar-pradesh": { obc: 0.35, general: 0.28, sc: 0.22, st: 0.03, prefer_not_to_say: 0.12 },
+  punjab: { general: 0.35, sc: 0.3, obc: 0.2, st: 0.02, prefer_not_to_say: 0.13 },
+  goa: { general: 0.45, obc: 0.25, st: 0.1, sc: 0.08, prefer_not_to_say: 0.12 },
+  uttarakhand: { general: 0.4, obc: 0.22, sc: 0.18, st: 0.08, prefer_not_to_say: 0.12 },
+};
+const CASTE_PARTY_TILT: Record<StateSlug, Record<string, { favour: string; penalise: string; amount: number }>> = {
+  "uttar-pradesh": { sc: { favour: "bsp", penalise: "bjp", amount: 0.14 } },
+  punjab: { sc: { favour: "aap", penalise: "sad", amount: 0.08 } },
+  goa: { st: { favour: "congress", penalise: "bjp", amount: 0.08 } },
+  uttarakhand: { obc: { favour: "bjp", penalise: "congress", amount: 0.07 } },
+};
+
 const ISSUE_KEYS = ["bijli", "jal_nikasi", "kanoon_vyavastha", "krishi", "mahangai", "other", "pani", "parivahan", "rojgar", "sadak", "shiksha", "swasthya"];
 const YOUNG_ISSUE_TILT = ["rojgar", "shiksha"];
 const OLDER_ISSUE_TILT = ["swasthya", "kanoon_vyavastha"];
@@ -157,6 +173,8 @@ interface SurveyOptionMaps {
   genderOptionByKey: Map<string, string>;
   religionQuestionId: string;
   religionOptionByKey: Map<string, string>;
+  casteQuestionId: string;
+  casteOptionByKey: Map<string, string>;
 }
 
 async function loadSurveyOptionMaps(constituencyId: string): Promise<SurveyOptionMaps | null> {
@@ -164,7 +182,7 @@ async function loadSurveyOptionMaps(constituencyId: string): Promise<SurveyOptio
   if (!survey) return null;
 
   const questions = await prisma.surveyQuestion.findMany({
-    where: { surveyId: survey.id, key: { in: ["party_preference", "top_issue", "age_group", "gender", "religion"] } },
+    where: { surveyId: survey.id, key: { in: ["party_preference", "top_issue", "age_group", "gender", "religion", "social_category"] } },
     select: { id: true, key: true, options: { where: { isActive: true }, select: { id: true, key: true } } },
   });
 
@@ -174,7 +192,8 @@ async function loadSurveyOptionMaps(constituencyId: string): Promise<SurveyOptio
   const age = byKey.get("age_group");
   const gender = byKey.get("gender");
   const religion = byKey.get("religion");
-  if (!party || !issue || !age || !gender || !religion) return null;
+  const caste = byKey.get("social_category");
+  if (!party || !issue || !age || !gender || !religion || !caste) return null;
 
   return {
     surveyId: survey.id,
@@ -188,6 +207,8 @@ async function loadSurveyOptionMaps(constituencyId: string): Promise<SurveyOptio
     genderOptionByKey: new Map(gender.options.map((o) => [o.key, o.id])),
     religionQuestionId: religion.id,
     religionOptionByKey: new Map(religion.options.map((o) => [o.key, o.id])),
+    casteQuestionId: caste.id,
+    casteOptionByKey: new Map(caste.options.map((o) => [o.key, o.id])),
   };
 }
 
@@ -277,11 +298,13 @@ async function main() {
 
     const partyBase = PARTY_BASE_WEIGHTS[stateSlug];
     const religionWeights = RELIGION_WEIGHTS[stateSlug];
+    const casteWeights = CASTE_WEIGHTS[stateSlug];
     const drift = TREND_DRIFT[stateSlug];
     const youthParty = YOUTH_LEANING_PARTY[stateSlug];
     const olderParty = OLDER_LEANING_PARTY[stateSlug];
     const womenParty = WOMEN_LEANING_PARTY[stateSlug];
     const religionTilt = RELIGION_PARTY_TILT[stateSlug];
+    const casteTilt = CASTE_PARTY_TILT[stateSlug];
     const issueFocus = PARTY_ISSUE_FOCUS[stateSlug];
 
     const responseRows: { id: string; surveyId: string; constituencyId: string; status: string; dataSource: string; createdAt: Date }[] = [];
@@ -318,6 +341,7 @@ async function main() {
         const age = weightedPick(AGE_WEIGHTS);
         const gender = weightedPick(GENDER_WEIGHTS);
         const religion = weightedPick(religionWeights);
+        const caste = weightedPick(casteWeights);
 
         // Party weights: base + month drift + demographic tilts.
         const partyWeights: Record<string, number> = { ...partyBase };
@@ -338,6 +362,11 @@ async function main() {
         if (tilt) {
           bump(tilt.favour, tilt.amount);
           bump(tilt.penalise, -tilt.amount);
+        }
+        const cTilt = casteTilt[caste];
+        if (cTilt) {
+          bump(cTilt.favour, cTilt.amount);
+          bump(cTilt.penalise, -cTilt.amount);
         }
 
         const partyKey = weightedPick(partyWeights);
@@ -381,6 +410,9 @@ async function main() {
 
         const religionOptionId = maps.religionOptionByKey.get(religion);
         if (religionOptionId) answerRows.push({ id: randomUUID(), responseId, questionId: maps.religionQuestionId, optionId: religionOptionId });
+
+        const casteOptionId = maps.casteOptionByKey.get(caste);
+        if (casteOptionId) answerRows.push({ id: randomUUID(), responseId, questionId: maps.casteQuestionId, optionId: casteOptionId });
 
         for (const issueKey of selectedIssues) {
           const issueOptionId = maps.issueOptionByKey.get(issueKey);

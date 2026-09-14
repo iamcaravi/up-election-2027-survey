@@ -20,7 +20,7 @@ const SELECT_CLASSNAME =
 // than useful ones. A combination whose intersected sample is below the
 // privacy/sample threshold shows an honest low-data message instead of a
 // ranked list built from too few respondents.
-export function IntersectionAnalysis({ cells, hasReligion }: { cells: IntersectionCell[]; hasReligion: boolean }) {
+export function IntersectionAnalysis({ cells, hasReligion, hasCaste }: { cells: IntersectionCell[]; hasReligion: boolean; hasCaste?: boolean }) {
   const { t, locale } = useLocale();
   const [dimension, setDimension] = useState<IntersectionDimension>("age_group");
 
@@ -54,7 +54,8 @@ export function IntersectionAnalysis({ cells, hasReligion }: { cells: Intersecti
     return <InlineState>{t.results.resultsSuppressed}</InlineState>;
   }
 
-  const dimensionLabel = (d: IntersectionDimension) => (d === "age_group" ? t.results.ageGroup : d === "gender" ? t.results.gender : t.results.religion);
+  const dimensionLabel = (d: IntersectionDimension) =>
+    d === "age_group" ? t.results.ageGroup : d === "gender" ? t.results.gender : d === "religion" ? t.results.religion : t.results.socialCategory;
 
   return (
     <div>
@@ -74,6 +75,7 @@ export function IntersectionAnalysis({ cells, hasReligion }: { cells: Intersecti
             <option value="age_group">{t.results.ageGroup}</option>
             <option value="gender">{t.results.gender}</option>
             {hasReligion && <option value="religion">{t.results.religion}</option>}
+            {hasCaste && <option value="social_category">{t.results.socialCategory}</option>}
           </select>
         </label>
         <label className="block">

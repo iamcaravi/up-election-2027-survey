@@ -23,6 +23,14 @@ export const ANALYSIS_CONFIG = {
   issueByDemographic: true,
   intersectionAnalysis: true,
   advancedInsights: true,
+
+  // Caste/social-category is its own dimension (same underlying
+  // `social_category` survey question every state already collects) —
+  // flagged separately so it can be gated independently of age/gender/
+  // religion later without touching the aggregation code.
+  castePartyAnalysis: true,
+  casteIssueAnalysis: true,
+  advancedDemographicAnalysis: true,
 } as const;
 
 export type AnalysisModuleKey = keyof typeof ANALYSIS_CONFIG;

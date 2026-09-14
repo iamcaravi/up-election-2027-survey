@@ -67,6 +67,15 @@ export function AnalysisResultsView({
   const { statewide } = data;
   const hasResults = statewide.sample.validResponseCount > 0;
   const hasReligion = data.religionPartyRows.length > 0;
+  const hasCaste = data.castePartyRows.length > 0;
+  const overallTopIssues =
+    statewide.demographics.top_issue.state === "available"
+      ? statewide.demographics.top_issue.buckets
+          .filter((b): b is Extract<typeof b, { state: "available" }> => b.state === "available")
+          .sort((a, b) => b.percentage - a.percentage)
+          .slice(0, 5)
+          .map((b) => ({ key: b.key, label: locale === "hi" && b.nameHindi ? b.nameHindi : b.label, percentage: b.percentage }))
+      : [];
 
   return (
     <>
@@ -117,27 +126,45 @@ export function AnalysisResultsView({
                 IssuesDonutChart's fixed-size donut, which was overflowing
                 each card at ~768px. One column comfortably fits a donut +
                 legend until there's truly enough width for three. */}
-            <div className="mt-4 grid gap-4 lg:grid-cols-3">
+            <div className={`mt-4 grid gap-4 lg:grid-cols-3 ${hasCaste ? "xl:grid-cols-4" : ""}`}>
               <DistributionCard title={t.results.ageGroup} distribution={statewide.demographics.age_group} />
               <DistributionCard title={t.results.gender} distribution={statewide.demographics.gender} />
               <DistributionCard title={t.results.religion} distribution={statewide.demographics.religion} />
+              {hasCaste && <DistributionCard title={t.results.socialCategory} distribution={data.casteDistribution} />}
             </div>
           </section>
 
-          {/* Section C — Current Vote Preference */}
+          {/* Section C — Party Landscape: Party Support (bar) and Current
+              Vote Share (donut) are two views of the exact same underlying
+              party distribution, so they live side by side in one unified
+              module rather than two stacked cards. lg:grid-cols-2 (not sm:)
+              for the same reason the demographics grid above uses lg: — a
+              donut + legend needs real room next to a bar chart at tablet
+              widths. Both panels are read straight off the same
+              statewide.partyPreference distribution; no formula changed. */}
           <section className="mt-8 card-surface rounded-2xl p-5 sm:p-6">
-            <SectionHeader title={t.analysisHub.partySupportHeading} subtitle={t.analysisHub.partySupportSubtitle} />
-            <div className="mt-5">
-              <PartySupportChart buckets={statewide.partyPreference.state === "available" ? statewide.partyPreference.buckets : []} locale={locale} />
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <h2 className="font-display text-xl font-bold">{t.analysisHub.partyLandscapeHeading}</h2>
+              <PrivacyPill />
             </div>
-            {ANALYSIS_CONFIG.currentVoteShare && (
-              <div className="mt-6 border-t border-border pt-6">
-                <h3 className="font-display text-sm font-bold text-ink">{t.analysisHub.currentVoteShareHeading}</h3>
+            <div className="mt-5 grid gap-6 lg:grid-cols-2">
+              <div className="min-w-0">
+                <h3 className="font-display text-sm font-bold text-ink">{t.analysisHub.partySupportHeading}</h3>
+                <p className="mt-0.5 text-xs text-muted">{t.analysisHub.partySupportSubtitle}</p>
                 <div className="mt-4">
-                  <IssuesDonutChart distribution={statewide.partyPreference} centerLabel={t.analysisHub.currentVoteShareHeading} />
+                  <PartySupportChart buckets={statewide.partyPreference.state === "available" ? statewide.partyPreference.buckets : []} locale={locale} />
                 </div>
               </div>
-            )}
+              {ANALYSIS_CONFIG.currentVoteShare && (
+                <div className="min-w-0 border-t border-border pt-5 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
+                  <h3 className="font-display text-sm font-bold text-ink">{t.analysisHub.currentVoteShareHeading}</h3>
+                  <p className="mt-0.5 text-xs text-muted">{t.analysisHub.currentVoteShareSubtitle}</p>
+                  <div className="mt-4">
+                    <IssuesDonutChart distribution={statewide.partyPreference} centerLabel={t.analysisHub.currentVoteShareHeading} />
+                  </div>
+                </div>
+              )}
+            </div>
           </section>
 
           {/* Section D — Vote Preference Trend */}
@@ -179,13 +206,38 @@ export function AnalysisResultsView({
               Takeaways insight engine, placed right beside Trend/Momentum. */}
           {ANALYSIS_CONFIG.advancedInsights && <WhatChangedStrip data={data} />}
 
-          {/* Section F — Key Issues Overall */}
+          {/* Section F — Key Issues Overall: compact donut on the left,
+              ranked top-3 + multi-select disclosure on the right, instead of
+              one oversized donut+giant-legend card. Same distribution, same
+              numbers — just a denser layout. */}
           {ANALYSIS_CONFIG.keyIssues && (
             <section className="mt-8 card-surface rounded-2xl p-5 sm:p-6">
               <SectionHeader title={t.analysisHub.keyIssuesOverallHeading} subtitle={t.analysisHub.keyIssuesOverallSubtitle} />
-              <div className="mt-5">
-                <IssuesDonutChart distribution={statewide.demographics.top_issue} centerLabel={t.analysisHub.keyIssuesOverallHeading} />
-                <p className="mt-3 text-[11px] leading-relaxed text-muted">{t.analysisHub.issueMultiSelectNote}</p>
+              <div className="mt-5 grid gap-6 lg:grid-cols-2">
+                <div className="min-w-0">
+                  <IssuesDonutChart distribution={statewide.demographics.top_issue} centerLabel={t.analysisHub.keyIssuesOverallHeading} />
+                </div>
+                <div className="min-w-0 border-t border-border pt-5 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
+                  <h3 className="font-display text-xs font-bold uppercase tracking-wide text-muted">{t.analysisHub.topTakeawaysLabel}</h3>
+                  {overallTopIssues.length > 0 ? (
+                    <ol className="mt-3 space-y-2">
+                      {overallTopIssues.slice(0, 3).map((issue, index) => (
+                        <li key={issue.key} className="flex items-center justify-between gap-2 text-sm">
+                          <span className="min-w-0 truncate text-foreground">
+                            <span className="mr-1.5 text-xs font-semibold text-muted">
+                              {index === 0 ? t.analysisHub.keyIssuesTopLabel : index === 1 ? t.analysisHub.keyIssuesSecondLabel : t.analysisHub.keyIssuesThirdLabel}:
+                            </span>
+                            {issue.label}
+                          </span>
+                          <span className="shrink-0 font-display font-bold tabular-nums text-ink">{issue.percentage}%</span>
+                        </li>
+                      ))}
+                    </ol>
+                  ) : (
+                    <p className="mt-3 text-xs text-muted">{t.analysisHub.notEnoughTakeaways}</p>
+                  )}
+                  <p className="mt-4 text-[11px] leading-relaxed text-muted">{t.analysisHub.issueMultiSelectNote}</p>
+                </div>
               </div>
             </section>
           )}
@@ -195,7 +247,7 @@ export function AnalysisResultsView({
             <section className="mt-8 card-surface rounded-2xl p-5 sm:p-6">
               <SectionHeader title={t.analysisHub.keyIssuesByPartyHeading} subtitle={t.analysisHub.keyIssuesByPartySubtitle} />
               <div className="mt-5">
-                <KeyIssuesByParty parties={data.keyIssuesByParty} />
+                <KeyIssuesByParty parties={data.keyIssuesByParty} overallTopIssues={overallTopIssues} />
               </div>
             </section>
           )}
@@ -251,32 +303,60 @@ export function AnalysisResultsView({
             </section>
           )}
 
-          {/* Section M — Age x Issue */}
-          {ANALYSIS_CONFIG.issueByDemographic && (
+          {/* Section L2 — Caste/Social Category x Party (same "social_category"
+              question every state's survey already collects — only rendered
+              when the state's survey actually has answers for it). */}
+          {ANALYSIS_CONFIG.castePartyAnalysis && hasCaste && (
             <section className="mt-8 card-surface rounded-2xl p-5 sm:p-6">
-              <SectionHeader title={t.analysisHub.ageIssueHeading} subtitle={t.analysisHub.ageIssueSubtitle} />
+              <SectionHeader title={t.analysisHub.castePartyHeading} />
               <div className="mt-5">
-                <DemographicIssueAnalysis series={data.issueByAge} />
+                <DemographicPartyChart rows={data.castePartyRows} showLeaderTakeaways />
               </div>
             </section>
           )}
 
-          {/* Section N — Gender x Issue */}
+          {/* Sections M, N, O (+ Caste) — Issue Priority by Age / Gender /
+              Religion / Caste, as one row of compact cards (each keeps its
+              own issue-select dropdown) instead of four full-width stacked
+              sections. lg:grid-cols-4 only once there's genuinely enough
+              width for four compact charts side by side; 2 columns at
+              tablet, 1 on mobile. */}
           {ANALYSIS_CONFIG.issueByDemographic && (
-            <section className="mt-8 card-surface rounded-2xl p-5 sm:p-6">
-              <SectionHeader title={t.analysisHub.genderIssueHeading} subtitle={t.analysisHub.genderIssueSubtitle} />
-              <div className="mt-5">
-                <DemographicIssueAnalysis series={data.issueByGender} />
+            <section className="mt-8">
+              <div className="flex flex-wrap items-end justify-between gap-3">
+                <h2 className="font-display text-xl font-bold">{t.analysisHub.issueByDemographicHeading}</h2>
+                <PrivacyPill />
               </div>
-            </section>
-          )}
-
-          {/* Section O — Religion x Issue */}
-          {ANALYSIS_CONFIG.issueByDemographic && hasReligion && (
-            <section className="mt-8 card-surface rounded-2xl p-5 sm:p-6">
-              <SectionHeader title={t.analysisHub.religionIssueHeading} subtitle={t.analysisHub.religionIssueSubtitle} />
-              <div className="mt-5">
-                <DemographicIssueAnalysis series={data.issueByReligion} />
+              <p className="mt-1 text-xs text-muted">{t.analysisHub.issueByDemographicSubtitle}</p>
+              <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                <div className="card-surface min-w-0 rounded-2xl p-4">
+                  <h3 className="font-display text-sm font-bold text-ink">{t.analysisHub.ageIssueHeading}</h3>
+                  <div className="mt-3">
+                    <DemographicIssueAnalysis series={data.issueByAge} compact />
+                  </div>
+                </div>
+                <div className="card-surface min-w-0 rounded-2xl p-4">
+                  <h3 className="font-display text-sm font-bold text-ink">{t.analysisHub.genderIssueHeading}</h3>
+                  <div className="mt-3">
+                    <DemographicIssueAnalysis series={data.issueByGender} compact />
+                  </div>
+                </div>
+                {hasReligion && (
+                  <div className="card-surface min-w-0 rounded-2xl p-4">
+                    <h3 className="font-display text-sm font-bold text-ink">{t.analysisHub.religionIssueHeading}</h3>
+                    <div className="mt-3">
+                      <DemographicIssueAnalysis series={data.issueByReligion} compact />
+                    </div>
+                  </div>
+                )}
+                {ANALYSIS_CONFIG.casteIssueAnalysis && hasCaste && (
+                  <div className="card-surface min-w-0 rounded-2xl p-4">
+                    <h3 className="font-display text-sm font-bold text-ink">{t.analysisHub.casteIssueHeading}</h3>
+                    <div className="mt-3">
+                      <DemographicIssueAnalysis series={data.issueByCaste} compact />
+                    </div>
+                  </div>
+                )}
               </div>
             </section>
           )}
@@ -286,7 +366,7 @@ export function AnalysisResultsView({
             <section className="mt-8 card-surface rounded-2xl p-5 sm:p-6">
               <SectionHeader title={t.analysisHub.intersectionHeading} subtitle={t.analysisHub.intersectionSubtitle} />
               <div className="mt-5">
-                <IntersectionAnalysis cells={data.intersections} hasReligion={hasReligion} />
+                <IntersectionAnalysis cells={data.intersections} hasReligion={hasReligion} hasCaste={hasCaste} />
               </div>
             </section>
           )}
