@@ -2,8 +2,8 @@
 
 import { BarChart3, CalendarDays, Globe, MapPin, Users } from "lucide-react";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
-import { analysisPath } from "@/lib/routes";
 import type { PublicStatewideResultsDto } from "@/lib/public-statewide-results";
+import { analysisPath } from "@/lib/routes";
 import {
   SummaryCard,
   PartySupportChart,
@@ -17,7 +17,17 @@ import {
   DetailedAnalysisCta,
 } from "./ResultsDashboardParts";
 
-export function StatewideResultsView({ data }: { data: PublicStatewideResultsDto }) {
+export function StatewideResultsView({
+  data,
+  showCta = true,
+}: {
+  data: PublicStatewideResultsDto;
+  /** Off when the caller's own page header already carries the Detailed
+   *  Analysis CTA (the Results Overview page) — on by default so the
+   *  standalone constituency results page's "statewide" tab, which has no
+   *  such header CTA, keeps showing it here. */
+  showCta?: boolean;
+}) {
   const { locale, t } = useLocale();
   const numberFormatter = new Intl.NumberFormat(locale === "hi" ? "hi-IN" : "en-IN");
   const isZeroState = data.sample.validResponseCount === 0;
@@ -101,7 +111,7 @@ export function StatewideResultsView({ data }: { data: PublicStatewideResultsDto
             </div>
           </section>
 
-          <DetailedAnalysisCta analysisHref={analysisPath(data.state.slug, data.election.slug)} />
+          {showCta && <DetailedAnalysisCta analysisHref={analysisPath(data.state.slug, data.election.slug)} />}
 
           <DisclaimerShareBar
             shareTitle={t.surveyFlow.stateWideHeading.replace("{state}", data.state.name)}

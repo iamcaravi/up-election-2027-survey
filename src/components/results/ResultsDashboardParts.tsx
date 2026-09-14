@@ -298,8 +298,29 @@ export function KeyIssuesPanel({
 // state/election — always built from analysisHref (routes.ts's
 // analysisPath), never a hardcoded "/analysis" path, so it stays correct
 // for whichever state/election context the results page is currently in.
-export function DetailedAnalysisCta({ analysisHref }: { analysisHref: string }) {
+// "compact" is the same CTA rendered as a single button (no subtitle/card
+// chrome) for a tight slot like the page header, next to the title — the
+// destination and localized copy are identical, only the presentation
+// differs; "card" (default) is the original full block used wherever the
+// header isn't available (e.g. the standalone constituency results page).
+export function DetailedAnalysisCta({
+  analysisHref,
+  variant = "card",
+}: {
+  analysisHref: string;
+  variant?: "card" | "compact";
+}) {
   const { t } = useLocale();
+
+  if (variant === "compact") {
+    return (
+      <LinkButton href={analysisHref} variant="cta" className="w-full shrink-0 sm:w-auto">
+        {t.results.detailedAnalysisCtaTitle}
+        <span aria-hidden="true">→</span>
+      </LinkButton>
+    );
+  }
+
   return (
     <div className="mt-6 flex flex-col items-start justify-between gap-4 rounded-2xl border border-border bg-surface p-5 shadow-[var(--shadow-card)] sm:flex-row sm:items-center sm:p-6">
       <div className="min-w-0">

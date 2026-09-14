@@ -141,12 +141,13 @@ export function ResultsDashboard({
             <PublicResultsView
               data={constituencyResult}
               surveyHref={`${constituencyPath(stateSlug, electionSlug, constituencySlug)}/survey`}
+              showCta={false}
             />
           )
         ) : districtSlug ? (
-          districtResult && <StatewideResultsView data={districtResult} />
+          districtResult && <StatewideResultsView data={districtResult} showCta={false} />
         ) : (
-          <StatewideResultsView data={initialStatewide} />
+          <StatewideResultsView data={initialStatewide} showCta={false} />
         )}
       </div>
 

@@ -18,7 +18,19 @@ import {
   DetailedAnalysisCta,
 } from "./ResultsDashboardParts";
 
-export function PublicResultsView({ data, surveyHref }: { data: PublicSurveyResultsDto; surveyHref: string }) {
+export function PublicResultsView({
+  data,
+  surveyHref,
+  showCta = true,
+}: {
+  data: PublicSurveyResultsDto;
+  surveyHref: string;
+  /** Off when the caller's own page header already carries the Detailed
+   *  Analysis CTA (the Results Overview page) — on by default so the
+   *  standalone constituency results page, which has no such header CTA,
+   *  keeps showing it here. */
+  showCta?: boolean;
+}) {
   const { locale, t } = useLocale();
   const numberFormatter = new Intl.NumberFormat(locale === "hi" ? "hi-IN" : "en-IN");
   const dateTimeFormatter = new Intl.DateTimeFormat(locale === "hi" ? "hi-IN" : "en-IN", {
@@ -142,7 +154,7 @@ export function PublicResultsView({ data, surveyHref }: { data: PublicSurveyResu
             </div>
           </section>
 
-          <DetailedAnalysisCta analysisHref={analysisPath(data.context.state.slug, data.context.election.slug)} />
+          {showCta && <DetailedAnalysisCta analysisHref={analysisPath(data.context.state.slug, data.context.election.slug)} />}
 
           <DisclaimerShareBar shareTitle={data.context.constituency.name} electionYear={data.context.election.year} />
         </>

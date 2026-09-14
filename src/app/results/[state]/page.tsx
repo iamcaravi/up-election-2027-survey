@@ -7,6 +7,7 @@ import { getUpConstituencyExplorer } from "@/lib/up-analytics";
 import { Container } from "@/components/ui/Container";
 import { ResultsDashboard } from "@/components/results/ResultsDashboard";
 import { ResultsStateHeading, NoElectionForResultsNotice } from "@/components/results/ResultsStateHeader";
+import { analysisPath } from "@/lib/routes";
 import { displayStateName } from "@/lib/utils";
 
 export async function generateMetadata({
@@ -44,7 +45,11 @@ export default async function StateResultsPage({
 
   return (
     <Container className="py-12">
-      <ResultsStateHeading stateNameRaw={state.name} stateSlug={state.slug} />
+      <ResultsStateHeading
+        stateNameRaw={state.name}
+        stateSlug={state.slug}
+        analysisHref={election ? analysisPath(state.slug, election.slug) : null}
+      />
 
       {!election ? (
         <div className="mt-8">
