@@ -3,8 +3,10 @@
 import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 import { Moon, Sun } from "lucide-react";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 export function ThemeToggle() {
+  const { t } = useLocale();
   const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
@@ -14,7 +16,7 @@ export function ThemeToggle() {
   const isDark = resolvedTheme === "dark";
   return (
     <button
-      aria-label="Toggle theme"
+      aria-label={t.common.toggleThemeAriaLabel}
       onClick={() => setTheme(isDark ? "light" : "dark")}
       className="flex h-9 w-9 items-center justify-center rounded-lg border border-border text-foreground/70 transition-colors hover:bg-surface-2 hover:text-foreground"
     >

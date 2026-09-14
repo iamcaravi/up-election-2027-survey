@@ -28,15 +28,19 @@ export async function GET(req: NextRequest) {
   const category = req.nextUrl.searchParams.get("category");
   const stateSlug = req.nextUrl.searchParams.get("stateSlug");
 
+  // The admin editor's "Generated Default" preview always shows the site's
+  // default-locale (Hindi) copy — admin is intentionally left out of the
+  // public locale toggle's scope (see AGENTS/plan notes); an admin who wants
+  // to see the English default can check the live English page directly.
   if (category && STATIC_CATEGORIES.has(category as SeoStaticCategory)) {
-    const base = resolveStaticSeoBase(category as SeoStaticCategory);
+    const base = resolveStaticSeoBase(category as SeoStaticCategory, "hi");
     const override = await getSeoOverride(base.path);
     return NextResponse.json({ path: base.path, generatedTitle: base.title, generatedDescription: base.description, override });
   }
 
   if (category && STATE_SCOPED_CATEGORIES.has(category as SeoStateScopedCategory)) {
     if (!stateSlug) return NextResponse.json({ error: "Missing required ?stateSlug=" }, { status: 400 });
-    const base = await resolveStateScopedSeoBase(category as SeoStateScopedCategory, stateSlug);
+    const base = await resolveStateScopedSeoBase(category as SeoStateScopedCategory, stateSlug, "hi");
     if (!base) return NextResponse.json({ error: "Could not resolve this state/election." }, { status: 404 });
     const override = await getSeoOverride(base.path);
     return NextResponse.json({ path: base.path, generatedTitle: base.title, generatedDescription: base.description, override });

@@ -6,6 +6,8 @@ import { ConstituencyGrid } from "@/components/district/ConstituencyGrid";
 import { ConstituenciesListingText, NoConstituenciesNotice } from "@/components/election/ConstituenciesListingText";
 import { electionPath, statePath } from "@/lib/routes";
 import { buildPageMetadata } from "@/lib/seo";
+import { getServerLocale } from "@/lib/i18n/locale-cookie";
+import { displayStateName } from "@/lib/utils";
 
 export async function generateMetadata({
   params,
@@ -13,11 +15,15 @@ export async function generateMetadata({
   params: Promise<{ state: string; election: string }>;
 }): Promise<Metadata> {
   const { state: stateSlug, election: electionSlug } = await params;
-  const result = await getStateAndElection(stateSlug, electionSlug);
+  const [result, locale] = await Promise.all([getStateAndElection(stateSlug, electionSlug), getServerLocale()]);
   if (!result?.election) return {};
+  const stateName = displayStateName(result.state.name, result.state.slug, locale);
   return buildPageMetadata({
-    title: `${result.state.name} — All Assembly Constituencies`,
-    description: `Every assembly constituency contesting the ${result.election.name}.`,
+    title: locale === "hi" ? `${stateName} — सभी विधानसभा क्षेत्र` : `${stateName} — All Assembly Constituencies`,
+    description:
+      locale === "hi"
+        ? `${result.election.name} में लड़ने वाला प्रत्येक विधानसभा क्षेत्र।`
+        : `Every assembly constituency contesting the ${result.election.name}.`,
     path: `${electionPath(result.state.slug, result.election.slug)}/constituencies`,
   });
 }

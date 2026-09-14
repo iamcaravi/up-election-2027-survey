@@ -8,8 +8,9 @@
 // render the existing "not enough data" state instead, never a placeholder.
 import type { PublicAnalyticsBucket, PublicDistribution } from "./public-analytics-core";
 import type { DemographicGroupPartyRow, IssuePartyMatrixRow, PartyMomentumItem, PartySegmentMeta, PartyTopIssues, VotePreferenceTrend } from "./state-analysis";
+import { resolveOptionLabel } from "./option-labels";
 
-type T = Record<string, unknown> & { analysisHub: Record<string, string> };
+type T = Record<string, unknown> & { analysisHub: Record<string, string>; surveyQuestions: { options: Record<string, string> } };
 
 export function fmt(template: string, values: Record<string, string | number>): string {
   return Object.entries(values).reduce((acc, [key, value]) => acc.replaceAll(`{${key}}`, String(value)), template);
@@ -17,6 +18,13 @@ export function fmt(template: string, values: Record<string, string | number>): 
 
 function nameOf(label: string, nameHindi: string | null | undefined, locale: "hi" | "en"): string {
   return locale === "hi" && nameHindi ? nameHindi : label;
+}
+
+// Issue/demographic group labels (unlike party labels, which have a real
+// nameHindi field) only ever have ONE stored label — see option-labels.ts
+// for why. Reuses the same survey-question dictionary the input form uses.
+function groupNameOf(key: string, label: string, t: T, locale: "hi" | "en"): string {
+  return resolveOptionLabel(key, { label }, locale, t.surveyQuestions.options);
 }
 
 const MONTH_LABELS_EN = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -126,7 +134,7 @@ export function buildPartyIssueReading(parties: PartyTopIssues[], t: T, locale: 
   lines.push(
     fmt(t.analysisHub.readingPartyTopIssue, {
       party: nameOf(top.partyLabel, top.partyNameHindi, locale),
-      issue: top.topIssues[0].label,
+      issue: groupNameOf(top.topIssues[0].key, top.topIssues[0].label, t, locale),
       percentage: top.topIssues[0].percentage,
     })
   );
@@ -134,7 +142,7 @@ export function buildPartyIssueReading(parties: PartyTopIssues[], t: T, locale: 
     lines.push(
       fmt(t.analysisHub.readingPartyTopIssue, {
         party: nameOf(usable[1].partyLabel, usable[1].partyNameHindi, locale),
-        issue: usable[1].topIssues[0].label,
+        issue: groupNameOf(usable[1].topIssues[0].key, usable[1].topIssues[0].label, t, locale),
         percentage: usable[1].topIssues[0].percentage,
       })
     );
@@ -158,7 +166,7 @@ export function buildHeatmapReading(rows: IssuePartyMatrixRow[], segments: Party
   if (!maxParty || !minParty) return [];
   return [
     fmt(t.analysisHub.readingHeatmapGap, {
-      issue: row.issueLabel,
+      issue: groupNameOf(row.issueKey, row.issueLabel, t, locale),
       partyA: nameOf(maxParty.label, maxParty.nameHindi, locale),
       pctA: max.percentage,
       partyB: nameOf(minParty.label, minParty.nameHindi, locale),
@@ -174,7 +182,11 @@ export function buildDemographicLeaderReading(row: DemographicGroupPartyRow, t: 
   if (row.lowData || row.parties.length === 0) return null;
   const leader = row.parties.reduce((a, b) => (b.percentage > a.percentage ? b : a));
   if (leader.percentage <= 0) return null;
-  return fmt(t.analysisHub.groupLeaderNote, { group: row.groupLabel, party: nameOf(leader.label, leader.nameHindi, locale), percentage: leader.percentage });
+  return fmt(t.analysisHub.groupLeaderNote, {
+    group: groupNameOf(row.groupKey, row.groupLabel, t, locale),
+    party: nameOf(leader.label, leader.nameHindi, locale),
+    percentage: leader.percentage,
+  });
 }
 
 // The 40%-column reading for a Demographic x Party chart (Age/Gender/
@@ -205,13 +217,13 @@ export function buildDistributionInsight(distribution: PublicDistribution, t: T,
   const top = available[0];
   if (top.percentage <= 0) return null;
   if (!available[1]) {
-    return fmt(t.analysisHub.distributionInsightSingle, { label: nameOf(top.label, top.nameHindi, locale), percentage: top.percentage });
+    return fmt(t.analysisHub.distributionInsightSingle, { label: groupNameOf(top.key, top.label, t, locale), percentage: top.percentage });
   }
   const second = available[1];
   return fmt(t.analysisHub.distributionInsight, {
-    topLabel: nameOf(top.label, top.nameHindi, locale),
+    topLabel: groupNameOf(top.key, top.label, t, locale),
     topPercentage: top.percentage,
-    secondLabel: nameOf(second.label, second.nameHindi, locale),
+    secondLabel: groupNameOf(second.key, second.label, t, locale),
     secondPercentage: second.percentage,
   });
 }

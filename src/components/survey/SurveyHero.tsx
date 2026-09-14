@@ -118,7 +118,7 @@ export function SurveyHero({
       <div className="absolute inset-0 -z-10 bg-gradient-to-r from-white via-white/90 to-white/25 sm:to-white/10" aria-hidden="true" />
 
       <Container className="relative py-3.5 sm:min-h-[125px] sm:py-4">
-        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 overflow-x-auto whitespace-nowrap text-xs font-medium text-muted sm:text-sm">
+        <nav aria-label={t.common.breadcrumbAriaLabel} className="flex items-center gap-1.5 overflow-x-auto whitespace-nowrap text-xs font-medium text-muted sm:text-sm">
           <Link href={stateHref} className="shrink-0 hover:text-ink">{stateName}</Link>
           <ChevronRight size={13} className="shrink-0" aria-hidden="true" />
           <Link href={districtHref} className="shrink-0 hover:text-ink">{districtName}</Link>
@@ -366,6 +366,7 @@ function renderElementContent(
             districtHref={districtHref}
             constituencyName={constituencyName}
             breadcrumbSurveyLabel={t.surveyFlow.breadcrumbSurvey}
+            ariaLabel={t.common.breadcrumbAriaLabel}
             editable={editable}
           />
         </StyledText>
@@ -458,6 +459,7 @@ function BreadcrumbContent({
   districtHref,
   constituencyName,
   breadcrumbSurveyLabel,
+  ariaLabel,
   editable,
 }: {
   stateName: string;
@@ -466,10 +468,11 @@ function BreadcrumbContent({
   districtHref: string;
   constituencyName: string;
   breadcrumbSurveyLabel: string;
+  ariaLabel: string;
   editable: boolean;
 }) {
   return (
-    <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 overflow-x-auto whitespace-nowrap text-muted">
+    <nav aria-label={ariaLabel} className="flex items-center gap-1.5 overflow-x-auto whitespace-nowrap text-muted">
       {editable ? (
         <span className="shrink-0 hover:text-ink">{stateName}</span>
       ) : (

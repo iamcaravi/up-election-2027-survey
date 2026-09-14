@@ -18,7 +18,7 @@ export function HistoricalElections({ items }: { items: HistoricalStateSummary[]
 
   return (
     <>
-      <SectionHeading eyebrow="Historical" title={t.home.historical.title} subtitle={t.home.historical.subtitle} />
+      <SectionHeading eyebrow={t.home.historical.eyebrow} title={t.home.historical.title} subtitle={t.home.historical.subtitle} />
       {items.length === 0 ? (
         <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-border bg-surface-2 px-6 py-6 text-center sm:flex-row sm:justify-between sm:text-left">
           <span className="flex items-center gap-2 text-sm text-muted">

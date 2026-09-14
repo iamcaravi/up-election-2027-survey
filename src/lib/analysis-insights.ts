@@ -1,5 +1,6 @@
 import type { StateAnalysisData } from "./state-analysis";
 import { formatNumber } from "./utils";
+import { resolveOptionLabel } from "./option-labels";
 
 // The Key Takeaway engine (Analysis spec Section 14). Every insight below is
 // derived strictly from fields already present on StateAnalysisData — itself
@@ -19,6 +20,7 @@ export interface Insight {
 
 type T = Record<string, unknown> & {
   analysisHub: Record<string, string>;
+  surveyQuestions: { options: Record<string, string> };
 };
 
 function fmt(template: string, values: Record<string, string | number>): string {
@@ -28,6 +30,7 @@ function fmt(template: string, values: Record<string, string | number>): string 
 export function buildAnalysisInsights(data: StateAnalysisData, t: T, locale: "hi" | "en"): Insight[] {
   const candidates: Insight[] = [];
   const name = (label: string, nameHindi: string | null | undefined) => (locale === "hi" && nameHindi ? nameHindi : label);
+  const groupName = (key: string, label: string) => resolveOptionLabel(key, { label }, locale, t.surveyQuestions.options);
 
   // 1. Leading party overall.
   if (data.statewide.partyPreference.state === "available") {
@@ -69,7 +72,7 @@ export function buildAnalysisInsights(data: StateAnalysisData, t: T, locale: "hi
       const top = available.reduce((a, b) => (b.percentage > a.percentage ? b : a));
       candidates.push({
         id: "top-issue",
-        headline: fmt(t.analysisHub.takeawayTopIssue, { issue: top.label, percentage: top.percentage }),
+        headline: fmt(t.analysisHub.takeawayTopIssue, { issue: groupName(top.key, top.label), percentage: top.percentage }),
         percentage: top.percentage,
       });
     }
@@ -86,7 +89,7 @@ export function buildAnalysisInsights(data: StateAnalysisData, t: T, locale: "hi
       id: "top-issue-by-party",
       headline: fmt(t.analysisHub.takeawayTopIssueByParty, {
         party: name(party.partyLabel, party.partyNameHindi),
-        issue: issue.label,
+        issue: groupName(issue.key, issue.label),
         percentage: issue.percentage,
       }),
       percentage: issue.percentage,
@@ -133,7 +136,7 @@ export function buildAnalysisInsights(data: StateAnalysisData, t: T, locale: "hi
     if (widest && widest.spread >= 10) {
       candidates.push({
         id: "age-spread",
-        headline: fmt(t.analysisHub.takeawayAgeSpread, { group: widest.row.groupLabel }),
+        headline: fmt(t.analysisHub.takeawayAgeSpread, { group: groupName(widest.row.groupKey, widest.row.groupLabel) }),
         percentage: widest.spread,
       });
     }
@@ -143,17 +146,17 @@ export function buildAnalysisInsights(data: StateAnalysisData, t: T, locale: "hi
   // any one party (only from groups that clear the privacy/sample threshold).
   const usableReligionRows = data.religionPartyRows.filter((r) => !r.lowData && r.sampleSize > 0);
   if (usableReligionRows.length > 0) {
-    let best: { group: string; party: (typeof usableReligionRows)[number]["parties"][number] } | null = null;
+    let best: { groupKey: string; group: string; party: (typeof usableReligionRows)[number]["parties"][number] } | null = null;
     for (const row of usableReligionRows) {
       for (const party of row.parties) {
-        if (!best || party.percentage > best.party.percentage) best = { group: row.groupLabel, party };
+        if (!best || party.percentage > best.party.percentage) best = { groupKey: row.groupKey, group: row.groupLabel, party };
       }
     }
     if (best && best.party.percentage > 0) {
       candidates.push({
         id: "religion-leader",
         headline: fmt(t.analysisHub.takeawayReligionLeader, {
-          group: best.group,
+          group: groupName(best.groupKey, best.group),
           party: name(best.party.label, best.party.nameHindi),
           percentage: best.party.percentage,
         }),
@@ -166,17 +169,17 @@ export function buildAnalysisInsights(data: StateAnalysisData, t: T, locale: "hi
   // for any one party (mirrors the religion-leader check above).
   const usableCasteRows = data.castePartyRows.filter((r) => !r.lowData && r.sampleSize > 0);
   if (usableCasteRows.length > 0) {
-    let best: { group: string; party: (typeof usableCasteRows)[number]["parties"][number] } | null = null;
+    let best: { groupKey: string; group: string; party: (typeof usableCasteRows)[number]["parties"][number] } | null = null;
     for (const row of usableCasteRows) {
       for (const party of row.parties) {
-        if (!best || party.percentage > best.party.percentage) best = { group: row.groupLabel, party };
+        if (!best || party.percentage > best.party.percentage) best = { groupKey: row.groupKey, group: row.groupLabel, party };
       }
     }
     if (best && best.party.percentage > 0) {
       candidates.push({
         id: "caste-leader",
         headline: fmt(t.analysisHub.takeawayCasteLeader, {
-          group: best.group,
+          group: groupName(best.groupKey, best.group),
           party: name(best.party.label, best.party.nameHindi),
           percentage: best.party.percentage,
         }),

@@ -17,7 +17,7 @@ export function HowItWorks() {
 
   return (
     <div>
-      <SectionHeading eyebrow="How it works" title={t.home.howItWorks.title} subtitle={t.home.howItWorks.subtitle} />
+      <SectionHeading eyebrow={t.home.howItWorks.eyebrow} title={t.home.howItWorks.title} subtitle={t.home.howItWorks.subtitle} />
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
         {steps.map((s, i) => (
           <motion.div
@@ -31,7 +31,9 @@ export function HowItWorks() {
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-ink/10 text-ink">
               <s.icon size={18} />
             </div>
-            <p className="mt-4 font-display text-sm font-bold text-muted">STEP {i + 1}</p>
+            <p className="mt-4 font-display text-sm font-bold text-muted">
+              {t.home.howItWorks.stepPrefix} {i + 1}
+            </p>
             <p className="mt-1 font-semibold">{s.title}</p>
             <p className="mt-1 text-sm text-muted">{s.desc}</p>
           </motion.div>

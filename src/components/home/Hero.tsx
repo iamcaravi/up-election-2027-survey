@@ -17,6 +17,25 @@ import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 const FEATURE_ICONS = [Users, CheckCircle2, Shield];
 
+// The mobile poster's real, natural aspect ratio (hero-mobile.png is
+// 941x1672 px). This MUST match the file's actual dimensions — the
+// container below renders at this ratio with object-fit:cover, and any
+// mismatch between this ratio and the file's real one makes cover crop
+// the image top+bottom (centered) to fill the mismatched box, which is
+// exactly what was silently clipping the top badge before this constant
+// was introduced. If the poster asset is ever replaced, update this to
+// match the new file's real width/height.
+const MOBILE_HERO_ASPECT_RATIO = "941 / 1672";
+
+// See tierRules()'s mobile branch: how far (as % of the poster's own
+// width) the survey CTA card is pulled up over the mobile hero poster so
+// it lands in the first viewport instead of requiring a scroll. Tuned
+// against the shipped hero-mobile.png poster at its real, uncropped
+// aspect ratio (1672/941 ≈ 1.777x width) — the raised Indian flag begins
+// at roughly 69% of the image's height, so the card is pulled up to start
+// right there. A different poster image would need this retuned.
+const MOBILE_HERO_CARD_OVERLAP = 55;
+
 // The Hero's text is admin-positioned pixel-by-pixel (see hero-config.ts) and
 // stored as a single plain string per element — there's no per-locale field
 // in that schema, and doubling it would mean reworking the drag-and-drop
@@ -86,8 +105,20 @@ function tierRules(
   rules.push(`[data-hero-viewport]{height:${viewport[tier]}px;}`);
 
   if (tier === "mobile") {
+    // Pulls the survey CTA card up so it overlaps the lower (photo-only,
+    // no baked-in text) portion of the tall mobile poster instead of
+    // sitting entirely below it — the card starts near where the poster's
+    // text content ends and its decorative crowd/monument photo begins, so
+    // the CTA is visible in the first mobile viewport without scrolling.
+    // A negative *percentage* margin-top resolves against the container's
+    // WIDTH (per the CSS spec), and since the poster's height is a fixed
+    // multiple of its width (MOBILE_HERO_ASPECT_RATIO = 1672/941 ≈ 1.777x),
+    // this scales correctly at every mobile width instead of needing a
+    // hardcoded px value. The card stays in normal flow (not
+    // position:absolute), so it still reserves its own space and can never
+    // overlap whatever section follows the hero.
     rules.push(
-      `[data-hero-card]{position:relative;margin-top:1.25rem;margin-left:auto;margin-right:auto;width:calc(100% - 2rem);}`
+      `[data-hero-card]{position:relative;margin-top:-${MOBILE_HERO_CARD_OVERLAP}%;margin-left:auto;margin-right:auto;width:calc(100% - 2rem);}`
     );
     rules.push(`[data-hero-text="features"]{flex-direction:column;gap:0.5rem;max-width:44%;}`);
   } else if (tier === "tablet") {
@@ -473,7 +504,7 @@ export function Hero({
       {(editable ? editorShowsMobilePoster : true) && (
         <div
           className={editable ? "relative w-full overflow-hidden" : "relative block w-full overflow-hidden sm:hidden"}
-          style={{ aspectRatio: "1024 / 1536" }}
+          style={{ aspectRatio: MOBILE_HERO_ASPECT_RATIO }}
         >
           <Image
             src={mobileImageUrl}

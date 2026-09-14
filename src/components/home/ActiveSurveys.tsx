@@ -39,7 +39,7 @@ export function ActiveSurveys({
 
   return (
     <>
-      <SectionHeading eyebrow="Public Mood" title={t.home.surveys.title} subtitle={t.home.surveys.subtitle} />
+      <SectionHeading eyebrow={t.home.surveys.eyebrow} title={t.home.surveys.title} subtitle={t.home.surveys.subtitle} />
 
       {primaryState && (
         <div className="card-surface mb-6 rounded-2xl p-6 sm:p-7">
@@ -106,7 +106,7 @@ export function ActiveSurveys({
                     {s.districtName ?? s.stateName}
                   </p>
                   <p className="mt-2 font-display text-base font-bold leading-snug">{s.title}</p>
-                  <p className="mt-1 text-sm text-muted">{s.constituencyName ?? "Statewide"}</p>
+                  <p className="mt-1 text-sm text-muted">{s.constituencyName ?? t.home.surveys.statewideFallback}</p>
                   <p className="mt-3 text-sm font-medium">
                     {formatNumber(s.responseCount)} {t.home.surveys.responsesLabel}
                   </p>

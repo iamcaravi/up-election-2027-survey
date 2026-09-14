@@ -10,6 +10,8 @@ import { StateEyebrow, StateHeroText, NoElectionNotice, TrendingSectionHeading, 
 import { electionPath, districtsPath, stateResultsPath, statePath } from "@/lib/routes";
 import { buildPageMetadata } from "@/lib/seo";
 import { applySeoOverride } from "@/lib/seo-overrides";
+import { getServerLocale } from "@/lib/i18n/locale-cookie";
+import { displayStateName } from "@/lib/utils";
 
 export async function generateMetadata({
   params,
@@ -17,14 +19,18 @@ export async function generateMetadata({
   params: Promise<{ state: string }>;
 }): Promise<Metadata> {
   const { state: slug } = await params;
-  const result = await getStateAndElection(slug);
+  const [result, locale] = await Promise.all([getStateAndElection(slug), getServerLocale()]);
   if (!result) return {};
+  const stateName = displayStateName(result.state.name, result.state.slug, locale);
   const path = statePath(result.state.slug);
   const base = buildPageMetadata({
-    title: `${result.state.name} Election Survey`,
-    description: `${result.state.name}: districts, assembly constituencies, candidates and public survey${
-      result.election ? ` for the ${result.election.name}` : ""
-    }.`,
+    title: locale === "hi" ? `${stateName} चुनाव सर्वेक्षण` : `${stateName} Election Survey`,
+    description:
+      locale === "hi"
+        ? `${stateName}: जिले, विधानसभा क्षेत्र, उम्मीदवार और सार्वजनिक सर्वे${result.election ? ` — ${result.election.name}` : ""}।`
+        : `${stateName}: districts, assembly constituencies, candidates and public survey${
+            result.election ? ` for the ${result.election.name}` : ""
+          }.`,
     path,
   });
   return applySeoOverride(base, path);
@@ -34,9 +40,10 @@ export const revalidate = 60;
 
 export default async function StatePage({ params }: { params: Promise<{ state: string }> }) {
   const { state: slug } = await params;
-  const result = await getStateAndElection(slug);
+  const [result, locale] = await Promise.all([getStateAndElection(slug), getServerLocale()]);
   if (!result) notFound();
   const { state, election } = result;
+  const stateName = displayStateName(state.name, state.slug, locale);
 
   const [{ districts }, constituencyCount, responseCount, trending] = await Promise.all([
     getDistrictsWithResponseCounts(slug),
@@ -49,9 +56,9 @@ export default async function StatePage({ params }: { params: Promise<{ state: s
     <div>
       <div className="border-b border-border bg-surface">
         <Container className="py-12">
-          <Breadcrumb items={[{ label: state.name }]} />
+          <Breadcrumb items={[{ label: stateName }]} />
           <StateEyebrow />
-          <h1 className="font-display text-3xl font-extrabold sm:text-5xl">{state.name}</h1>
+          <h1 className="font-display text-3xl font-extrabold sm:text-5xl">{stateName}</h1>
           <StateHeroText
             election={election}
             districtCount={districts.length}
@@ -69,7 +76,7 @@ export default async function StatePage({ params }: { params: Promise<{ state: s
           <DistrictExplorer
             basePath={electionPath(state.slug, election.slug)}
             districts={districts}
-            stateName={state.name}
+            stateName={stateName}
           />
         ) : (
           <NoElectionNotice />

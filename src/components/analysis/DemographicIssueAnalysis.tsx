@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { resolveOptionLabel } from "@/lib/option-labels";
 import { InlineState } from "@/components/results/ResultsDashboardParts";
 import { KeyReading } from "./KeyReading";
 import type { IssueByDemographicSeries } from "@/lib/state-analysis";
@@ -20,14 +21,21 @@ const SELECT_CLASSNAME =
 // recharts vertical BarChart) avoid axis-label overlap/clipping when a
 // group's label is long (e.g. a caste category name) at compact card width.
 export function DemographicIssueAnalysis({ series, compact }: { series: IssueByDemographicSeries[]; compact?: boolean }) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const [issueKey, setIssueKey] = useState(series[0]?.issueKey ?? "");
   const activeSeries = series.find((s) => s.issueKey === issueKey) ?? series[0];
+  const issueName = (s: { issueKey: string; issueLabel: string }) =>
+    resolveOptionLabel(s.issueKey, { label: s.issueLabel }, locale, t.surveyQuestions.options);
 
   const rows = useMemo(() => {
     if (!activeSeries) return [];
-    return activeSeries.values.map((v) => ({ group: v.groupLabel, percentage: v.percentage, lowData: v.lowData }));
-  }, [activeSeries]);
+    return activeSeries.values.map((v) => ({
+      groupKey: v.groupKey,
+      group: resolveOptionLabel(v.groupKey, { label: v.groupLabel }, locale, t.surveyQuestions.options),
+      percentage: v.percentage,
+      lowData: v.lowData,
+    }));
+  }, [activeSeries, locale, t]);
 
   const maxPct = Math.max(1, ...rows.filter((r) => !r.lowData).map((r) => r.percentage));
 
@@ -44,7 +52,7 @@ export function DemographicIssueAnalysis({ series, compact }: { series: IssueByD
         <select value={issueKey} onChange={(e) => setIssueKey(e.target.value)} className={SELECT_CLASSNAME}>
           {series.map((s) => (
             <option key={s.issueKey} value={s.issueKey}>
-              {s.issueLabel}
+              {issueName(s)}
             </option>
           ))}
         </select>
@@ -74,7 +82,7 @@ export function DemographicIssueAnalysis({ series, compact }: { series: IssueByD
           lines={[
             t.analysisHub.readingIssueLeaderGroup
               .replace("{group}", leader.group)
-              .replace("{issue}", activeSeries.issueLabel)
+              .replace("{issue}", issueName(activeSeries))
               .replace("{percentage}", String(leader.percentage)),
           ]}
         />

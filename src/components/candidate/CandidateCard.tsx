@@ -5,7 +5,23 @@ import { CandidateAvatar } from "./CandidateAvatar";
 import { StatusBadge, PartyPill } from "@/components/ui/Badge";
 import { CANDIDATE_STATUS_LABELS, type CandidateStatus } from "@/lib/enums";
 import { cn } from "@/lib/utils";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { CheckCircle2 } from "lucide-react";
+
+const STATUS_KEY: Record<CandidateStatus, "declared" | "likely" | "possible" | "incumbent" | "historical" | "other"> = {
+  DECLARED: "declared",
+  LIKELY: "likely",
+  POSSIBLE: "possible",
+  INCUMBENT: "incumbent",
+  HISTORICAL: "historical",
+  OTHER: "other",
+};
+
+const CONFIDENCE_KEY: Record<string, "confidenceHigh" | "confidenceMedium" | "confidenceLow"> = {
+  HIGH: "confidenceHigh",
+  MEDIUM: "confidenceMedium",
+  LOW: "confidenceLow",
+};
 
 export interface CandidateCardData {
   id: string;
@@ -38,6 +54,7 @@ export function CandidateCard({
   radioValue?: string;
   required?: boolean;
 }) {
+  const { t } = useLocale();
   const status = (candidate.status in CANDIDATE_STATUS_LABELS ? candidate.status : "POSSIBLE") as CandidateStatus;
 
   const content = (
@@ -49,7 +66,7 @@ export function CandidateCard({
           {candidate.party ? (
             <PartyPill shortName={candidate.party.shortName} colorHex={candidate.party.colorHex} className="mt-1.5" />
           ) : (
-            <span className="mt-1.5 inline-block text-xs text-muted">Independent / Unaffiliated</span>
+            <span className="mt-1.5 inline-block text-xs text-muted">{t.candidate.independentUnaffiliated}</span>
           )}
         </div>
         {selectable && (
@@ -65,9 +82,10 @@ export function CandidateCard({
       </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
-        <StatusBadge status={status} />
+        <StatusBadge status={status} label={t.candidate[STATUS_KEY[status]]} />
         <span className="text-[11px] font-medium text-muted">
-          Confidence: {candidate.confidenceScore}
+          {t.candidate.confidenceLabel}:{" "}
+          {candidate.confidenceScore in CONFIDENCE_KEY ? t.candidate[CONFIDENCE_KEY[candidate.confidenceScore]] : candidate.confidenceScore}
         </span>
       </div>
 

@@ -3,16 +3,11 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { resolveOptionLabel } from "@/lib/option-labels";
 
 type Dimension = "age_group" | "gender" | "social_category" | "religion";
 type Target = "candidate_choice" | "party_preference";
-
-const DIMENSIONS: { key: Dimension; label: string }[] = [
-  { key: "age_group", label: "Age Group" },
-  { key: "gender", label: "Gender" },
-  { key: "social_category", label: "Social Category" },
-  { key: "religion", label: "Religion" },
-];
 
 interface GroupData {
   groupKey: string;
@@ -33,10 +28,18 @@ export function DemographicAnalytics({
   stateSlug: string;
   electionSlug: string;
 }) {
+  const { t, locale } = useLocale();
   const [dimension, setDimension] = useState<Dimension>("age_group");
   const [target, setTarget] = useState<Target>("candidate_choice");
   const [data, setData] = useState<{ groups: GroupData[] } | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const DIMENSIONS: { key: Dimension; label: string }[] = [
+    { key: "age_group", label: t.results.ageGroup },
+    { key: "gender", label: t.results.gender },
+    { key: "social_category", label: t.results.socialCategory },
+    { key: "religion", label: t.results.religion },
+  ];
 
   useEffect(() => {
     setLoading(true);
@@ -74,17 +77,17 @@ export function DemographicAnalytics({
                 target === tg ? "border-ink text-ink" : "border-border text-muted hover:text-foreground"
               )}
             >
-              {tg === "candidate_choice" ? "Candidate" : "Party"}
+              {tg === "candidate_choice" ? t.results.breakdownCandidateToggle : t.results.breakdownPartyToggle}
             </button>
           ))}
         </div>
       </div>
 
       <div className="mt-5 space-y-5">
-        {loading && <p className="text-sm text-muted">Loading...</p>}
+        {loading && <p className="text-sm text-muted">{t.common.loading}</p>}
         {!loading && (!data || data.groups.length === 0) && (
           <p className="rounded-xl border border-dashed border-border bg-surface-2 p-6 text-center text-sm text-muted">
-            No responses yet for this breakdown.
+            {t.results.noBreakdownResponses}
           </p>
         )}
         {!loading &&
@@ -92,17 +95,17 @@ export function DemographicAnalytics({
             const options = target === "candidate_choice" ? g.candidateOptions : g.partyOptions;
             return (
               <div key={g.groupKey}>
-                <p className="mb-2 text-sm font-semibold">{g.groupLabel}</p>
+                <p className="mb-2 text-sm font-semibold">{resolveOptionLabel(g.groupKey, { label: g.groupLabel }, locale, t.surveyQuestions.options)}</p>
                 {!g.sufficientSample ? (
                   <p className="rounded-lg bg-surface-2 px-3 py-2 text-xs text-muted">
-                    Insufficient responses to display this breakdown (minimum {g.minRequired}).
+                    {t.results.insufficientBreakdownSample.replace("{minimum}", String(g.minRequired))}
                   </p>
                 ) : (
                   <div className="space-y-2">
                     {options.slice(0, 4).map((o, i) => (
                       <div key={o.key}>
                         <div className="mb-1 flex justify-between text-xs">
-                          <span>{o.label}</span>
+                          <span>{target === "candidate_choice" ? o.label : resolveOptionLabel(o.key, o, locale, t.surveyQuestions.options)}</span>
                           <span className="text-muted">{o.pct}%</span>
                         </div>
                         <div className="h-1.5 overflow-hidden rounded-full bg-surface-2">

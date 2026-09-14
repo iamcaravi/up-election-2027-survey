@@ -10,6 +10,12 @@ const updateSchema = z.object({
   categoryLabel: z.string().trim().min(1).max(80).optional(),
   question: z.string().trim().min(1).max(300).optional(),
   answer: z.string().trim().min(1).max(3000).optional(),
+  // Optional Hindi counterparts — see prisma/schema.prisma's FaqItem doc
+  // comment. An empty string clears the field back to "use the English
+  // fallback" rather than being rejected as invalid.
+  categoryLabelHi: z.string().trim().max(80).optional(),
+  questionHi: z.string().trim().max(300).optional(),
+  answerHi: z.string().trim().max(3000).optional(),
   published: z.boolean().optional(),
   displayOrder: z.number().int().optional(),
 });
@@ -50,7 +56,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const contentChanged =
     (data.question !== undefined && data.question !== existing.question) ||
     (data.answer !== undefined && data.answer !== existing.answer) ||
-    (data.category !== undefined && data.category !== existing.category);
+    (data.category !== undefined && data.category !== existing.category) ||
+    (data.questionHi !== undefined && data.questionHi !== (existing.questionHi ?? "")) ||
+    (data.answerHi !== undefined && data.answerHi !== (existing.answerHi ?? ""));
 
   if (contentChanged) {
     await prisma.faqItemVersion.create({
@@ -59,6 +67,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         category: existing.category,
         question: existing.question,
         answer: existing.answer,
+        questionHi: existing.questionHi,
+        answerHi: existing.answerHi,
         createdBy: session.email,
       },
     });
@@ -66,7 +76,13 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   const item = await prisma.faqItem.update({
     where: { id },
-    data: { ...data, updatedBy: session.email },
+    data: {
+      ...data,
+      ...(data.categoryLabelHi !== undefined ? { categoryLabelHi: data.categoryLabelHi || null } : {}),
+      ...(data.questionHi !== undefined ? { questionHi: data.questionHi || null } : {}),
+      ...(data.answerHi !== undefined ? { answerHi: data.answerHi || null } : {}),
+      updatedBy: session.email,
+    },
   });
 
   await logAudit({ adminUserId: session.sub, action: "UPDATE", entityType: "FaqItem", entityId: id, metadata: data });
@@ -95,6 +111,8 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
       category: existing.category,
       question: existing.question,
       answer: existing.answer,
+      questionHi: existing.questionHi,
+      answerHi: existing.answerHi,
       createdBy: session.email,
     },
   });

@@ -11,6 +11,7 @@ import { analysisPath, stateResultsPath } from "@/lib/routes";
 import { displayStateName } from "@/lib/utils";
 import { buildPageMetadata } from "@/lib/seo";
 import { applySeoOverride } from "@/lib/seo-overrides";
+import { getServerLocale } from "@/lib/i18n/locale-cookie";
 
 export async function generateMetadata({
   params,
@@ -18,13 +19,16 @@ export async function generateMetadata({
   params: Promise<{ state: string }>;
 }): Promise<Metadata> {
   const { state: stateSlug } = await params;
-  const result = await getStateAndElection(stateSlug);
+  const [result, locale] = await Promise.all([getStateAndElection(stateSlug), getServerLocale()]);
   if (!result) return {};
-  const stateName = displayStateName(result.state.name, result.state.slug, "hi");
+  const stateName = displayStateName(result.state.name, result.state.slug, locale);
   const path = stateResultsPath(result.state.slug);
   const base = buildPageMetadata({
-    title: `${stateName} — परिणाम`,
-    description: `${stateName} के जनमत सर्वे के परिणाम — पार्टी समर्थन, मुख्य मुद्दे और जिला/विधानसभा क्षेत्रवार परिणाम।`,
+    title: locale === "hi" ? `${stateName} — परिणाम` : `${stateName} — Results`,
+    description:
+      locale === "hi"
+        ? `${stateName} के जनमत सर्वे के परिणाम — पार्टी समर्थन, मुख्य मुद्दे और जिला/विधानसभा क्षेत्रवार परिणाम।`
+        : `${stateName} public survey results — party support, key issues, and district/constituency-level results.`,
     path,
   });
   return applySeoOverride(base, path);

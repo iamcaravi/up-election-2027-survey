@@ -79,7 +79,15 @@ export interface PartyTopIssues {
 
 export type VoterVoice =
   | { kind: "issue"; issueKey: string; issueLabel: string; percentage: number; respondentCount: number }
-  | { kind: "age" | "gender" | "religion"; groupLabel: string; issueKey: string; issueLabel: string; percentage: number; respondentCount: number };
+  | {
+      kind: "age" | "gender" | "religion";
+      groupKey: string;
+      groupLabel: string;
+      issueKey: string;
+      issueLabel: string;
+      percentage: number;
+      respondentCount: number;
+    };
 
 export interface PartyMomentumItem {
   partyKey: string;
@@ -784,13 +792,29 @@ function computeVoterVoices(
   const youngest = topIssueForGroup(issueByAge, "18-24");
   if (youngest) {
     const groupLabel = issueByAge[0]?.values.find((v) => v.groupKey === "18-24")?.groupLabel ?? "18-24";
-    voices.push({ kind: "age", groupLabel, issueKey: youngest.key, issueLabel: youngest.label, percentage: youngest.percentage, respondentCount: youngest.count });
+    voices.push({
+      kind: "age",
+      groupKey: "18-24",
+      groupLabel,
+      issueKey: youngest.key,
+      issueLabel: youngest.label,
+      percentage: youngest.percentage,
+      respondentCount: youngest.count,
+    });
   }
 
   const female = topIssueForGroup(issueByGender, "female");
   if (female) {
     const groupLabel = issueByGender[0]?.values.find((v) => v.groupKey === "female")?.groupLabel ?? "female";
-    voices.push({ kind: "gender", groupLabel, issueKey: female.key, issueLabel: female.label, percentage: female.percentage, respondentCount: female.count });
+    voices.push({
+      kind: "gender",
+      groupKey: "female",
+      groupLabel,
+      issueKey: female.key,
+      issueLabel: female.label,
+      percentage: female.percentage,
+      respondentCount: female.count,
+    });
   }
 
   return voices.slice(0, MAX_VOTER_VOICES);

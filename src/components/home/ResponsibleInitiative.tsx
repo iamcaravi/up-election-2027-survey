@@ -3,13 +3,15 @@
 import { motion } from "framer-motion";
 import { Lock, ShieldCheck, Scale, FileBarChart } from "lucide-react";
 import Image from "next/image";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 export function ResponsibleInitiative() {
+  const { t } = useLocale();
   const principles = [
-    { icon: Lock, title: "आपकी गोपनीयता हमारी प्राथमिकता" },
-    { icon: ShieldCheck, title: "डेटा सुरक्षा और पारदर्शिता" },
-    { icon: Scale, title: "किसी भी राजनीतिक दल से स्वतंत्र" },
-    { icon: FileBarChart, title: "तथ्यों और आंकड़ों पर आधारित" },
+    { icon: Lock, title: t.home.responsibleInitiative.principle1Title },
+    { icon: ShieldCheck, title: t.home.responsibleInitiative.principle2Title },
+    { icon: Scale, title: t.home.responsibleInitiative.principle3Title },
+    { icon: FileBarChart, title: t.home.responsibleInitiative.principle4Title },
   ];
 
   return (
@@ -20,7 +22,7 @@ export function ResponsibleInitiative() {
         viewport={{ once: true, margin: "-40px" }}
         transition={{ duration: 0.5 }}
       >
-        <h2 className="font-display text-base font-bold text-foreground sm:text-lg">एक जिम्मेदार पहल</h2>
+        <h2 className="font-display text-base font-bold text-foreground sm:text-lg">{t.home.responsibleInitiative.heading}</h2>
         <div className="mt-1.5 space-y-1">
           {principles.map((p, i) => {
             const Icon = p.icon;
@@ -45,14 +47,14 @@ export function ResponsibleInitiative() {
       >
         <Image
           src="/images/homepage/responsible-india-gate.jpg"
-          alt="इंडिया गेट पर तिरंगे झंडे और आम नागरिक"
+          alt={t.home.responsibleInitiative.imageAlt}
           fill
           sizes="(min-width: 1024px) 25vw, 100vw"
           className="object-cover"
         />
         <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-ink/70 via-ink/15 to-transparent p-4">
-          <p className="font-display text-sm font-bold text-white">जागरूक नागरिक</p>
-          <p className="text-xs font-medium text-white/90">मजबूत लोकतंत्र</p>
+          <p className="font-display text-sm font-bold text-white">{t.home.responsibleInitiative.overlayTitle}</p>
+          <p className="text-xs font-medium text-white/90">{t.home.responsibleInitiative.overlaySubtitle}</p>
         </div>
       </motion.div>
     </div>

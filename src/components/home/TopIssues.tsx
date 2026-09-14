@@ -1,6 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { resolveOptionLabel } from "@/lib/option-labels";
 
 interface IssueTally {
   key: string;
@@ -18,10 +20,12 @@ export function TopIssues({
   sufficientSample: boolean;
   minRequired: number;
 }) {
+  const { t, locale } = useLocale();
+
   if (!sufficientSample || issues.length === 0) {
     return (
       <div className="rounded-2xl border border-dashed border-border bg-surface-2 p-8 text-center text-sm text-muted">
-        Not enough responses yet (minimum {minRequired}) to show statewide issue trends.
+        {t.results.insufficientBreakdownSample.replace("{minimum}", String(minRequired))}
       </div>
     );
   }
@@ -32,7 +36,7 @@ export function TopIssues({
         {issues.map((issue, i) => (
           <li key={issue.key}>
             <div className="mb-1.5 flex items-center justify-between text-sm">
-              <span className="font-medium">{issue.label}</span>
+              <span className="font-medium">{resolveOptionLabel(issue.key, issue, locale, t.surveyQuestions.options)}</span>
               <span className="text-muted">{issue.pct}%</span>
             </div>
             <div className="h-2 overflow-hidden rounded-full bg-surface-2">

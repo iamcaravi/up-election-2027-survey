@@ -312,7 +312,12 @@ export function SurveyExperience({
           <Button
             variant="outline"
             size="lg"
-            className="border-ink/40 text-base text-ink shadow-[var(--shadow-card)] hover:bg-ink/5"
+            // Mobile: the outline variant's bg-transparent read as too weak
+            // floating over whatever content happens to be scrolled behind
+            // it (photos, colored sections), so it gets a solid surface +
+            // stronger border here — sm: resets both back to the original
+            // transparent outline look, unchanged on desktop.
+            className="border-ink/60 bg-white text-base text-ink shadow-[var(--shadow-card)] hover:bg-ink/5 sm:border-ink/40 sm:bg-transparent"
             onClick={() => setPageIndex((i) => i - 1)}
             disabled={submitting}
             aria-label={t.surveyFlow.previous}
@@ -574,7 +579,37 @@ function SuccessScreen({
         animate={{ opacity: 1, y: 0 }}
         className="mt-2 overflow-hidden rounded-3xl border border-blue-100 bg-blue-50/60 p-5 sm:mt-3 sm:p-7"
       >
-        <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-center sm:gap-6">
+        {/* Compact mobile-only header: a simple green check badge + heading
+            + one short confirmation line, directly above the primary
+            actions — no scrolling past a decorative illustration or trust
+            badges to reach Result/Share. Hidden at sm: where the original
+            side-by-side illustration layout (below) already puts the
+            actions within easy reach on a taller/wider viewport. */}
+        <div className="flex flex-col items-center gap-2 text-center sm:hidden">
+          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-positive/15 text-positive" aria-hidden="true">
+            <Check size={28} strokeWidth={3} />
+          </span>
+          <h1 className="font-display text-2xl font-extrabold text-ink">{t.surveyFlow.successTitle}</h1>
+          <p className="font-display text-base font-bold text-ink">{t.surveyFlow.successBody}</p>
+          <p className="text-xs leading-5 text-muted">
+            {t.surveyFlow.successVoteRecorded.replace("{constituency}", constituencyName)}
+          </p>
+
+          <div className="mt-3 flex w-full flex-col gap-2.5">
+            <Button variant="cta" size="lg" className="justify-center" onClick={onViewResults}>
+              {t.surveyFlow.viewResults} <ArrowRight size={18} />
+            </Button>
+            <Button variant="outline" size="lg" className="justify-center border-ink/60 bg-white text-ink hover:bg-ink/5" onClick={handleShare}>
+              <Share2 size={17} /> {copied ? t.surveyFlow.shareCopied : t.surveyFlow.shareSurvey}
+            </Button>
+          </div>
+        </div>
+
+        {/* Original desktop/tablet layout — illustration + heading/body +
+            trust badges + actions side by side. Hidden below sm: (the
+            compact block above takes over there) so nothing here needs to
+            change for mobile; unchanged from before. */}
+        <div className="hidden sm:flex sm:flex-row sm:items-center sm:gap-6">
           <div className="relative flex shrink-0 flex-col items-center justify-center sm:w-[34%]">
             <span className="absolute -left-3 top-6 h-3 w-3 rounded-full bg-orange-500" aria-hidden="true" />
             <span className="absolute right-1 top-1 h-2.5 w-2.5 rounded-full bg-white ring-2 ring-green-200" aria-hidden="true" />
@@ -608,7 +643,7 @@ function SuccessScreen({
             </motion.div>
           </div>
 
-          <div className="min-w-0 flex-1 text-center sm:text-left">
+          <div className="flex min-w-0 flex-1 flex-col text-center sm:text-left">
             <h1 className="font-display text-3xl font-extrabold text-ink sm:text-4xl">{t.surveyFlow.successTitle}</h1>
             <p className="mt-1.5 font-display text-lg font-bold text-ink sm:text-xl">{t.surveyFlow.successBody}</p>
             <p className="mt-2 text-sm leading-6 text-muted">
@@ -645,19 +680,15 @@ function SuccessScreen({
         </div>
       </motion.div>
 
+      {/* Only Analysis is offered here — Results and Share already have
+          exactly one clear, immediately-visible primary action each in the
+          card above (View Results / Share buttons); repeating them as
+          "next step" cards too would just duplicate the same two actions. */}
       <div className="mt-8">
         <h2 className="font-display text-3xl font-extrabold text-ink sm:text-4xl">{t.surveyFlow.nextStepsHeading}</h2>
         <p className="mt-2 text-lg leading-relaxed text-muted">{t.surveyFlow.nextStepsSubtitle}</p>
 
-        <div className="mt-4 grid gap-3 sm:grid-cols-3">
-          <NextStepCard
-            icon={BarChart3}
-            color="text-blue-600 bg-blue-50"
-            title={t.surveyFlow.nextStepResultsTitle}
-            body={t.surveyFlow.nextStepResultsBody}
-            cta={t.surveyFlow.nextStepResultsCta}
-            onClick={onViewResults}
-          />
+        <div className="mt-4 grid gap-3 sm:max-w-sm">
           <NextStepLinkCard
             icon={FileText}
             color="text-ink bg-ink/5"
@@ -665,14 +696,6 @@ function SuccessScreen({
             body={t.surveyFlow.nextStepAnalysisBody}
             cta={t.surveyFlow.nextStepAnalysisCta}
             href="/methodology"
-          />
-          <NextStepCard
-            icon={Share2}
-            color="text-green-700 bg-green-50"
-            title={t.surveyFlow.nextStepShareTitle}
-            body={t.surveyFlow.nextStepShareBody}
-            cta={t.surveyFlow.nextStepShareCta}
-            onClick={handleShare}
           />
         </div>
       </div>
@@ -687,39 +710,6 @@ function SuccessScreen({
         </div>
       </div>
     </div>
-  );
-}
-
-function NextStepCard({
-  icon: Icon,
-  color,
-  title,
-  body,
-  cta,
-  onClick,
-}: {
-  icon: typeof BarChart3;
-  color: string;
-  title: string;
-  body: string;
-  cta: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="card-surface flex flex-col items-start gap-3 rounded-2xl p-6 text-left transition-all hover:-translate-y-0.5 hover:shadow-[var(--shadow-soft)]"
-    >
-      <span className={cn("flex h-12 w-12 items-center justify-center rounded-xl", color)}>
-        <Icon size={22} />
-      </span>
-      <p className="font-display text-xl font-bold text-ink">{title}</p>
-      <p className="text-base leading-6 text-muted">{body}</p>
-      <span className="mt-1 inline-flex items-center gap-1.5 text-base font-bold text-orange-600">
-        {cta} <ArrowRight size={16} />
-      </span>
-    </button>
   );
 }
 

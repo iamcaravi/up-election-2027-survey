@@ -10,7 +10,11 @@ const STATUS_STYLES: Record<CandidateStatus, string> = {
   OTHER: "bg-muted/10 text-muted border-border",
 };
 
-export function StatusBadge({ status, className }: { status: CandidateStatus; className?: string }) {
+// `label` lets a locale-aware caller (e.g. the public CandidateCard) supply
+// the correct-language text; callers that don't pass one (admin, which is
+// intentionally left English per the site's admin-panel scope) keep the
+// existing English CANDIDATE_STATUS_LABELS unchanged.
+export function StatusBadge({ status, className, label }: { status: CandidateStatus; className?: string; label?: string }) {
   return (
     <span
       className={cn(
@@ -19,7 +23,7 @@ export function StatusBadge({ status, className }: { status: CandidateStatus; cl
         className
       )}
     >
-      {CANDIDATE_STATUS_LABELS[status]}
+      {label ?? CANDIDATE_STATUS_LABELS[status]}
     </span>
   );
 }

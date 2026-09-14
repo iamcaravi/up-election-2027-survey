@@ -13,6 +13,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import type { TooltipContentProps, PieLabelRenderProps } from "recharts";
 import { FlaskConical, Info, Share2, ShieldCheck } from "lucide-react";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { resolveOptionLabel } from "@/lib/option-labels";
 import { buildResultShareHook, buildResultShareMessage } from "@/lib/share-message";
 import { LinkButton } from "@/components/ui/Button";
 import { SocialShareButtons } from "./SocialShareButtons";
@@ -378,7 +379,7 @@ export function IssuesDonutChart({
   if (available.length === 0) return <InlineState>{t.results.resultsSuppressed}</InlineState>;
 
   const chartData = available.map((bucket, index) => ({
-    name: locale === "hi" && bucket.nameHindi ? bucket.nameHindi : bucket.label,
+    name: resolveOptionLabel(bucket.key, bucket, locale, t.surveyQuestions.options),
     value: bucket.percentage,
     count: bucket.count,
     color: bucket.colorHex ?? ISSUE_COLORS[index % ISSUE_COLORS.length],
@@ -447,7 +448,7 @@ export function KeyIssuesPanel({
   centerLabel: string;
   topIssuesLabel: string;
 }) {
-  const { locale } = useLocale();
+  const { locale, t } = useLocale();
   const available =
     distribution.state === "available"
       ? distribution.buckets.filter((b): b is Extract<PublicAnalyticsBucket, { state: "available" }> => b.state === "available")
@@ -460,7 +461,7 @@ export function KeyIssuesPanel({
   const sorted = available
     .map((b, index) => ({
       key: b.key,
-      label: locale === "hi" && b.nameHindi ? b.nameHindi : b.label,
+      label: resolveOptionLabel(b.key, b, locale, t.surveyQuestions.options),
       percentage: b.percentage,
       color: b.colorHex ?? ISSUE_COLORS[index % ISSUE_COLORS.length],
     }))

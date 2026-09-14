@@ -9,6 +9,8 @@ import { DISTRICT_COLORS } from "@/lib/district-colors";
 import { cn } from "@/lib/utils";
 import { MapPin, ChevronRight } from "lucide-react";
 import { buildPageMetadata } from "@/lib/seo";
+import { getServerLocale } from "@/lib/i18n/locale-cookie";
+import { displayStateName } from "@/lib/utils";
 
 export async function generateMetadata({
   params,
@@ -16,11 +18,15 @@ export async function generateMetadata({
   params: Promise<{ state: string; election: string }>;
 }): Promise<Metadata> {
   const { state: stateSlug, election: electionSlug } = await params;
-  const result = await getStateAndElection(stateSlug);
+  const [result, locale] = await Promise.all([getStateAndElection(stateSlug), getServerLocale()]);
   if (!result) return {};
+  const stateName = displayStateName(result.state.name, result.state.slug, locale);
   return buildPageMetadata({
-    title: `${result.state.name} — Explore Districts`,
-    description: `Browse all districts of ${result.state.name} and their assembly constituencies.`,
+    title: locale === "hi" ? `${stateName} — जिले देखें` : `${stateName} — Explore Districts`,
+    description:
+      locale === "hi"
+        ? `${stateName} के सभी जिलों और उनके विधानसभा क्षेत्रों को देखें।`
+        : `Browse all districts of ${stateName} and their assembly constituencies.`,
     path: districtsPath(result.state.slug, electionSlug),
   });
 }

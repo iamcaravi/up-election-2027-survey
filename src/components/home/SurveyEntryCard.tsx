@@ -136,13 +136,23 @@ function FieldSelect<T extends { id: string }>({
           <button
             type="button"
             aria-label={closeOptionsLabel}
-            className="fixed inset-0 z-10 cursor-default"
+            className="fixed inset-0 z-30 cursor-default"
             onClick={() => {
               setOpen(false);
               setQuery("");
             }}
           />
-          <div className="absolute bottom-full left-0 right-0 z-20 mb-2 max-h-64 min-w-[13rem] overflow-y-auto rounded-xl border border-[#101A3A]/15 bg-white shadow-xl">
+          {/* Opens DOWNWARD (top-full) by default — mobile, where this card
+              now sits high up the page (overlapping the hero poster), so an
+              upward-opening (bottom-full) panel used to render underneath
+              the sticky site header (SiteHeader.tsx is z-40) and either got
+              visually hidden there or swallowed the tap before it reached
+              an option. sm: restores the original upward-opening desktop/
+              tablet behavior unchanged, where the card sits near the
+              bottom of the hero banner and opening upward avoids the
+              viewport's bottom edge instead. z-50 keeps the panel above
+              that same sticky header (z-40) in either direction. */}
+          <div className="absolute left-0 right-0 top-full z-50 mt-2 max-h-64 min-w-[13rem] overflow-y-auto rounded-xl border border-[#101A3A]/15 bg-white shadow-xl sm:bottom-full sm:top-auto sm:mb-2 sm:mt-0">
             {filteredItems.length === 0 && <p className="px-4 py-3 text-sm text-[#101A3A]/60">{noOptionsLabel}</p>}
             {filteredItems.map((item) => (
               <button
@@ -169,9 +179,18 @@ export function SurveyEntryCard({ states, heading }: SurveyEntryCardProps) {
   const router = useRouter();
   const { locale, t } = useLocale();
 
-  // No state pre-selected — the visitor picks one explicitly rather than the
-  // form silently defaulting to whichever state happens to sort first.
-  const [selectedState, setSelectedState] = useState<SurveyEntryState | null>(null);
+  // Defaults to Uttar Pradesh for the initial UP-focused launch promotion
+  // (explicit product decision — not "whichever state sorts first", which
+  // is exactly what the previous no-default behavior was guarding
+  // against). Looked up by slug rather than assumed to be states[0], so it
+  // never silently locks onto the wrong entry if UP isn't present (falls
+  // back to unselected) or isn't first in whatever order the caller
+  // passes. The visitor can still change it via the selector below like
+  // any other field, and district/constituency stay unselected until they
+  // choose one — only the state itself is preselected.
+  const [selectedState, setSelectedState] = useState<SurveyEntryState | null>(
+    () => states.find((s) => s.slug === "uttar-pradesh") ?? null
+  );
   const [districts, setDistricts] = useState<DistrictItem[]>([]);
   const [selectedDistrict, setSelectedDistrict] = useState<DistrictItem | null>(null);
   const [constituencies, setConstituencies] = useState<ConstituencyItem[]>([]);

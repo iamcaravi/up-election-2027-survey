@@ -3,11 +3,14 @@ import { getStates } from "@/lib/data";
 import { Container } from "@/components/ui/Container";
 import { StatesGrid } from "@/components/states/StatesGrid";
 import { AnalysisLandingBreadcrumb } from "@/components/analysis/AnalysisLandingBreadcrumb";
+import { getServerLocale } from "@/lib/i18n/locale-cookie";
 
-export const metadata: Metadata = {
-  title: "Analysis",
-  description: "Select a state to explore its detailed election analysis — party support, key issues and voter trends.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getServerLocale();
+  return locale === "hi"
+    ? { title: "विश्लेषण", description: "पार्टी समर्थन, मुख्य मुद्दे और मतदाता रुझान — विस्तृत चुनाव विश्लेषण देखने के लिए एक राज्य चुनें।" }
+    : { title: "Analysis", description: "Select a state to explore its detailed election analysis — party support, key issues and voter trends." };
+}
 
 export const revalidate = 60;
 

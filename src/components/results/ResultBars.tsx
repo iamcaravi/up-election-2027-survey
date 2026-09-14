@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import type { PublicAnalyticsBucket } from "@/lib/public-analytics-core";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { resolveOptionLabel } from "@/lib/option-labels";
 
 export function ResultBars({ options }: { options: PublicAnalyticsBucket[] }) {
   const { locale, t } = useLocale();
@@ -17,7 +18,7 @@ export function ResultBars({ options }: { options: PublicAnalyticsBucket[] }) {
               {option.colorHex && (
                 <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: option.colorHex }} />
               )}
-              <span className="truncate">{locale === "hi" && option.nameHindi ? option.nameHindi : option.label}</span>
+              <span className="truncate">{resolveOptionLabel(option.key, option, locale, t.surveyQuestions.options)}</span>
             </span>
             {option.state === "suppressed" ? (
               <span className="shrink-0 text-xs font-medium text-muted">{t.results.suppressed}</span>

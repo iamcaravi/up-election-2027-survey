@@ -6,6 +6,7 @@ import { ConstituencyGrid } from "@/components/district/ConstituencyGrid";
 import { DistrictHeroText } from "@/components/district/DistrictHeroText";
 import { districtsPath, electionPath, statePath, districtPath } from "@/lib/routes";
 import { buildPageMetadata } from "@/lib/seo";
+import { getServerLocale } from "@/lib/i18n/locale-cookie";
 
 export async function generateMetadata({
   params,
@@ -13,13 +14,16 @@ export async function generateMetadata({
   params: Promise<{ state: string; election: string; district: string }>;
 }): Promise<Metadata> {
   const { state: stateSlug, election: electionSlug, district: districtSlug } = await params;
-  const result = await getStateAndElection(stateSlug, electionSlug);
+  const [result, locale] = await Promise.all([getStateAndElection(stateSlug, electionSlug), getServerLocale()]);
   if (!result?.election) return {};
   const district = await getDistrictBySlug(stateSlug, districtSlug, result.election.id);
   if (!district) return {};
   return buildPageMetadata({
-    title: `${district.name} — Assembly Constituencies`,
-    description: `${district.name} district: ${district.constituencies.length} assembly constituencies, candidates and public survey results.`,
+    title: locale === "hi" ? `${district.name} — विधानसभा क्षेत्र` : `${district.name} — Assembly Constituencies`,
+    description:
+      locale === "hi"
+        ? `${district.name} जिला: ${district.constituencies.length} विधानसभा क्षेत्र, उम्मीदवार और सार्वजनिक सर्वे परिणाम।`
+        : `${district.name} district: ${district.constituencies.length} assembly constituencies, candidates and public survey results.`,
     path: districtPath(result.state.slug, result.election.slug, districtSlug),
   });
 }

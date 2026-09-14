@@ -246,13 +246,21 @@ test("16. OG image integration: an override with ogImageAssetId resolves to that
 });
 
 test("17. SEO catalog: static pages resolve to their known fixed paths", () => {
-  const home = seoCatalogLib.resolveStaticSeoBase("home");
+  const home = seoCatalogLib.resolveStaticSeoBase("home", "hi");
   assert.equal(home.path, "/");
-  const faq = seoCatalogLib.resolveStaticSeoBase("faq");
+  const faq = seoCatalogLib.resolveStaticSeoBase("faq", "hi");
   assert.equal(faq.path, "/faq");
 });
 
 test("18. SEO catalog: state-scoped resolution returns null for an unknown state slug", async () => {
-  const result = await seoCatalogLib.resolveStateScopedSeoBase("results", "not-a-real-state-slug");
+  const result = await seoCatalogLib.resolveStateScopedSeoBase("results", "not-a-real-state-slug", "hi");
   assert.equal(result, null);
+});
+
+test("19. SEO catalog: static pages resolve locale-correct title text (no accidental language mixing)", () => {
+  const homeHi = seoCatalogLib.resolveStaticSeoBase("home", "hi");
+  const homeEn = seoCatalogLib.resolveStaticSeoBase("home", "en");
+  assert.notEqual(homeHi.title, homeEn.title);
+  assert.match(homeHi.title, /[ऀ-ॿ]/);
+  assert.doesNotMatch(homeEn.title, /[ऀ-ॿ]/);
 });

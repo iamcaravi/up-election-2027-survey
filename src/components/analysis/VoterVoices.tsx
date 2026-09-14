@@ -3,6 +3,7 @@
 import { Quote } from "lucide-react";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { formatNumber } from "@/lib/utils";
+import { resolveOptionLabel } from "@/lib/option-labels";
 import type { VoterVoice } from "@/lib/state-analysis";
 
 // The database has no free-text public-comment field (SurveyAnswer only
@@ -15,11 +16,15 @@ import type { VoterVoice } from "@/lib/state-analysis";
 // persona (name/age/gender/constituency), which would misrepresent an
 // aggregate as an individual's statement.
 export function VoterVoices({ voices }: { voices: VoterVoice[] }) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
 
   if (voices.length === 0) {
     return <p className="text-sm text-muted">{t.analysisHub.notEnoughTakeaways}</p>;
   }
+
+  const issueName = (v: VoterVoice) => resolveOptionLabel(v.issueKey, { label: v.issueLabel }, locale, t.surveyQuestions.options);
+  const groupName = (v: Extract<VoterVoice, { kind: "age" | "gender" | "religion" }>) =>
+    resolveOptionLabel(v.groupKey, { label: v.groupLabel }, locale, t.surveyQuestions.options);
 
   return (
     <div>
@@ -32,8 +37,8 @@ export function VoterVoices({ voices }: { voices: VoterVoice[] }) {
             <Quote size={18} className="text-accent" />
             <p className="mt-2 font-display text-sm font-semibold leading-relaxed text-foreground">
               {voice.kind === "issue"
-                ? t.analysisHub.voiceIssueTemplate.replace("{issue}", voice.issueLabel)
-                : t.analysisHub.voiceGroupTemplate.replace("{group}", voice.groupLabel).replace("{issue}", voice.issueLabel)}
+                ? t.analysisHub.voiceIssueTemplate.replace("{issue}", issueName(voice))
+                : t.analysisHub.voiceGroupTemplate.replace("{group}", groupName(voice)).replace("{issue}", issueName(voice))}
             </p>
             <p className="mt-3 text-xs text-muted">
               {t.analysisHub.voiceRespondentCount

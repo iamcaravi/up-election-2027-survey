@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import type { FaqCategory } from "@/lib/faq-data";
 
 // Native <details>/<summary> — accessible expand/collapse (keyboard, screen
@@ -11,6 +12,7 @@ import type { FaqCategory } from "@/lib/faq-data";
 // data, so the FAQPage JSON-LD (built server-side from that same array in
 // src/app/faq/page.tsx) always matches what a visitor can find here.
 export function FaqAccordion({ categories }: { categories: FaqCategory[] }) {
+  const { t } = useLocale();
   const [query, setQuery] = useState("");
 
   const filtered = useMemo(() => {
@@ -32,14 +34,14 @@ export function FaqAccordion({ categories }: { categories: FaqCategory[] }) {
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search FAQs…"
-          aria-label="Search frequently asked questions"
+          placeholder={t.faqPage.searchPlaceholder}
+          aria-label={t.faqPage.searchAriaLabel}
           className="w-full rounded-xl border border-border bg-surface py-3 pl-10 pr-4 text-sm text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/40"
         />
       </div>
 
       {filtered.length === 0 ? (
-        <p className="mt-8 text-sm text-muted">No questions match &quot;{query}&quot;.</p>
+        <p className="mt-8 text-sm text-muted">{t.faqPage.noMatch.replace("{query}", query)}</p>
       ) : (
         <div className="mt-8 space-y-10">
           {filtered.map((category) => (

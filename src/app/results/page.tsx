@@ -3,11 +3,17 @@ import { getStates } from "@/lib/data";
 import { Container } from "@/components/ui/Container";
 import { StatesGrid } from "@/components/states/StatesGrid";
 import { ResultsLandingBreadcrumb } from "@/components/results/ResultsLandingBreadcrumb";
+import { getServerLocale } from "@/lib/i18n/locale-cookie";
 
-export const metadata: Metadata = {
-  title: "Results",
-  description: "Select a state to view its live public survey results — party support, top issues and constituency-level results.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getServerLocale();
+  return locale === "hi"
+    ? { title: "परिणाम", description: "इसके लाइव सार्वजनिक सर्वे परिणाम — पार्टी समर्थन, मुख्य मुद्दे और विधानसभा क्षेत्रवार परिणाम — देखने के लिए एक राज्य चुनें।" }
+    : {
+        title: "Results",
+        description: "Select a state to view its live public survey results — party support, top issues and constituency-level results.",
+      };
+}
 
 export const revalidate = 60;
 

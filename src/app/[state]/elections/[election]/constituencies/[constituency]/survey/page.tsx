@@ -9,6 +9,7 @@ import { electionPath, districtPath, statePath, constituencyPath } from "@/lib/r
 import { getPartyLogoUrl, getPartyDisplayName } from "@/lib/party-logos";
 import { getIssueIcon } from "@/lib/survey-issue-icons";
 import { buildPageMetadata } from "@/lib/seo";
+import { getServerLocale } from "@/lib/i18n/locale-cookie";
 import {
   SURVEY_HERO_ELEMENTS_KEY,
   surveyHeroElementsOverrideKey,
@@ -22,11 +23,14 @@ export async function generateMetadata({
   params: Promise<{ state: string; election: string; constituency: string }>;
 }): Promise<Metadata> {
   const { state: stateSlug, election: electionSlug, constituency: slug } = await params;
-  const c = await getConstituencyBySlug(stateSlug, slug, electionSlug);
+  const [c, locale] = await Promise.all([getConstituencyBySlug(stateSlug, slug, electionSlug), getServerLocale()]);
   if (!c) return {};
   return buildPageMetadata({
-    title: `Take the Survey — ${c.name}`,
-    description: `Share your voter preference for ${c.name} assembly constituency, ${c.district.name}, ${c.state.name} — a 2-minute public opinion survey.`,
+    title: locale === "hi" ? `सर्वे में भाग लें — ${c.name}` : `Take the Survey — ${c.name}`,
+    description:
+      locale === "hi"
+        ? `${c.name} विधानसभा क्षेत्र, ${c.district.name}, ${c.state.name} के लिए अपनी मतदाता पसंद साझा करें — एक 2-मिनट का सार्वजनिक राय सर्वे।`
+        : `Share your voter preference for ${c.name} assembly constituency, ${c.district.name}, ${c.state.name} — a 2-minute public opinion survey.`,
     path: `${constituencyPath(c.state.slug, electionSlug, c.slug)}/survey`,
   });
 }

@@ -40,7 +40,7 @@ export function Breadcrumb({ items }: { items: BreadcrumbItem[] }) {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <nav
-        aria-label="Breadcrumb"
+        aria-label={t.common.breadcrumbAriaLabel}
         className="mb-3 flex items-center gap-1.5 overflow-x-auto whitespace-nowrap text-xs font-medium text-muted sm:text-sm"
       >
         {allItems.map((item, i) => {

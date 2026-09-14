@@ -1,6 +1,7 @@
 "use client";
 
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { resolveOptionLabel } from "@/lib/option-labels";
 import { InlineState } from "@/components/results/ResultsDashboardParts";
 import type { IssuePartyMatrixRow, PartySegmentMeta } from "@/lib/state-analysis";
 
@@ -36,7 +37,9 @@ export function IssuePartyHeatmap({ rows, segments }: { rows: IssuePartyMatrixRo
         <tbody>
           {rows.map((row) => (
             <tr key={row.issueKey}>
-              <td className="whitespace-nowrap p-1.5 pr-3 font-semibold text-foreground">{row.issueLabel}</td>
+              <td className="whitespace-nowrap p-1.5 pr-3 font-semibold text-foreground">
+                {resolveOptionLabel(row.issueKey, { label: row.issueLabel }, locale, t.surveyQuestions.options)}
+              </td>
               {row.cells.map((cell) => {
                 const segment = segments.find((s) => s.key === cell.partyKey);
                 const baseColor = segment?.colorHex ?? "#2563eb";

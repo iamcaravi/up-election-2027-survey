@@ -40,11 +40,26 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   if (existing) {
     await prisma.faqItemVersion.create({
-      data: { faqItemId: existing.id, category: existing.category, question: existing.question, answer: existing.answer, createdBy: session.email },
+      data: {
+        faqItemId: existing.id,
+        category: existing.category,
+        question: existing.question,
+        answer: existing.answer,
+        questionHi: existing.questionHi,
+        answerHi: existing.answerHi,
+        createdBy: session.email,
+      },
     });
     const restored = await prisma.faqItem.update({
       where: { id },
-      data: { category: version.category, question: version.question, answer: version.answer, updatedBy: session.email },
+      data: {
+        category: version.category,
+        question: version.question,
+        answer: version.answer,
+        questionHi: version.questionHi,
+        answerHi: version.answerHi,
+        updatedBy: session.email,
+      },
     });
     await logAudit({ adminUserId: session.sub, action: "RESTORE", entityType: "FaqItem", entityId: id, metadata: { versionId: version.id } });
     return NextResponse.json(restored);
@@ -57,6 +72,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       categoryLabel: version.category,
       question: version.question,
       answer: version.answer,
+      questionHi: version.questionHi,
+      answerHi: version.answerHi,
       published: false,
       displayOrder: (maxOrder._max.displayOrder ?? 0) + 1,
       updatedBy: session.email,

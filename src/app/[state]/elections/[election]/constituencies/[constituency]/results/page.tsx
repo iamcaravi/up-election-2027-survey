@@ -9,6 +9,7 @@ import { SurveyHero } from "@/components/survey/SurveyHero";
 import { Container } from "@/components/ui/Container";
 import { electionPath, districtPath, statePath, constituencyPath } from "@/lib/routes";
 import { buildPageMetadata } from "@/lib/seo";
+import { getServerLocale } from "@/lib/i18n/locale-cookie";
 import {
   SURVEY_HERO_ELEMENTS_KEY,
   surveyHeroElementsOverrideKey,
@@ -22,11 +23,14 @@ export async function generateMetadata({
   params: Promise<{ state: string; election: string; constituency: string }>;
 }): Promise<Metadata> {
   const { state: stateSlug, election: electionSlug, constituency: slug } = await params;
-  const c = await getConstituencyBySlug(stateSlug, slug, electionSlug);
+  const [c, locale] = await Promise.all([getConstituencyBySlug(stateSlug, slug, electionSlug), getServerLocale()]);
   if (!c) return {};
   return buildPageMetadata({
-    title: `Survey Results — ${c.name}`,
-    description: `Public survey results for ${c.name} assembly constituency, ${c.district.name}, ${c.state.name}.`,
+    title: locale === "hi" ? `सर्वे परिणाम — ${c.name}` : `Survey Results — ${c.name}`,
+    description:
+      locale === "hi"
+        ? `${c.name} विधानसभा क्षेत्र, ${c.district.name}, ${c.state.name} के लिए सार्वजनिक सर्वे परिणाम।`
+        : `Public survey results for ${c.name} assembly constituency, ${c.district.name}, ${c.state.name}.`,
     path: `${constituencyPath(c.state.slug, electionSlug, c.slug)}/results`,
   });
 }

@@ -3,12 +3,24 @@
 import { LinkButton } from "@/components/ui/Button";
 import { Stat } from "@/components/ui/Stat";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
-import { formatNumber } from "@/lib/utils";
+import { formatNumber, displayStateName } from "@/lib/utils";
 
-export function ElectionEyebrow({ stateName, electionType, year }: { stateName: string; electionType: string; year: number }) {
+export function ElectionEyebrow({
+  stateName,
+  stateSlug,
+  electionType,
+  year,
+}: {
+  stateName: string;
+  stateSlug: string;
+  electionType: string;
+  year: number;
+}) {
+  const { locale } = useLocale();
+  const displayName = displayStateName(stateName, stateSlug, locale);
   return (
     <p className="text-xs font-semibold uppercase tracking-wider text-accent">
-      {stateName} · {electionType.replace("_", " ")} · {year}
+      {displayName} · {electionType.replace("_", " ")} · {year}
     </p>
   );
 }

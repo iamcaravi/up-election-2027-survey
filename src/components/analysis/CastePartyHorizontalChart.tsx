@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { resolveOptionLabel } from "@/lib/option-labels";
 import { ISSUE_COLORS, InlineState } from "@/components/results/ResultsDashboardParts";
 import type { DemographicGroupPartyRow } from "@/lib/state-analysis";
 
@@ -39,7 +40,9 @@ export function CastePartyHorizontalChart({ rows }: { rows: DemographicGroupPart
     color: p.colorHex ?? ISSUE_COLORS[index % ISSUE_COLORS.length],
   }));
 
-  const lowDataGroups = rows.filter((r) => r.lowData).map((r) => r.groupLabel);
+  const groupName = (r: DemographicGroupPartyRow) => resolveOptionLabel(r.groupKey, { label: r.groupLabel }, locale, t.surveyQuestions.options);
+
+  const lowDataGroups = rows.filter((r) => r.lowData).map(groupName);
 
   return (
     <div>
@@ -83,7 +86,7 @@ export function CastePartyHorizontalChart({ rows }: { rows: DemographicGroupPart
           const segments = row.parties.filter((p) => p.percentage > 0);
           return (
             <li key={row.groupKey} className="min-w-0">
-              <p className="mb-1 truncate text-sm font-bold text-ink">{row.groupLabel}</p>
+              <p className="mb-1 truncate text-sm font-bold text-ink">{groupName(row)}</p>
               <div className="flex h-8 w-full overflow-hidden rounded-md bg-surface-2">
                 {segments.map((p, index) => {
                   const meta = partyMeta.find((m) => m.key === p.key);

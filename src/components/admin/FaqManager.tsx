@@ -11,6 +11,9 @@ interface FaqRow {
   categoryLabel: string;
   question: string;
   answer: string;
+  categoryLabelHi: string | null;
+  questionHi: string | null;
+  answerHi: string | null;
   displayOrder: number;
   published: boolean;
   updatedAt: string;
@@ -22,11 +25,22 @@ interface FaqVersion {
   category: string;
   question: string;
   answer: string;
+  questionHi: string | null;
+  answerHi: string | null;
   createdAt: string;
   createdBy: string | null;
 }
 
-const emptyForm = { category: "", categoryLabel: "", question: "", answer: "", published: true };
+const emptyForm = {
+  category: "",
+  categoryLabel: "",
+  question: "",
+  answer: "",
+  categoryLabelHi: "",
+  questionHi: "",
+  answerHi: "",
+  published: true,
+};
 
 export function FaqManager() {
   const [items, setItems] = useState<FaqRow[] | null>(null);
@@ -70,6 +84,9 @@ export function FaqManager() {
       categoryLabel: item.categoryLabel,
       question: item.question,
       answer: item.answer,
+      categoryLabelHi: item.categoryLabelHi ?? "",
+      questionHi: item.questionHi ?? "",
+      answerHi: item.answerHi ?? "",
       published: item.published,
     });
     setError(null);
@@ -158,12 +175,28 @@ export function FaqManager() {
               <TextInput value={form.categoryLabel} onChange={(v) => setForm((f) => ({ ...f, categoryLabel: v }))} required placeholder="e.g. General" />
             </Field>
           </div>
-          <Field label="Question" required>
+          <Field label="Question (English)" required>
             <TextInput value={form.question} onChange={(v) => setForm((f) => ({ ...f, question: v }))} required placeholder="What is VoterSurvey.in?" />
           </Field>
-          <Field label="Answer" required>
+          <Field label="Answer (English)" required>
             <TextArea value={form.answer} onChange={(v) => setForm((f) => ({ ...f, answer: v }))} rows={4} />
           </Field>
+
+          <div className="rounded-xl border border-dashed border-border p-4">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted">
+              Hindi (optional — shown to Hindi-locale visitors; falls back to the English text above when left blank)
+            </p>
+            <Field label="Category label (Hindi)">
+              <TextInput value={form.categoryLabelHi} onChange={(v) => setForm((f) => ({ ...f, categoryLabelHi: v }))} placeholder="e.g. सामान्य" />
+            </Field>
+            <Field label="Question (Hindi)">
+              <TextInput value={form.questionHi} onChange={(v) => setForm((f) => ({ ...f, questionHi: v }))} placeholder="VoterSurvey.in क्या है?" />
+            </Field>
+            <Field label="Answer (Hindi)">
+              <TextArea value={form.answerHi} onChange={(v) => setForm((f) => ({ ...f, answerHi: v }))} rows={4} />
+            </Field>
+          </div>
+
           <Checkbox checked={form.published} onChange={(v) => setForm((f) => ({ ...f, published: v }))} label="Published (visible on the public FAQ page)" />
           <div className="flex gap-3">
             <Button type="submit" size="sm" disabled={saving}>

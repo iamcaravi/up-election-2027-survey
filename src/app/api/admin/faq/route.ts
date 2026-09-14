@@ -16,6 +16,12 @@ const createSchema = z.object({
   categoryLabel: z.string().trim().min(1).max(80),
   question: z.string().trim().min(1).max(300),
   answer: z.string().trim().min(1).max(3000),
+  // Optional Hindi counterparts — see prisma/schema.prisma's FaqItem doc
+  // comment. Left blank, the public site falls back to the English fields
+  // above for Hindi visitors, same as any other missing translation.
+  categoryLabelHi: z.string().trim().max(80).optional(),
+  questionHi: z.string().trim().max(300).optional(),
+  answerHi: z.string().trim().max(3000).optional(),
   published: z.boolean().optional(),
 });
 
@@ -47,6 +53,9 @@ export async function POST(req: NextRequest) {
       categoryLabel: data.categoryLabel,
       question: data.question,
       answer: data.answer,
+      categoryLabelHi: data.categoryLabelHi || null,
+      questionHi: data.questionHi || null,
+      answerHi: data.answerHi || null,
       published: data.published ?? true,
       displayOrder: (maxOrder._max.displayOrder ?? 0) + 1,
       updatedBy: session.email,

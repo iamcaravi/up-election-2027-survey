@@ -42,7 +42,7 @@ export function ElectionExplorer({ primaryState }: { primaryState: ExplorerState
 
   return (
     <>
-      <SectionHeading eyebrow="How it's organized" title={t.home.explorer.title} subtitle={t.home.explorer.subtitle} />
+      <SectionHeading eyebrow={t.home.explorer.eyebrow} title={t.home.explorer.title} subtitle={t.home.explorer.subtitle} />
       <div className="flex flex-wrap items-center justify-center gap-x-1.5 gap-y-3">
         {nodes.map((node, i) => {
           const pill = (

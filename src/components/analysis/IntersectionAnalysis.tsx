@@ -5,6 +5,7 @@ import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { formatNumber } from "@/lib/utils";
 import { InlineState } from "@/components/results/ResultsDashboardParts";
 import { RankedIssueList } from "./RankedIssueList";
+import { resolveOptionLabel } from "@/lib/option-labels";
 import type { IntersectionCell, IntersectionDimension } from "@/lib/state-analysis";
 
 const SELECT_CLASSNAME =
@@ -83,7 +84,7 @@ export function IntersectionAnalysis({ cells, hasReligion, hasCaste }: { cells: 
           <select value={activeGroupKey} onChange={(e) => setGroupKey(e.target.value)} className={SELECT_CLASSNAME}>
             {groups.map((g) => (
               <option key={g.key} value={g.key}>
-                {g.label}
+                {resolveOptionLabel(g.key, g, locale, t.surveyQuestions.options)}
               </option>
             ))}
           </select>

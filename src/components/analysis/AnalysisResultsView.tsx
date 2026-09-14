@@ -18,6 +18,7 @@ import { MethodologyCard } from "@/components/analysis/MethodologyCard";
 import { AnalysisFilterBar, type AnalysisFilterState, type AnalysisFilterConstituency } from "@/components/analysis/AnalysisFilterBar";
 import { KeyReading } from "@/components/analysis/KeyReading";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { resolveOptionLabel } from "@/lib/option-labels";
 import { ANALYSIS_CONFIG } from "@/lib/analysis-config";
 import { buildPartySupportReading, buildHeatmapReading, buildDemographicPartyReading } from "@/lib/analysis-summaries";
 import type { StateAnalysisData } from "@/lib/state-analysis";
@@ -89,7 +90,7 @@ export function AnalysisResultsView({
           .slice(0, 5)
           .map((b) => ({
             key: b.key,
-            label: locale === "hi" && b.nameHindi ? b.nameHindi : b.label,
+            label: resolveOptionLabel(b.key, b, locale, t.surveyQuestions.options),
             percentage: b.percentage,
             color: issueColorByKey.get(b.key) ?? ISSUE_COLORS[0],
           }))
@@ -105,7 +106,7 @@ export function AnalysisResultsView({
           .sort((a, b) => b.percentage - a.percentage)
           .map((b) => ({
             key: b.key,
-            label: locale === "hi" && b.nameHindi ? b.nameHindi : b.label,
+            label: resolveOptionLabel(b.key, b, locale, t.surveyQuestions.options),
             percentage: b.percentage,
             color: issueColorByKey.get(b.key) ?? ISSUE_COLORS[0],
           }))

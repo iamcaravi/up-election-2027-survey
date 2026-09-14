@@ -454,6 +454,19 @@ model FaqItem {
   categoryLabel String
   question      String
   answer        String
+  // Optional Hindi counterparts — additive, nullable columns so every
+  // existing row (seeded in English from src/lib/faq-data.ts, or whatever
+  // language an admin has since entered in the primary fields above) is
+  // preserved unchanged. Named *Hi rather than *En to match this codebase's
+  // existing convention (Party's base fields are English with an optional
+  // nameHindi overlay — see src/lib/party-logos.ts) and the FAQ CMS's
+  // actual current data, which is English in the primary fields. The
+  // public FAQ page prefers these when locale=hi and they are filled in;
+  // otherwise it falls back to the primary (English) fields (see
+  // loadPublishedFaqCategories) — same fallback pattern as Party.nameHindi.
+  categoryLabelHi String?
+  questionHi      String?
+  answerHi        String?
   displayOrder  Int      @default(0)
   published     Boolean  @default(true)
   createdAt     DateTime @default(now())
@@ -470,13 +483,15 @@ model FaqItem {
 // which is intentional: it's still a legitimate historical record of what
 // that question/answer used to say.
 model FaqItemVersion {
-  id        String   @id @default(cuid())
-  faqItemId String
-  category  String
-  question  String
-  answer    String
-  createdAt DateTime @default(now())
-  createdBy String?
+  id         String   @id @default(cuid())
+  faqItemId  String
+  category   String
+  question   String
+  answer     String
+  questionHi String?
+  answerHi   String?
+  createdAt  DateTime @default(now())
+  createdBy  String?
 
   @@index([faqItemId, createdAt])
   @@map("faq_item_versions")

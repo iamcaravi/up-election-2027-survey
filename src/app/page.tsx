@@ -18,6 +18,7 @@ import { Container } from "@/components/ui/Container";
 import { buildPageMetadata } from "@/lib/seo";
 import { resolveStaticSeoBase } from "@/lib/seo-catalog";
 import { applySeoOverride } from "@/lib/seo-overrides";
+import { getServerLocale } from "@/lib/i18n/locale-cookie";
 
 export const revalidate = 60;
 
@@ -28,7 +29,8 @@ export const revalidate = 60;
 // <title>/<meta> are unchanged when no admin override exists (Admin → SEO)
 // — plus a canonical URL for "/", consistent with every other page.
 export async function generateMetadata(): Promise<Metadata> {
-  const base = resolveStaticSeoBase("home");
+  const locale = await getServerLocale();
+  const base = resolveStaticSeoBase("home", locale);
   return applySeoOverride(buildPageMetadata({ title: base.title, description: base.description, path: base.path }), base.path);
 }
 

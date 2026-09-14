@@ -5,11 +5,14 @@ import Image from "next/image";
 import { BarChart3, Users2 } from "lucide-react";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { formatNumber } from "@/lib/utils";
+import { resolveOptionLabel } from "@/lib/option-labels";
 import { IssuesDonutChart } from "@/components/results/ResultsDashboardParts";
 import { RankedIssueList } from "./RankedIssueList";
 import { KeyReading } from "./KeyReading";
 import type { CompositionCell, PartyTopIssues } from "@/lib/state-analysis";
 import type { PublicDistribution } from "@/lib/public-analytics-core";
+import type { Locale } from "@/lib/i18n/LocaleProvider";
+import type hi from "@/lib/i18n/locales/hi";
 
 const SELECT_CLASSNAME =
   "h-10 rounded-xl border border-border bg-surface px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ink/30";
@@ -25,18 +28,29 @@ const SELECT_CLASSNAME =
 // are named in one compact summary line — same disclosure, same honesty,
 // far less vertical bulk. A dimension that is suppressed across the board
 // still shows that line instead of silently disappearing.
-function CompositionList({ cells, omittedLabel }: { cells: CompositionCell[]; omittedLabel: string }) {
+function CompositionList({
+  cells,
+  omittedLabel,
+  locale,
+  optionDictionary,
+}: {
+  cells: CompositionCell[];
+  omittedLabel: string;
+  locale: Locale;
+  optionDictionary: (typeof hi)["surveyQuestions"]["options"];
+}) {
   if (cells.length === 0) return null;
   const visible = cells.filter((c) => !c.lowData).sort((a, b) => b.percentage - a.percentage);
   const omitted = cells.filter((c) => c.lowData);
   const maxPct = Math.max(1, ...visible.map((c) => c.percentage));
+  const name = (cell: CompositionCell) => resolveOptionLabel(cell.key, cell, locale, optionDictionary);
   return (
     <div>
       {visible.length > 0 && (
         <ul className="space-y-1.5">
           {visible.map((cell) => (
             <li key={cell.key} className="flex min-w-0 items-center gap-2 text-xs">
-              <span className="w-20 shrink-0 truncate text-foreground sm:w-24">{cell.label}</span>
+              <span className="w-20 shrink-0 truncate text-foreground sm:w-24">{name(cell)}</span>
               <span className="h-2 flex-1 overflow-hidden rounded-full bg-surface-2">
                 <span className="block h-full rounded-full bg-accent" style={{ width: `${(cell.percentage / maxPct) * 100}%` }} />
               </span>
@@ -47,7 +61,7 @@ function CompositionList({ cells, omittedLabel }: { cells: CompositionCell[]; om
       )}
       {omitted.length > 0 && (
         <p className={`text-[11px] text-muted ${visible.length > 0 ? "mt-1.5" : ""}`}>
-          {omittedLabel}: {omitted.map((c) => c.label).join(", ")}
+          {omittedLabel}: {omitted.map((c) => name(c)).join(", ")}
         </p>
       )}
     </div>
@@ -191,7 +205,10 @@ export function KeyIssuesByParty({
                     lines={[
                       t.analysisHub.readingPartyTopIssue
                         .replace("{party}", selectedName)
-                        .replace("{issue}", selected.topIssues[0].label)
+                        .replace(
+                          "{issue}",
+                          resolveOptionLabel(selected.topIssues[0].key, selected.topIssues[0], locale, t.surveyQuestions.options)
+                        )
                         .replace("{percentage}", String(selected.topIssues[0].percentage)),
                     ]}
                   />
@@ -217,25 +234,25 @@ export function KeyIssuesByParty({
                   {selected.genderComposition.length > 0 && (
                     <div className="min-w-0 rounded-xl border border-border bg-surface-2 p-3">
                       <p className="mb-1.5 text-[11px] font-bold uppercase tracking-wide text-muted">{t.analysisHub.genderCompositionLabel}</p>
-                      <CompositionList cells={selected.genderComposition} omittedLabel={t.analysisHub.lowDataGroupsNote} />
+                      <CompositionList cells={selected.genderComposition} omittedLabel={t.analysisHub.lowDataGroupsNote} locale={locale} optionDictionary={t.surveyQuestions.options} />
                     </div>
                   )}
                   {selected.ageComposition.length > 0 && (
                     <div className="min-w-0 rounded-xl border border-border bg-surface-2 p-3">
                       <p className="mb-1.5 text-[11px] font-bold uppercase tracking-wide text-muted">{t.analysisHub.ageCompositionLabel}</p>
-                      <CompositionList cells={selected.ageComposition} omittedLabel={t.analysisHub.lowDataGroupsNote} />
+                      <CompositionList cells={selected.ageComposition} omittedLabel={t.analysisHub.lowDataGroupsNote} locale={locale} optionDictionary={t.surveyQuestions.options} />
                     </div>
                   )}
                   {selected.religionComposition.length > 0 && (
                     <div className="min-w-0 rounded-xl border border-border bg-surface-2 p-3">
                       <p className="mb-1.5 text-[11px] font-bold uppercase tracking-wide text-muted">{t.analysisHub.religionCompositionLabel}</p>
-                      <CompositionList cells={selected.religionComposition} omittedLabel={t.analysisHub.lowDataGroupsNote} />
+                      <CompositionList cells={selected.religionComposition} omittedLabel={t.analysisHub.lowDataGroupsNote} locale={locale} optionDictionary={t.surveyQuestions.options} />
                     </div>
                   )}
                   {selected.casteComposition.length > 0 && (
                     <div className="min-w-0 rounded-xl border border-border bg-surface-2 p-3">
                       <p className="mb-1.5 text-[11px] font-bold uppercase tracking-wide text-muted">{t.analysisHub.casteCompositionLabel}</p>
-                      <CompositionList cells={selected.casteComposition} omittedLabel={t.analysisHub.lowDataGroupsNote} />
+                      <CompositionList cells={selected.casteComposition} omittedLabel={t.analysisHub.lowDataGroupsNote} locale={locale} optionDictionary={t.surveyQuestions.options} />
                     </div>
                   )}
                 </div>

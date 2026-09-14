@@ -2,6 +2,7 @@
 
 import { BarChart, Bar, XAxis, YAxis, Legend, ResponsiveContainer, CartesianGrid, LabelList } from "recharts";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { resolveOptionLabel } from "@/lib/option-labels";
 import { ISSUE_COLORS, InlineState } from "@/components/results/ResultsDashboardParts";
 import type { DemographicGroupPartyRow } from "@/lib/state-analysis";
 
@@ -32,13 +33,15 @@ export function DemographicPartyChart({ rows }: { rows: DemographicGroupPartyRow
     color: p.colorHex ?? ISSUE_COLORS[index % ISSUE_COLORS.length],
   }));
 
+  const groupName = (r: DemographicGroupPartyRow) => resolveOptionLabel(r.groupKey, { label: r.groupLabel }, locale, t.surveyQuestions.options);
+
   const chartData = usable.map((row) => {
-    const entry: Record<string, string | number> = { group: row.groupLabel };
+    const entry: Record<string, string | number> = { group: groupName(row) };
     for (const p of row.parties) entry[p.key] = p.percentage;
     return entry;
   });
 
-  const lowDataGroups = rows.filter((r) => r.lowData).map((r) => r.groupLabel);
+  const lowDataGroups = rows.filter((r) => r.lowData).map(groupName);
 
   return (
     <div>
