@@ -8,8 +8,9 @@ import { AnalysisStateHeading } from "@/components/analysis/AnalysisStateHeading
 import { AnalysisResultsView } from "@/components/analysis/AnalysisResultsView";
 import { SurveyResponseOverview } from "@/components/analysis/SurveyResponseOverview";
 import { SurveyTrustStrip } from "@/components/survey/SurveyTrustStrip";
-import { statePath } from "@/lib/routes";
+import { statePath, analysisPath } from "@/lib/routes";
 import { displayStateName } from "@/lib/utils";
+import { buildPageMetadata } from "@/lib/seo";
 
 export async function generateMetadata({
   params,
@@ -20,10 +21,11 @@ export async function generateMetadata({
   const result = await getStateAndElection(stateSlug, electionSlug);
   if (!result?.election) return {};
   const stateName = displayStateName(result.state.name, result.state.slug, "hi");
-  return {
+  return buildPageMetadata({
     title: `${stateName} चुनाव विश्लेषण`,
     description: `${stateName} के जनमत सर्वेक्षण का विस्तृत विश्लेषण — पार्टी समर्थन, मुख्य मुद्दे और मतदाता प्रोफ़ाइल।`,
-  };
+    path: analysisPath(result.state.slug, result.election.slug),
+  });
 }
 
 export const dynamic = "force-dynamic";

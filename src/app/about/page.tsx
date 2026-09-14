@@ -2,11 +2,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Users, ShieldCheck, Scale, FileBarChart } from "lucide-react";
 import { Container } from "@/components/ui/Container";
+import { Breadcrumb } from "@/components/ui/Breadcrumb";
+import { buildPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildPageMetadata({
   title: "हमारे बारे में",
   description: "votersurvey.in एक स्वतंत्र, स्वैच्छिक जनमत सर्वे मंच है — किसी भी राजनीतिक दल से स्वतंत्र।",
-};
+  path: "/about",
+});
 
 const PRINCIPLES = [
   { icon: Users, title: "जनता की भागीदारी", text: "कोई भी अपने विधानसभा क्षेत्र के सर्वे में स्वेच्छा से भाग ले सकता है।" },
@@ -18,6 +21,7 @@ const PRINCIPLES = [
 export default function AboutPage() {
   return (
     <Container className="max-w-3xl py-14">
+      <Breadcrumb items={[{ label: "सहायता" }, { label: "हमारे बारे में" }]} />
       <p className="text-xs font-semibold uppercase tracking-wider text-accent">हमारे बारे में</p>
       <h1 className="font-display text-3xl font-extrabold text-foreground sm:text-4xl">votersurvey.in</h1>
 

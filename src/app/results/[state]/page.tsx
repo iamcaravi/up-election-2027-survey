@@ -7,8 +7,9 @@ import { getUpConstituencyExplorer } from "@/lib/up-analytics";
 import { Container } from "@/components/ui/Container";
 import { ResultsDashboard } from "@/components/results/ResultsDashboard";
 import { ResultsStateHeading, NoElectionForResultsNotice } from "@/components/results/ResultsStateHeader";
-import { analysisPath } from "@/lib/routes";
+import { analysisPath, stateResultsPath } from "@/lib/routes";
 import { displayStateName } from "@/lib/utils";
+import { buildPageMetadata } from "@/lib/seo";
 
 export async function generateMetadata({
   params,
@@ -19,10 +20,11 @@ export async function generateMetadata({
   const result = await getStateAndElection(stateSlug);
   if (!result) return {};
   const stateName = displayStateName(result.state.name, result.state.slug, "hi");
-  return {
+  return buildPageMetadata({
     title: `${stateName} — परिणाम`,
     description: `${stateName} के जनमत सर्वे के परिणाम — पार्टी समर्थन, मुख्य मुद्दे और जिला/विधानसभा क्षेत्रवार परिणाम।`,
-  };
+    path: stateResultsPath(result.state.slug),
+  });
 }
 
 export const revalidate = 60;

@@ -9,6 +9,7 @@ import {
   buildGlobalChromeStyleCss,
   normalizeHomepageSectionsConfig,
 } from "@/lib/homepage-sections-config";
+import { SITE_URL } from "@/lib/seo";
 import "./globals.css";
 
 const inter = Inter({ variable: "--font-inter", subsets: ["latin"] });
@@ -19,10 +20,8 @@ const notoDevanagari = Noto_Sans_Devanagari({
   weight: ["400", "500", "600", "700", "800"],
 });
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://india-election-survey.example";
-
 export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
+  metadataBase: new URL(SITE_URL),
   title: {
     default: "भारत चुनाव | जनता का मूड — राज्यों के चुनाव",
     template: "%s | भारत चुनाव",

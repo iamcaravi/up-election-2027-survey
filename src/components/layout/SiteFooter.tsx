@@ -40,10 +40,11 @@ export function SiteFooter({ resultsHref, analysisHref, socialLinks }: SiteFoote
   const helpLinks = [
     { href: "/about", label: t.siteFooter.aboutUs },
     { href: "/contact", label: t.siteFooter.contactUs },
+    { href: "/faq", label: t.siteFooter.faq },
+    { href: "/methodology", label: t.nav.methodology },
     { href: "/privacy", label: t.siteFooter.privacyPolicy },
     { href: "/terms", label: t.siteFooter.termsOfUse },
     { href: "/disclaimer", label: t.siteFooter.disclaimer },
-    { href: "/faq", label: t.siteFooter.faq },
   ];
 
   return (

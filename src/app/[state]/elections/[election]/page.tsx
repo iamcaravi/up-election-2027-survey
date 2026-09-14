@@ -5,7 +5,8 @@ import { prisma } from "@/lib/prisma";
 import { Container } from "@/components/ui/Container";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { ElectionEyebrow, ElectionHeroText, ElectionDisclaimer } from "@/components/election/ElectionHeroText";
-import { districtsPath, statePath, stateResultsPath, analysisPath } from "@/lib/routes";
+import { districtsPath, statePath, stateResultsPath, analysisPath, electionPath } from "@/lib/routes";
+import { buildPageMetadata } from "@/lib/seo";
 
 export async function generateMetadata({
   params,
@@ -15,10 +16,11 @@ export async function generateMetadata({
   const { state: stateSlug, election: electionSlug } = await params;
   const result = await getStateAndElection(stateSlug, electionSlug);
   if (!result?.election) return {};
-  return {
+  return buildPageMetadata({
     title: result.election.name,
     description: result.election.description ?? `${result.election.name} — public survey and candidate information.`,
-  };
+    path: electionPath(result.state.slug, result.election.slug),
+  });
 }
 
 export const revalidate = 60;

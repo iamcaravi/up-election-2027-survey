@@ -5,6 +5,7 @@ import { Container } from "@/components/ui/Container";
 import { ConstituencyGrid } from "@/components/district/ConstituencyGrid";
 import { ConstituenciesListingText, NoConstituenciesNotice } from "@/components/election/ConstituenciesListingText";
 import { electionPath, statePath } from "@/lib/routes";
+import { buildPageMetadata } from "@/lib/seo";
 
 export async function generateMetadata({
   params,
@@ -14,10 +15,11 @@ export async function generateMetadata({
   const { state: stateSlug, election: electionSlug } = await params;
   const result = await getStateAndElection(stateSlug, electionSlug);
   if (!result?.election) return {};
-  return {
+  return buildPageMetadata({
     title: `${result.state.name} — All Assembly Constituencies`,
     description: `Every assembly constituency contesting the ${result.election.name}.`,
-  };
+    path: `${electionPath(result.state.slug, result.election.slug)}/constituencies`,
+  });
 }
 
 export const revalidate = 60;

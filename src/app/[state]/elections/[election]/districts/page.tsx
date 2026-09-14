@@ -4,23 +4,25 @@ import type { Metadata } from "next";
 import { getStateAndElection, getDistricts } from "@/lib/data";
 import { Container } from "@/components/ui/Container";
 import { DistrictsListingText, DistrictCardCount } from "@/components/district/DistrictsListingText";
-import { districtPath, electionPath, statePath } from "@/lib/routes";
+import { districtPath, electionPath, statePath, districtsPath } from "@/lib/routes";
 import { DISTRICT_COLORS } from "@/lib/district-colors";
 import { cn } from "@/lib/utils";
 import { MapPin, ChevronRight } from "lucide-react";
+import { buildPageMetadata } from "@/lib/seo";
 
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ state: string; election: string }>;
 }): Promise<Metadata> {
-  const { state: stateSlug } = await params;
+  const { state: stateSlug, election: electionSlug } = await params;
   const result = await getStateAndElection(stateSlug);
   if (!result) return {};
-  return {
+  return buildPageMetadata({
     title: `${result.state.name} — Explore Districts`,
     description: `Browse all districts of ${result.state.name} and their assembly constituencies.`,
-  };
+    path: districtsPath(result.state.slug, electionSlug),
+  });
 }
 
 export const revalidate = 60;

@@ -7,7 +7,8 @@ import { getPublicStatewideResults } from "@/lib/public-statewide-results";
 import { ResultsTabs } from "@/components/results/ResultsTabs";
 import { SurveyHero } from "@/components/survey/SurveyHero";
 import { Container } from "@/components/ui/Container";
-import { electionPath, districtPath, statePath } from "@/lib/routes";
+import { electionPath, districtPath, statePath, constituencyPath } from "@/lib/routes";
+import { buildPageMetadata } from "@/lib/seo";
 import {
   SURVEY_HERO_ELEMENTS_KEY,
   surveyHeroElementsOverrideKey,
@@ -23,10 +24,11 @@ export async function generateMetadata({
   const { state: stateSlug, election: electionSlug, constituency: slug } = await params;
   const c = await getConstituencyBySlug(stateSlug, slug, electionSlug);
   if (!c) return {};
-  return {
+  return buildPageMetadata({
     title: `Survey Results — ${c.name}`,
     description: `Public survey results for ${c.name} assembly constituency, ${c.district.name}, ${c.state.name}.`,
-  };
+    path: `${constituencyPath(c.state.slug, electionSlug, c.slug)}/results`,
+  });
 }
 export const dynamic = "force-dynamic";
 

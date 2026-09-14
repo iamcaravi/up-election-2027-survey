@@ -4,7 +4,8 @@ import { getStateAndElection, getDistrictBySlug } from "@/lib/data";
 import { Container } from "@/components/ui/Container";
 import { ConstituencyGrid } from "@/components/district/ConstituencyGrid";
 import { DistrictHeroText } from "@/components/district/DistrictHeroText";
-import { districtsPath, electionPath, statePath } from "@/lib/routes";
+import { districtsPath, electionPath, statePath, districtPath } from "@/lib/routes";
+import { buildPageMetadata } from "@/lib/seo";
 
 export async function generateMetadata({
   params,
@@ -16,10 +17,11 @@ export async function generateMetadata({
   if (!result?.election) return {};
   const district = await getDistrictBySlug(stateSlug, districtSlug, result.election.id);
   if (!district) return {};
-  return {
+  return buildPageMetadata({
     title: `${district.name} — Assembly Constituencies`,
     description: `${district.name} district: ${district.constituencies.length} assembly constituencies, candidates and public survey results.`,
-  };
+    path: districtPath(result.state.slug, result.election.slug, districtSlug),
+  });
 }
 
 export const revalidate = 30;

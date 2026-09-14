@@ -5,9 +5,10 @@ import { SurveyHero } from "@/components/survey/SurveyHero";
 import { SurveyExperience, type SurveyOptionItem } from "@/components/survey/SurveyExperience";
 import { SurveyTrustStrip } from "@/components/survey/SurveyTrustStrip";
 import { Container } from "@/components/ui/Container";
-import { electionPath, districtPath, statePath } from "@/lib/routes";
+import { electionPath, districtPath, statePath, constituencyPath } from "@/lib/routes";
 import { getPartyLogoUrl, getPartyDisplayName } from "@/lib/party-logos";
 import { getIssueIcon } from "@/lib/survey-issue-icons";
+import { buildPageMetadata } from "@/lib/seo";
 import {
   SURVEY_HERO_ELEMENTS_KEY,
   surveyHeroElementsOverrideKey,
@@ -23,10 +24,11 @@ export async function generateMetadata({
   const { state: stateSlug, election: electionSlug, constituency: slug } = await params;
   const c = await getConstituencyBySlug(stateSlug, slug, electionSlug);
   if (!c) return {};
-  return {
+  return buildPageMetadata({
     title: `Take the Survey — ${c.name}`,
     description: `Share your voter preference for ${c.name} assembly constituency, ${c.district.name}, ${c.state.name} — a 2-minute public opinion survey.`,
-  };
+    path: `${constituencyPath(c.state.slug, electionSlug, c.slug)}/survey`,
+  });
 }
 
 export default async function SurveyPage({

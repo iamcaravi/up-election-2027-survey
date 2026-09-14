@@ -1,15 +1,19 @@
 import type { Metadata } from "next";
 import { Container } from "@/components/ui/Container";
+import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { MIN_ANALYTICS_GROUP_SIZE_DEFAULT } from "@/lib/enums";
+import { buildPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildPageMetadata({
   title: "Methodology",
-  description: "How India Election Survey collects, validates and aggregates public survey responses.",
-};
+  description: "How VoterSurvey.in collects, validates and aggregates public survey responses.",
+  path: "/methodology",
+});
 
 export default function MethodologyPage() {
   return (
     <Container className="max-w-3xl py-14 prose-headings:font-display">
+      <Breadcrumb items={[{ label: "Help" }, { label: "Methodology" }]} />
       <p className="text-xs font-semibold uppercase tracking-wider text-accent">Legal & methodology</p>
       <h1 className="font-display text-3xl font-extrabold sm:text-4xl">Methodology</h1>
 

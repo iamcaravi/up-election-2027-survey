@@ -1,11 +1,19 @@
 import type { Metadata } from "next";
 import { Container } from "@/components/ui/Container";
+import { Breadcrumb } from "@/components/ui/Breadcrumb";
+import { buildPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = { title: "Privacy Policy" };
+export const metadata: Metadata = buildPageMetadata({
+  title: "Privacy Policy",
+  description:
+    "How VoterSurvey.in handles survey data — what is collected, how duplicate detection works, and what is never asked for or published.",
+  path: "/privacy",
+});
 
 export default function PrivacyPage() {
   return (
     <Container className="max-w-3xl py-14">
+      <Breadcrumb items={[{ label: "Legal" }, { label: "Privacy Policy" }]} />
       <p className="text-xs font-semibold uppercase tracking-wider text-accent">Legal</p>
       <h1 className="font-display text-3xl font-extrabold sm:text-4xl">Privacy Policy</h1>
       <div className="mt-6 space-y-5 text-sm leading-relaxed text-foreground/90">

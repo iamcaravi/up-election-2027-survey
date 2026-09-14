@@ -3,7 +3,8 @@ import type { Metadata } from "next";
 import { getStateAndElection, getConstituencyBySlug } from "@/lib/data";
 import { Container } from "@/components/ui/Container";
 import { ConstituencyHeroText } from "@/components/election/ConstituencyHeroText";
-import { districtPath, electionPath, statePath } from "@/lib/routes";
+import { districtPath, electionPath, statePath, constituencyPath } from "@/lib/routes";
+import { buildPageMetadata } from "@/lib/seo";
 
 export async function generateMetadata({
   params,
@@ -13,14 +14,13 @@ export async function generateMetadata({
   const { state: stateSlug, election: electionSlug, constituency: slug } = await params;
   const c = await getConstituencyBySlug(stateSlug, slug, electionSlug);
   if (!c) return {};
-  return {
+  return buildPageMetadata({
     title: `${c.name} Election Survey`,
     description: `${c.name} Assembly constituency (${c.district.name}, ${c.state.name}) public survey, candidate preferences, key issues and constituency-level survey trends.`,
-    openGraph: {
-      title: `${c.name} Survey`,
-      description: `Public survey for ${c.name} assembly constituency, ${c.district.name} district, ${c.state.name}.`,
-    },
-  };
+    ogTitle: `${c.name} Survey`,
+    ogDescription: `Public survey for ${c.name} assembly constituency, ${c.district.name} district, ${c.state.name}.`,
+    path: constituencyPath(c.state.slug, electionSlug, c.slug),
+  });
 }
 
 export const revalidate = 15;

@@ -7,7 +7,8 @@ import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { DistrictExplorer } from "@/components/map/DistrictExplorer";
 import { TrendingConstituencies } from "@/components/home/TrendingConstituencies";
 import { StateEyebrow, StateHeroText, NoElectionNotice, TrendingSectionHeading, MethodologyLink } from "@/components/state/StateHeroText";
-import { electionPath, districtsPath, stateResultsPath } from "@/lib/routes";
+import { electionPath, districtsPath, stateResultsPath, statePath } from "@/lib/routes";
+import { buildPageMetadata } from "@/lib/seo";
 
 export async function generateMetadata({
   params,
@@ -17,12 +18,13 @@ export async function generateMetadata({
   const { state: slug } = await params;
   const result = await getStateAndElection(slug);
   if (!result) return {};
-  return {
+  return buildPageMetadata({
     title: `${result.state.name} Election Survey`,
     description: `${result.state.name}: districts, assembly constituencies, candidates and public survey${
       result.election ? ` for the ${result.election.name}` : ""
     }.`,
-  };
+    path: statePath(result.state.slug),
+  });
 }
 
 export const revalidate = 60;
