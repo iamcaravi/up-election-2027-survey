@@ -36,6 +36,9 @@ const prisma = new PrismaClient();
 class SeedBatchLimitReached extends Error {}
 
 const SEED_BATCH_LIMIT = process.env.SEED_BATCH_LIMIT ? Number.parseInt(process.env.SEED_BATCH_LIMIT, 10) : undefined;
+// Optional SEED_STATE (e.g. "UP") restricts a run to a single state's config by its `code`,
+// so a large seed can be resumed one state at a time. Absent, every configured state runs — unchanged.
+const SEED_STATE = process.env.SEED_STATE?.trim().toUpperCase();
 let constituenciesWrittenThisRun = 0;
 
 const CONNECTION_ERROR_CODES = new Set(["P1001", "P1002", "P1008", "P1017"]);
@@ -233,7 +236,11 @@ async function main() {
   });
 
   // --- States ---------------------------------------------------------------
-  for (const config of STATE_SEEDS) {
+  const statesToSeed = SEED_STATE ? STATE_SEEDS.filter((c) => c.code.toUpperCase() === SEED_STATE) : STATE_SEEDS;
+  if (SEED_STATE && statesToSeed.length === 0) {
+    throw new Error(`SEED_STATE=${SEED_STATE} did not match any configured state code (${STATE_SEEDS.map((c) => c.code).join(", ")}).`);
+  }
+  for (const config of statesToSeed) {
     await seedState(config);
   }
 
