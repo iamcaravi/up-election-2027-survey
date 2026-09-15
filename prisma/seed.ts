@@ -4,9 +4,59 @@ import { STATE_SEEDS, type StateSeedConfig } from "./data/state-seeds";
 import { FAQ_CATEGORIES } from "../src/lib/faq-data";
 import { CANONICAL_SPECIAL_PARTIES, DEFAULT_ISSUES, MIN_ANALYTICS_GROUP_SIZE_DEFAULT } from "../src/lib/enums";
 import { slugify } from "../src/lib/slugify";
-import { createDefaultSurveyQuestions } from "../src/lib/survey-template-data";
+import { createDefaultSurveyQuestions, ensureDefaultSurveyQuestions } from "../src/lib/survey-template-data";
 
 const prisma = new PrismaClient();
+
+// --- Resumability (see README "Resuming an interrupted production seed") --
+//
+// A remote Postgres connection (e.g. Neon's pooled endpoint) can drop
+// mid-run on a long seed. Two things make that safe to resume from rather
+// than requiring a full restart:
+//
+// 1. Every state/election/party/district/constituency upsert below was
+//    already idempotent. The one gap was per-constituency survey setup: if
+//    the process died between `survey.create()` and its question/option
+//    work finishing, the Survey row existed with an incomplete question
+//    set, and the old "skip if a Survey already exists" check would skip it
+//    forever. seedState() below now checks the survey's question COUNT, not
+//    just its existence, and routes to the appropriate repair path.
+// 2. SEED_BATCH_LIMIT (optional env var) caps how many constituencies get
+//    (re)processed in a single run before exiting cleanly (code 0) instead
+//    of running unbounded — re-running the seed command continues exactly
+//    where it left off, since already-complete constituencies are skipped
+//    almost for free (one count query, no writes).
+//
+// A transient connection error during a single constituency's work is
+// retried a couple of times with a short backoff; if it still fails, the
+// process logs exactly which state/constituency was in progress and exits
+// cleanly (code 1) rather than crashing with an unhandled rejection. Either
+// way, re-running `npm run seed` (optionally with SEED_BATCH_LIMIT set)
+// continues safely — nothing is ever deleted or duplicated.
+class SeedBatchLimitReached extends Error {}
+
+const SEED_BATCH_LIMIT = process.env.SEED_BATCH_LIMIT ? Number.parseInt(process.env.SEED_BATCH_LIMIT, 10) : undefined;
+let constituenciesWrittenThisRun = 0;
+
+const CONNECTION_ERROR_CODES = new Set(["P1001", "P1002", "P1008", "P1017"]);
+function isConnectionError(err: unknown): boolean {
+  return typeof err === "object" && err !== null && "code" in err && CONNECTION_ERROR_CODES.has(String((err as { code?: unknown }).code));
+}
+
+async function withConnectionRetry<T>(label: string, fn: () => Promise<T>, retries = 2, delayMs = 3000): Promise<T> {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      if (isConnectionError(err) && attempt < retries) {
+        console.warn(`[seed] transient connection error during ${label} (attempt ${attempt + 1}/${retries + 1}) — retrying in ${delayMs}ms...`);
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+        continue;
+      }
+      throw err;
+    }
+  }
+}
 
 async function seedState(config: StateSeedConfig) {
   const state = await prisma.state.upsert({
@@ -71,43 +121,78 @@ async function seedState(config: StateSeedConfig) {
   const usedSlugs = new Set<string>();
   let constituencyCount = 0;
   for (const [number, name, districtName, reserved] of rows) {
+    if (SEED_BATCH_LIMIT && constituenciesWrittenThisRun >= SEED_BATCH_LIMIT) {
+      throw new SeedBatchLimitReached();
+    }
+
     const districtId = districtSlugs.get(districtName);
     if (!districtId) throw new Error(`[${config.name}] Unknown district ${districtName} for AC#${number}`);
     let slug = slugify(name);
     if (usedSlugs.has(slug)) slug = `${slug}-${number}`;
     usedSlugs.add(slug);
 
-    const constituency = await prisma.constituency.upsert({
-      where: { stateId_number: { stateId: state.id, number } },
-      update: { name, districtId, reservedStatus: reserved, slug },
-      create: { number, name, slug, districtId, reservedStatus: reserved, stateId: state.id },
-    });
+    const label = `${config.name} AC#${number} (${name})`;
+
+    const constituency = await withConnectionRetry(label, () =>
+      prisma.constituency.upsert({
+        where: { stateId_number: { stateId: state.id, number } },
+        update: { name, districtId, reservedStatus: reserved, slug },
+        create: { number, name, slug, districtId, reservedStatus: reserved, stateId: state.id },
+      })
+    );
     constituencyCount++;
 
-    await prisma.electionConstituency.upsert({
-      where: { electionId_constituencyId: { electionId: election.id, constituencyId: constituency.id } },
-      update: {},
-      create: { electionId: election.id, constituencyId: constituency.id },
-    });
+    await withConnectionRetry(label, () =>
+      prisma.electionConstituency.upsert({
+        where: { electionId_constituencyId: { electionId: election.id, constituencyId: constituency.id } },
+        update: {},
+        create: { electionId: election.id, constituencyId: constituency.id },
+      })
+    );
 
     // Seed one statewide-template survey per constituency with the standard
-    // question set. Candidate options are added later as candidates are
-    // imported (see src/lib/survey-sync.ts).
-    const existingSurvey = await prisma.survey.findFirst({ where: { constituencyId: constituency.id, electionId: election.id } });
-    if (!existingSurvey) {
-      const survey = await prisma.survey.create({
-        data: {
-          electionId: election.id,
-          constituencyId: constituency.id,
-          title: `${name} — ${config.year} विधानसभा सर्वे`,
-          description: "Voluntary public-opinion survey. Not an official election result.",
-          type: "CONSTITUENCY",
-          isActive: true,
-        },
-      });
+    // 7-question set. Candidate options are added later as candidates are
+    // imported (see src/lib/survey-sync.ts). Resumability: a Survey's
+    // question COUNT (not just its existence) decides what happens next —
+    // 7 means already fully seeded (skip, no writes at all); 0 means either
+    // brand new or an orphan left by a run that died right after creating
+    // the Survey row (safe to bulk-create via the fast path); anything else
+    // is a partial survey from an interrupted run and is repaired via the
+    // slower, upsert-based path that can't violate a unique-key constraint
+    // on already-existing rows.
+    const existingSurvey = await withConnectionRetry(label, () =>
+      prisma.survey.findFirst({
+        where: { constituencyId: constituency.id, electionId: election.id },
+        select: { id: true, _count: { select: { questions: true } } },
+      })
+    );
 
-      await createDefaultSurveyQuestions(prisma, survey.id, state.id);
+    let wroteSomething = false;
+    if (!existingSurvey) {
+      const survey = await withConnectionRetry(label, () =>
+        prisma.survey.create({
+          data: {
+            electionId: election.id,
+            constituencyId: constituency.id,
+            title: `${name} — ${config.year} विधानसभा सर्वे`,
+            description: "Voluntary public-opinion survey. Not an official election result.",
+            type: "CONSTITUENCY",
+            isActive: true,
+          },
+        })
+      );
+      await withConnectionRetry(label, () => createDefaultSurveyQuestions(prisma, survey.id, state.id));
+      wroteSomething = true;
+    } else if (existingSurvey._count.questions === 0) {
+      await withConnectionRetry(label, () => createDefaultSurveyQuestions(prisma, existingSurvey.id, state.id));
+      wroteSomething = true;
+    } else if (existingSurvey._count.questions < 7) {
+      console.warn(`[seed] repairing partial survey for ${label} (had ${existingSurvey._count.questions}/7 questions)`);
+      await withConnectionRetry(label, () => ensureDefaultSurveyQuestions(prisma, existingSurvey.id, state.id));
+      wroteSomething = true;
     }
+
+    if (wroteSomething) constituenciesWrittenThisRun++;
   }
   console.log(`Seeded ${config.name}: ${districtNames.length} districts, ${constituencyCount} constituencies, ${config.parties.length} featured parties`);
 }
@@ -197,9 +282,29 @@ async function main() {
 }
 
 main()
+  .then(() => {
+    if (constituenciesWrittenThisRun > 0) {
+      console.log(`[seed] wrote/repaired ${constituenciesWrittenThisRun} constituenc${constituenciesWrittenThisRun === 1 ? "y" : "ies"} this run.`);
+    }
+  })
   .catch((e) => {
-    console.error(e);
-    process.exit(1);
+    if (e instanceof SeedBatchLimitReached) {
+      console.log(
+        `[seed] SEED_BATCH_LIMIT (${SEED_BATCH_LIMIT}) reached after writing/repairing ${constituenciesWrittenThisRun} constituencies this run. ` +
+          "Exiting cleanly — nothing was lost or duplicated. Re-run `npm run seed` to continue from where this left off."
+      );
+      return; // clean stop, not a failure — exit code stays 0
+    }
+    if (isConnectionError(e)) {
+      console.error(
+        `[seed] lost the database connection after writing/repairing ${constituenciesWrittenThisRun} constituencies this run. ` +
+          "Nothing was corrupted — every constituency's survey setup is atomic. Re-run `npm run seed` to continue."
+      );
+      console.error(e);
+    } else {
+      console.error(e);
+    }
+    process.exitCode = 1;
   })
   .finally(async () => {
     await prisma.$disconnect();

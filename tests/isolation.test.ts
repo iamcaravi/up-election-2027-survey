@@ -1,5 +1,5 @@
 // Multi-state / multi-election data isolation invariants.
-// Runs against an ephemeral SQLite database (never prisma/dev.db) seeded
+// Runs against an ephemeral Postgres schema (never prisma/dev.db) seeded
 // with two states that deliberately share slugs/numbers, to prove lookups
 // never cross-contaminate. See tests/helpers/fixtures.ts.
 import { test, before, after } from "node:test";
@@ -9,7 +9,7 @@ import { seedFixtures, createResponses } from "./helpers/fixtures";
 import type { PrismaClient } from "@prisma/client";
 
 let prisma: PrismaClient;
-let dbPath: string;
+let schema: string;
 let fx: Awaited<ReturnType<typeof seedFixtures>>;
 let dataLib: typeof import("../src/lib/data");
 let analyticsLib: typeof import("../src/lib/analytics");
@@ -19,8 +19,8 @@ let candidateImportLib: typeof import("../src/lib/candidate-import");
 before(async () => {
   const db = setupTestDb("test-isolation");
   prisma = db.prisma;
-  dbPath = db.dbPath;
-  process.env.DATABASE_URL = `file:${dbPath}`;
+  schema = db.schema;
+  process.env.DATABASE_URL = db.url;
   process.env.SESSION_SECRET ??= "test-secret-not-for-prod";
 
   // Dynamic import so these modules' singleton PrismaClient (src/lib/prisma.ts)
@@ -39,7 +39,7 @@ after(async () => {
   // Windows keeps the file locked and deletion fails.
   const { prisma: appPrisma } = await import("../src/lib/prisma");
   await appPrisma.$disconnect();
-  await teardownTestDb(prisma, dbPath);
+  await teardownTestDb(prisma, schema);
 });
 
 test("1. state isolation: same election slug in two states resolves independently", async () => {

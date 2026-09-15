@@ -1,6 +1,6 @@
 // Phase 14 — Admin Data Management Foundation: invariant tests for the new
 // States/Elections/Districts/Constituencies/ElectionConstituency admin CRUD.
-// Runs against an ephemeral SQLite database (never prisma/dev.db). See
+// Runs against an ephemeral Postgres schema (never prisma/dev.db). See
 // tests/helpers/fixtures.ts for the deliberately colliding two-state fixture.
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
@@ -11,19 +11,19 @@ import { seedFixtures } from "./helpers/fixtures";
 import type { PrismaClient } from "@prisma/client";
 
 let prisma: PrismaClient;
-let dbPath: string;
+let schema: string;
 let fx: Awaited<ReturnType<typeof seedFixtures>>;
 let guards: typeof import("../src/lib/admin-guards");
 
 before(async () => {
   const db = setupTestDb("test-admin-hierarchy");
   prisma = db.prisma;
-  dbPath = db.dbPath;
+  schema = db.schema;
   // Must be set BEFORE any dynamic import of a module that touches the
   // src/lib/prisma singleton (admin-guards, data.ts) — otherwise that
   // singleton binds to whatever DATABASE_URL this process inherited,
   // which can be the real prisma/dev.db.
-  process.env.DATABASE_URL = `file:${dbPath}`;
+  process.env.DATABASE_URL = db.url;
   guards = await import("../src/lib/admin-guards");
   fx = await seedFixtures(prisma);
 });
@@ -31,7 +31,7 @@ before(async () => {
 after(async () => {
   const { prisma: appPrisma } = await import("../src/lib/prisma");
   await appPrisma.$disconnect();
-  await teardownTestDb(prisma, dbPath);
+  await teardownTestDb(prisma, schema);
 });
 
 test("1. state creation/update validation: unique slug and code are enforced at the DB level", async () => {

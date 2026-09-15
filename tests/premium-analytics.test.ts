@@ -1,5 +1,5 @@
 // Phase 16 — Premium Analytics Engine tests. Runs against an ephemeral
-// SQLite database (never prisma/dev.db). See tests/helpers/analytics-fixtures.ts.
+// Postgres schema (never prisma/dev.db). See tests/helpers/analytics-fixtures.ts.
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -9,7 +9,7 @@ import { seedAnalyticsFixtures, createAnalyticsResponses, createIneligibleRespon
 import type { PrismaClient } from "@prisma/client";
 
 let prisma: PrismaClient;
-let dbPath: string;
+let schema: string;
 let fx: AnalyticsFixtures;
 let engine: typeof import("../src/lib/premium-analytics");
 let privacy: typeof import("../src/lib/analytics-privacy");
@@ -31,8 +31,8 @@ function bucket(buckets: { key: string }[], key: string) {
 before(async () => {
   const db = setupTestDb("test-premium-analytics");
   prisma = db.prisma;
-  dbPath = db.dbPath;
-  process.env.DATABASE_URL = `file:${dbPath}`;
+  schema = db.schema;
+  process.env.DATABASE_URL = db.url;
   engine = await import("../src/lib/premium-analytics");
   privacy = await import("../src/lib/analytics-privacy");
   publicAnalytics = await import("../src/lib/analytics");
@@ -77,7 +77,7 @@ before(async () => {
 after(async () => {
   const { prisma: appPrisma } = await import("../src/lib/prisma");
   await appPrisma.$disconnect();
-  await teardownTestDb(prisma, dbPath);
+  await teardownTestDb(prisma, schema);
 });
 
 // 1. Party aggregation.

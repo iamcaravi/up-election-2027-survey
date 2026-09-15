@@ -81,6 +81,89 @@ export async function syncPartyPreferenceOptions(prisma: PrismaClient, questionI
   }
 }
 
+type DefaultQuestionOpts = { candidateQuestionLabel?: string; partyQuestionLabel?: string; issueQuestionLabel?: string };
+type DefaultQuestionDef = {
+  key: string;
+  label: string;
+  order: number;
+  required: boolean;
+  allowSkip: boolean;
+  type?: string;
+};
+
+const DEMO_QUESTION_DEFS: Array<{ key: string; label: string; order: number; options: readonly { key: string; label: string }[] }> = [
+  { key: "age_group", label: "आयु वर्ग", order: 4, options: AGE_GROUPS },
+  { key: "gender", label: "लिंग", order: 5, options: GENDERS },
+  { key: "social_category", label: "सामाजिक श्रेणी", order: 6, options: SOCIAL_CATEGORIES },
+  { key: "religion", label: "धर्म", order: 7, options: RELIGIONS },
+];
+
+// The platform's standard 7-question set, as flat question definitions —
+// shared by both the fast bulk-insert path (createDefaultSurveyQuestions)
+// and the upsert-based repair path (ensureDefaultSurveyQuestions) so the
+// two can never drift out of sync.
+function buildDefaultQuestionDefs(opts?: DefaultQuestionOpts): DefaultQuestionDef[] {
+  return [
+    {
+      key: "party_preference",
+      label: opts?.partyQuestionLabel ?? "अगर आज विधानसभा चुनाव हों, तो आप किस पार्टी को वोट देना पसंद करेंगे?",
+      required: true,
+      allowSkip: false,
+      order: 1,
+    },
+    {
+      key: "candidate_choice",
+      label: opts?.candidateQuestionLabel ?? "आपकी चुनी हुई पार्टी की ओर से उम्मीदवार के रूप में आप किसे पसंद करेंगे?",
+      required: false,
+      allowSkip: true,
+      order: 2,
+    },
+    {
+      key: "top_issue",
+      label: opts?.issueQuestionLabel ?? "आपके क्षेत्र में सबसे बड़ा मुद्दा क्या है?",
+      type: "MULTIPLE_CHOICE",
+      required: false,
+      allowSkip: true,
+      order: 3,
+    },
+    ...DEMO_QUESTION_DEFS.map((dq) => ({ key: dq.key, label: dq.label, required: false, allowSkip: true, order: dq.order })),
+  ];
+}
+
+// Builds every option row for the standard question set, given each
+// question's already-created id (keyed by question `key`) and the state's
+// resolved party list. Shared by both the fast and repair paths.
+function buildDefaultOptionRows(
+  questionIdByKey: Map<string, string>,
+  parties: SurveyParty[]
+): Array<{ questionId: string; key: string; label: string; order: number; partyId?: string }> {
+  const partyQId = questionIdByKey.get("party_preference")!;
+  const candidateQId = questionIdByKey.get("candidate_choice")!;
+  const issueQId = questionIdByKey.get("top_issue")!;
+
+  const optionRows: Array<{ questionId: string; key: string; label: string; order: number; partyId?: string }> = [];
+
+  parties.forEach((party, order) => {
+    optionRows.push({ questionId: partyQId, key: party.slug, label: party.shortName, partyId: party.id, order });
+  });
+
+  optionRows.push({ questionId: candidateQId, key: "other", label: "Other", order: 999 });
+
+  DEFAULT_ISSUES.forEach((issue, i) => {
+    optionRows.push({ questionId: issueQId, key: issue.key, label: issue.label, order: i });
+  });
+
+  for (const dq of DEMO_QUESTION_DEFS) {
+    const qId = questionIdByKey.get(dq.key)!;
+    dq.options.forEach((opt, i) => {
+      optionRows.push({ questionId: qId, key: opt.key, label: opt.label, order: i });
+    });
+    optionRows.push({ questionId: qId, key: "prefer_not_to_say", label: "Prefer not to say", order: 999 });
+  }
+
+  return optionRows;
+}
+
 // Creates the platform's standard survey question set on an already-created
 // Survey row: candidate choice, party preference, top issue, and the four
 // anonymous demographic questions (age group, gender, social category,
@@ -93,71 +176,75 @@ export async function syncPartyPreferenceOptions(prisma: PrismaClient, questionI
 // separately by syncCandidateChoiceOptions, which is the one place allowed
 // to decide which candidates belong in a given (electionId, constituencyId)
 // survey.
+//
+// Performance note: this must only be called against a brand-new Survey
+// with zero existing questions/options (prisma/seed.ts only calls it right
+// after creating the Survey row) — every row here is a pure insert via
+// createManyAndReturn + createMany inside one transaction, instead of one
+// network round trip per row, since a full multi-state seed over a remote
+// Postgres connection previously meant tens of thousands of sequential
+// round trips. If a Survey might already have partial question/option data
+// (e.g. resuming a seed run that was interrupted mid-way), use
+// ensureDefaultSurveyQuestions instead — calling this on a non-empty survey
+// will fail on the questions' unique (surveyId, key) constraint.
+// createManyAndReturn does not guarantee its result order matches the input
+// array, so questions are looked up by their (per-survey unique) `key`
+// rather than by array position.
 export async function createDefaultSurveyQuestions(
   prisma: PrismaClient,
   surveyId: string,
   stateId: string,
-  opts?: { candidateQuestionLabel?: string; partyQuestionLabel?: string; issueQuestionLabel?: string }
+  opts?: DefaultQuestionOpts
 ) {
-  const partyQ = await prisma.surveyQuestion.create({
-    data: {
-      surveyId,
-      key: "party_preference",
-      label: opts?.partyQuestionLabel ?? "अगर आज विधानसभा चुनाव हों, तो आप किस पार्टी को वोट देना पसंद करेंगे?",
-      required: true,
-      allowSkip: false,
-      order: 1,
-    },
-  });
-  await syncPartyPreferenceOptions(prisma, partyQ.id, stateId);
+  const parties = await getStatePartiesForSurvey(prisma, stateId);
+  const questionDefs = buildDefaultQuestionDefs(opts);
 
-  const candidateQ = await prisma.surveyQuestion.create({
-    data: {
-      surveyId,
-      key: "candidate_choice",
-      label: opts?.candidateQuestionLabel ?? "आपकी चुनी हुई पार्टी की ओर से उम्मीदवार के रूप में आप किसे पसंद करेंगे?",
-      required: false,
-      allowSkip: true,
-      order: 2,
-    },
+  await prisma.$transaction(async (tx) => {
+    const createdQuestions = await tx.surveyQuestion.createManyAndReturn({
+      data: questionDefs.map((qd) => ({ surveyId, ...qd })),
+    });
+    const questionIdByKey = new Map(createdQuestions.map((q) => [q.key, q.id]));
+    const optionRows = buildDefaultOptionRows(questionIdByKey, parties);
+    await tx.surveyOption.createMany({ data: optionRows });
   });
-  await prisma.surveyOption.create({
-    data: { questionId: candidateQ.id, key: "other", label: "Other", order: 999 },
-  });
+}
 
-  const issueQ = await prisma.surveyQuestion.create({
-    data: {
-      surveyId,
-      key: "top_issue",
-      label: opts?.issueQuestionLabel ?? "आपके क्षेत्र में सबसे बड़ा मुद्दा क्या है?",
-      type: "MULTIPLE_CHOICE",
-      required: false,
-      allowSkip: true,
-      order: 3,
-    },
-  });
-  for (let i = 0; i < DEFAULT_ISSUES.length; i++) {
-    const issue = DEFAULT_ISSUES[i];
-    await prisma.surveyOption.create({ data: { questionId: issueQ.id, key: issue.key, label: issue.label, order: i } });
+// Idempotent, upsert-based variant of createDefaultSurveyQuestions for a
+// Survey that may already have SOME (but not necessarily all) of its
+// default questions/options — the state a Survey is left in if a seed run
+// is interrupted (e.g. a dropped database connection) between creating the
+// Survey row and this module's own transaction completing. Never deletes
+// anything and is always safe to call, including on an already-fully-seeded
+// survey (every write becomes a no-op update). Used by prisma/seed.ts to
+// resume a seed run without losing or duplicating existing structural data.
+// Slower than createDefaultSurveyQuestions (one round trip per question/
+// option, not batched) — acceptable because it only ever runs for the rare
+// already-partially-seeded case, never for the bulk of untouched surveys.
+export async function ensureDefaultSurveyQuestions(
+  prisma: PrismaClient,
+  surveyId: string,
+  stateId: string,
+  opts?: DefaultQuestionOpts
+) {
+  const parties = await getStatePartiesForSurvey(prisma, stateId);
+  const questionDefs = buildDefaultQuestionDefs(opts);
+
+  const questionIdByKey = new Map<string, string>();
+  for (const qd of questionDefs) {
+    const question = await prisma.surveyQuestion.upsert({
+      where: { surveyId_key: { surveyId, key: qd.key } },
+      update: {},
+      create: { surveyId, ...qd },
+    });
+    questionIdByKey.set(qd.key, question.id);
   }
 
-  const demoQuestions: Array<{ key: string; label: string; options: readonly { key: string; label: string }[] }> = [
-    { key: "age_group", label: "आयु वर्ग", options: AGE_GROUPS },
-    { key: "gender", label: "लिंग", options: GENDERS },
-    { key: "social_category", label: "सामाजिक श्रेणी", options: SOCIAL_CATEGORIES },
-    { key: "religion", label: "धर्म", options: RELIGIONS },
-  ];
-  let order = 4;
-  for (const dq of demoQuestions) {
-    const q = await prisma.surveyQuestion.create({
-      data: { surveyId, key: dq.key, label: dq.label, required: false, allowSkip: true, order: order++ },
-    });
-    for (let i = 0; i < dq.options.length; i++) {
-      const opt = dq.options[i];
-      await prisma.surveyOption.create({ data: { questionId: q.id, key: opt.key, label: opt.label, order: i } });
-    }
-    await prisma.surveyOption.create({
-      data: { questionId: q.id, key: "prefer_not_to_say", label: "Prefer not to say", order: 999 },
+  const optionRows = buildDefaultOptionRows(questionIdByKey, parties);
+  for (const option of optionRows) {
+    await prisma.surveyOption.upsert({
+      where: { questionId_key: { questionId: option.questionId, key: option.key } },
+      update: {},
+      create: option,
     });
   }
 }

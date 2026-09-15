@@ -1,6 +1,6 @@
 // Admin Content CMS (FAQ + Branding/Social Links) — added alongside the
-// Admin Panel content-management upgrade. Runs against an ephemeral SQLite
-// database (never prisma/dev.db). See tests/helpers/testDb.ts. Auth-required
+// Admin Panel content-management upgrade. Runs against an ephemeral Postgres
+// schema (never prisma/dev.db). See tests/helpers/testDb.ts. Auth-required
 // and role-gating checks are structural (same pattern as survey-admin.test.ts
 // and admin-hierarchy.test.ts) because getAdminSession() depends on
 // next/headers' cookies(), which only resolves inside a real Next.js request
@@ -13,7 +13,7 @@ import { setupTestDb, teardownTestDb } from "./helpers/testDb";
 import type { PrismaClient } from "@prisma/client";
 
 let prisma: PrismaClient;
-let dbPath: string;
+let schema: string;
 let authLib: typeof import("../src/lib/auth");
 let faqContentLib: typeof import("../src/lib/faq-content");
 let siteBrandingLib: typeof import("../src/lib/site-branding");
@@ -27,10 +27,10 @@ function readRoute(file: string) {
 before(async () => {
   const db = setupTestDb("test-admin-content-cms");
   prisma = db.prisma;
-  dbPath = db.dbPath;
+  schema = db.schema;
   // Must be set before any dynamic import touching the src/lib/prisma
   // singleton, or it binds to whatever DATABASE_URL this process inherited.
-  process.env.DATABASE_URL = `file:${dbPath}`;
+  process.env.DATABASE_URL = db.url;
   authLib = await import("../src/lib/auth");
   faqContentLib = await import("../src/lib/faq-content");
   siteBrandingLib = await import("../src/lib/site-branding");
@@ -40,7 +40,7 @@ before(async () => {
 after(async () => {
   const { prisma: appPrisma } = await import("../src/lib/prisma");
   await appPrisma.$disconnect();
-  await teardownTestDb(prisma, dbPath);
+  await teardownTestDb(prisma, schema);
 });
 
 // --- Structural: every handler requires a session ---------------------------

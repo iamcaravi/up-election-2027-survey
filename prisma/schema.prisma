@@ -1,9 +1,8 @@
 // India Election Survey — Public Mood & Survey Platform
-// Data model. Provider is SQLite for zero-config local development;
-// switch `provider` to "postgresql" and point DATABASE_URL at a real
-// Postgres instance for production (see README "Production database").
+// Data model. Provider is PostgreSQL (production). Local development also
+// requires a Postgres DATABASE_URL — see README "Local development database".
 // Enum-like fields are plain Strings validated in the app layer (src/lib/enums.ts)
-// so the same schema works unchanged on both SQLite and Postgres.
+// so the same schema works unchanged across Postgres environments.
 //
 // Hierarchy: State -> Election -> District / Constituency -> Candidate / Survey.
 // A Constituency belongs to a State (and District) independent of any one
@@ -16,7 +15,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 

@@ -1,7 +1,7 @@
 // Phase 15 — Survey Administration: invariant tests for admin survey
 // CRUD, election/constituency validation, candidate option scoping, and
-// public-route regression checks. Runs against an ephemeral SQLite
-// database (never prisma/dev.db). See tests/helpers/fixtures.ts.
+// public-route regression checks. Runs against an ephemeral Postgres
+// schema (never prisma/dev.db). See tests/helpers/fixtures.ts.
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -11,7 +11,7 @@ import { seedFixtures, createResponses } from "./helpers/fixtures";
 import type { PrismaClient } from "@prisma/client";
 
 let prisma: PrismaClient;
-let dbPath: string;
+let schema: string;
 let fx: Awaited<ReturnType<typeof seedFixtures>>;
 let guards: typeof import("../src/lib/admin-guards");
 let surveyTemplate: typeof import("../src/lib/survey-template");
@@ -27,10 +27,10 @@ function readRoute(file: string) {
 before(async () => {
   const db = setupTestDb("test-survey-admin");
   prisma = db.prisma;
-  dbPath = db.dbPath;
+  schema = db.schema;
   // Must be set before any dynamic import touching the src/lib/prisma
   // singleton, or it binds to whatever DATABASE_URL this process inherited.
-  process.env.DATABASE_URL = `file:${dbPath}`;
+  process.env.DATABASE_URL = db.url;
   guards = await import("../src/lib/admin-guards");
   surveyTemplate = await import("../src/lib/survey-template");
   surveySync = await import("../src/lib/survey-sync");
@@ -42,7 +42,7 @@ before(async () => {
 after(async () => {
   const { prisma: appPrisma } = await import("../src/lib/prisma");
   await appPrisma.$disconnect();
-  await teardownTestDb(prisma, dbPath);
+  await teardownTestDb(prisma, schema);
 });
 
 test("1&2. survey list and creation both require authentication (structural)", () => {

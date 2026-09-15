@@ -2,7 +2,7 @@
 // candidate status model, election/constituency/party relations, duplicate
 // prevention, the idempotent MLA importer, survey candidate-option
 // eligibility filtering, and public data-safety boundaries. Runs against an
-// ephemeral SQLite database (never prisma/dev.db). See tests/helpers/fixtures.ts.
+// ephemeral Postgres schema (never prisma/dev.db). See tests/helpers/fixtures.ts.
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -12,7 +12,7 @@ import { seedFixtures } from "./helpers/fixtures";
 import type { PrismaClient } from "@prisma/client";
 
 let prisma: PrismaClient;
-let dbPath: string;
+let schema: string;
 let fx: Awaited<ReturnType<typeof seedFixtures>>;
 let enums: typeof import("../src/lib/enums");
 let surveySync: typeof import("../src/lib/survey-sync");
@@ -26,8 +26,8 @@ function readRoute(file: string) {
 before(async () => {
   const db = setupTestDb("test-candidate-management");
   prisma = db.prisma;
-  dbPath = db.dbPath;
-  process.env.DATABASE_URL = `file:${dbPath}`;
+  schema = db.schema;
+  process.env.DATABASE_URL = db.url;
   enums = await import("../src/lib/enums");
   surveySync = await import("../src/lib/survey-sync");
   mlaImport = await import("../src/lib/mla-import");
@@ -37,7 +37,7 @@ before(async () => {
 after(async () => {
   const { prisma: appPrisma } = await import("../src/lib/prisma");
   await appPrisma.$disconnect();
-  await teardownTestDb(prisma, dbPath);
+  await teardownTestDb(prisma, schema);
 });
 
 // 1. Candidate status enum ----------------------------------------------

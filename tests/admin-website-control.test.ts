@@ -1,6 +1,6 @@
 // Admin Website Control (Phase 2a ContentBlock + 2d Media Library + 2g SEO
 // Overrides) — added on top of the frozen launch-audit baseline (9934f09,
-// b292bdd). Runs against an ephemeral SQLite database (never prisma/dev.db).
+// b292bdd). Runs against an ephemeral Postgres schema (never prisma/dev.db).
 // See tests/helpers/testDb.ts. Auth-required/role-gating checks are
 // structural (same pattern as survey-admin.test.ts, admin-hierarchy.test.ts,
 // admin-content-cms.test.ts) since getAdminSession() depends on
@@ -15,7 +15,7 @@ import { setupTestDb, teardownTestDb } from "./helpers/testDb";
 import type { PrismaClient } from "@prisma/client";
 
 let prisma: PrismaClient;
-let dbPath: string;
+let schema: string;
 let contentBlocksLib: typeof import("../src/lib/content-blocks");
 let mediaLib: typeof import("../src/lib/media");
 let seoOverridesLib: typeof import("../src/lib/seo-overrides");
@@ -29,8 +29,8 @@ function readRoute(file: string) {
 before(async () => {
   const db = setupTestDb("test-admin-website-control");
   prisma = db.prisma;
-  dbPath = db.dbPath;
-  process.env.DATABASE_URL = `file:${dbPath}`;
+  schema = db.schema;
+  process.env.DATABASE_URL = db.url;
   contentBlocksLib = await import("../src/lib/content-blocks");
   mediaLib = await import("../src/lib/media");
   seoOverridesLib = await import("../src/lib/seo-overrides");
@@ -40,7 +40,7 @@ before(async () => {
 after(async () => {
   const { prisma: appPrisma } = await import("../src/lib/prisma");
   await appPrisma.$disconnect();
-  await teardownTestDb(prisma, dbPath);
+  await teardownTestDb(prisma, schema);
 });
 
 // ============================================================ STRUCTURAL ===
