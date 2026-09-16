@@ -414,6 +414,7 @@ const en: typeof hi = {
     participate: "Participate in Survey",
     noOptions: "No options available",
     closeOptions: "Close options list",
+    searchPlaceholder: "Search...",
   },
   statisticsStrip: {
     totalResponses: "Total Valid Responses",

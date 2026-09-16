@@ -412,6 +412,7 @@ const hi = {
     participate: "सर्वे में भाग लें",
     noOptions: "कोई विकल्प उपलब्ध नहीं",
     closeOptions: "विकल्प सूची बंद करें",
+    searchPlaceholder: "खोजें...",
   },
   statisticsStrip: {
     totalResponses: "कुल वैध प्रतिक्रियाएं",

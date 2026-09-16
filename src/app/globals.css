@@ -114,3 +114,19 @@ body {
   background: var(--border);
   border-radius: 999px;
 }
+
+/* Netlify auto-injects its "Powered by Netlify" badge as a fixed,
+   near-max-z-index iframe (#nl-badge-frame) pinned to bottom:0;right:0 —
+   it's added by the platform itself, not rendered by this app. Below the
+   `sm:` breakpoint the survey's floating Next/Submit control also lives in
+   that exact corner (SurveyExperience.tsx's `fixed bottom-5 right-4` nav,
+   a 52px-tall button starting 20px off the bottom), so the badge sits
+   directly on top of it and swallows taps. This nudges the badge up clear
+   of that control on mobile only; `!important` is required because the
+   badge's position is set via an inline style attribute Netlify's own
+   script controls, which normal stylesheet specificity can't out-rank. */
+@media (max-width: 639.98px) {
+  #nl-badge-frame {
+    bottom: calc(84px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+}

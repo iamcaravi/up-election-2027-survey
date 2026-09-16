@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { ArrowRight, Building2, ChevronDown, MapPin, Users } from "lucide-react";
 import type { ReactNode } from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { displayStateName } from "@/lib/utils";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -71,8 +71,25 @@ function FieldSelect<T extends { id: string }>({
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const [isMobile, setIsMobile] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const noOptionsLabel = t.heroSurvey.noOptions;
   const closeOptionsLabel = t.heroSurvey.closeOptions;
+  const searchPlaceholder = t.heroSurvey.searchPlaceholder;
+
+  // Below `sm:` (640px, this codebase's own mobile/tablet cutoff — see
+  // Hero.tsx) the dropdown gets a real, visible search <input> instead of
+  // relying on the desktop trigger-button's invisible keydown-buffer typing
+  // below, since a <button> never opens the on-screen keyboard and mobile
+  // browsers don't fire physical keydown events without one. Desktop's
+  // existing click-then-type flow is untouched.
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 639.98px)");
+    setIsMobile(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
 
   // Items change when the parent field above this one is reselected (e.g. a
   // new state reloads the district list) — clear any leftover filter so it
@@ -97,40 +114,63 @@ function FieldSelect<T extends { id: string }>({
     setHighlightedIndex(-1);
   }, [query]);
 
+  // Autofocus the mobile search input once the dropdown (and the input
+  // inside it) has actually mounted, so the on-screen keyboard opens
+  // immediately without a second tap. requestAnimationFrame waits one
+  // paint past the `open` flip so the ref is guaranteed to be attached
+  // first — this only ever runs once per open/close (deps are booleans),
+  // so it can't loop or repeatedly steal focus back from the user.
+  useEffect(() => {
+    if (!open || !isMobile) return;
+    const raf = requestAnimationFrame(() => searchInputRef.current?.focus());
+    return () => cancelAnimationFrame(raf);
+  }, [open, isMobile]);
+
   function closeDropdown() {
     setOpen(false);
     setQuery("");
     setHighlightedIndex(-1);
   }
 
-  function handleKeyDown(e: React.KeyboardEvent<HTMLButtonElement>) {
-    if (disabled) return;
+  function selectItem(item: T) {
+    onSelect(item);
+    closeDropdown();
+  }
+
+  // Escape/Arrow keys/Enter — shared by the desktop trigger button (where
+  // typed characters also drive the type-ahead buffer below) and the
+  // mobile search input (where typed characters are handled natively via
+  // onChange instead). Returns true once it has handled the key.
+  function handleNavKeys(e: React.KeyboardEvent): boolean {
+    if (disabled) return false;
     if (e.key === "Escape") {
       closeDropdown();
-      return;
+      return true;
     }
     if (e.key === "ArrowDown") {
       e.preventDefault();
       setOpen(true);
       setHighlightedIndex((i) => Math.min(filteredItems.length - 1, i + 1));
-      return;
+      return true;
     }
     if (e.key === "ArrowUp") {
       e.preventDefault();
       setOpen(true);
       setHighlightedIndex((i) => Math.max(0, i - 1));
-      return;
+      return true;
     }
     if (e.key === "Enter") {
-      if (!open) return;
+      if (!open) return false;
       e.preventDefault();
       const item = filteredItems[highlightedIndex >= 0 ? highlightedIndex : 0];
-      if (item) {
-        onSelect(item);
-        closeDropdown();
-      }
-      return;
+      if (item) selectItem(item);
+      return true;
     }
+    return false;
+  }
+
+  function handleTriggerKeyDown(e: React.KeyboardEvent<HTMLButtonElement>) {
+    if (handleNavKeys(e) || disabled) return;
     if (e.key === "Backspace") {
       setQuery((prev) => prev.slice(0, -1));
       return;
@@ -148,7 +188,7 @@ function FieldSelect<T extends { id: string }>({
         type="button"
         disabled={disabled}
         onClick={() => setOpen((o) => !o)}
-        onKeyDown={handleKeyDown}
+        onKeyDown={handleTriggerKeyDown}
         aria-label={label}
         className="flex h-11 w-full min-w-[9.5rem] items-center justify-center gap-2 whitespace-nowrap rounded-full border border-[#101A3A]/12 bg-white px-3.5 text-center text-sm font-semibold text-[#101A3A] shadow-[0_1px_2px_rgba(16,26,58,0.06),0_6px_16px_-6px_rgba(16,26,58,0.18)] transition-all hover:border-[#101A3A]/20 hover:shadow-[0_1px_2px_rgba(16,26,58,0.08),0_10px_20px_-6px_rgba(16,26,58,0.22)] disabled:cursor-not-allowed disabled:border-[#101A3A]/8 disabled:text-[#101A3A]/40 disabled:shadow-[0_1px_2px_rgba(16,26,58,0.04)] disabled:hover:border-[#101A3A]/8 sm:min-w-[11rem] sm:text-base lg:h-12 lg:min-w-[12.5rem] lg:px-4"
       >
@@ -176,24 +216,38 @@ function FieldSelect<T extends { id: string }>({
               bottom of the hero banner and opening upward avoids the
               viewport's bottom edge instead. z-50 keeps the panel above
               that same sticky header (z-40) in either direction. */}
-          <div className="absolute left-0 right-0 top-full z-50 mt-2 max-h-64 min-w-[13rem] overflow-y-auto rounded-xl border border-[#101A3A]/15 bg-white shadow-xl sm:bottom-full sm:top-auto sm:mb-2 sm:mt-0">
-            {filteredItems.length === 0 && <p className="px-4 py-3 text-sm text-[#101A3A]/60">{noOptionsLabel}</p>}
-            {filteredItems.map((item, idx) => (
-              <button
-                key={item.id}
-                type="button"
-                onMouseEnter={() => setHighlightedIndex(idx)}
-                onClick={() => {
-                  onSelect(item);
-                  closeDropdown();
-                }}
-                className={`block w-full border-b border-[#101A3A]/10 px-4 py-2.5 text-left text-sm font-medium text-[#101A3A] last:border-b-0 hover:bg-[#101A3A]/5 ${
-                  highlightedIndex === idx ? "bg-[#101A3A]/5" : ""
-                }`}
-              >
-                {getLabel(item)}
-              </button>
-            ))}
+          <div className="absolute left-0 right-0 top-full z-50 mt-2 min-w-[13rem] overflow-hidden rounded-xl border border-[#101A3A]/15 bg-white shadow-xl sm:bottom-full sm:top-auto sm:mb-2 sm:mt-0">
+            {isMobile && (
+              <div className="border-b border-[#101A3A]/10 p-2">
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  inputMode="search"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onKeyDown={handleNavKeys}
+                  placeholder={searchPlaceholder}
+                  aria-label={label}
+                  className="h-9 w-full rounded-lg border border-[#101A3A]/15 bg-white px-3 text-sm text-[#101A3A] focus:outline-none focus:ring-2 focus:ring-[#101A3A]/20"
+                />
+              </div>
+            )}
+            <div className="max-h-64 overflow-y-auto">
+              {filteredItems.length === 0 && <p className="px-4 py-3 text-sm text-[#101A3A]/60">{noOptionsLabel}</p>}
+              {filteredItems.map((item, idx) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onMouseEnter={() => setHighlightedIndex(idx)}
+                  onClick={() => selectItem(item)}
+                  className={`block w-full border-b border-[#101A3A]/10 px-4 py-2.5 text-left text-sm font-medium text-[#101A3A] last:border-b-0 hover:bg-[#101A3A]/5 ${
+                    highlightedIndex === idx ? "bg-[#101A3A]/5" : ""
+                  }`}
+                >
+                  {getLabel(item)}
+                </button>
+              ))}
+            </div>
           </div>
         </>
       )}
