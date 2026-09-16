@@ -112,6 +112,13 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       suppressHydrationWarning
       className={`${inter.variable} ${manrope.variable} ${notoDevanagari.variable} h-full antialiased`}
     >
+      <head>
+        <script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6665490745490381"
+          crossOrigin="anonymous"
+        />
+      </head>
       <body className="min-h-full flex flex-col">
         {/* numeric values only, sourced from homepageSectionsConfigSchema-validated config */}
         <style dangerouslySetInnerHTML={{ __html: chromeStyleCss }} />

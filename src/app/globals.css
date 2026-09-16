@@ -127,6 +127,6 @@ body {
    script controls, which normal stylesheet specificity can't out-rank. */
 @media (max-width: 639.98px) {
   #nl-badge-frame {
-    bottom: calc(84px + env(safe-area-inset-bottom, 0px)) !important;
+    display: none !important;
   }
 }

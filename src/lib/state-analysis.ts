@@ -661,17 +661,18 @@ async function computeCrosstabAnalysis(electionId: string, dataSource: string, m
   // on this platform, computed here since public-statewide-results.ts does
   // not collect this dimension for the statewide DTO. ----
   const casteTotal = Array.from(casteGroups.values()).reduce((sum, g) => sum + g.responseIds.size, 0);
+  const casteDistributionMinRequired = 1;
   const casteDistribution: PublicDistribution =
     casteTotal === 0
-      ? { state: "unavailable", reason: "no_answers", minRequired: minCellSize }
+      ? { state: "unavailable", reason: "no_answers", minRequired: casteDistributionMinRequired }
       : {
           state: "available",
           denominator: casteTotal,
-          minRequired: minCellSize,
+          minRequired: casteDistributionMinRequired,
           buckets: protectPublicCells(
             Array.from(casteGroups.entries()).map(([key, g], index) => ({ key, label: g.label, displayOrder: index, count: g.responseIds.size })),
             casteTotal,
-            minCellSize
+            casteDistributionMinRequired
           ),
         };
 

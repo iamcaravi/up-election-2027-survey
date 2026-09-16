@@ -30,7 +30,7 @@ export function StatesSection({ states }: { states: StateItem[] }) {
         </Link>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-2 sm:gap-3 lg:grid-cols-4">
         {states.map((state, i) => {
           const isOngoing = state.elections[0]?.status === "ONGOING";
           const palette = DISTRICT_COLORS[i % DISTRICT_COLORS.length];
@@ -43,29 +43,29 @@ export function StatesSection({ states }: { states: StateItem[] }) {
               transition={{ duration: 0.4, delay: i * 0.04 }}
               className={
                 isOngoing
-                  ? "flex items-center gap-3 rounded-2xl border-2 border-orange-300 bg-orange-50 p-4 dark:border-orange-800 dark:bg-orange-950/30"
-                  : `flex items-center gap-3 rounded-2xl border p-4 ${palette.bg} ${palette.border}`
+                  ? "flex items-center gap-2.5 sm:gap-3 rounded-xl sm:rounded-2xl border-2 border-orange-300 bg-orange-50 p-3 sm:p-4 dark:border-orange-800 dark:bg-orange-950/30"
+                  : `flex items-center gap-2.5 sm:gap-3 rounded-xl sm:rounded-2xl border p-3 sm:p-4 ${palette.bg} ${palette.border}`
               }
             >
               <span
                 className={
                   isOngoing
-                    ? "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-orange-100 text-orange-600 dark:bg-orange-900/40"
-                    : `flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${palette.icon}`
+                    ? "flex h-9 w-9 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-lg sm:rounded-xl bg-orange-100 text-orange-600 dark:bg-orange-900/40"
+                    : `flex h-9 w-9 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-lg sm:rounded-xl ${palette.icon}`
                 }
               >
-                <Landmark size={20} />
+                <Landmark size={18} className="sm:h-5 sm:w-5" />
               </span>
               <div className="min-w-0 flex-1">
-                <p className="truncate font-display text-base font-bold text-foreground">
+                <p className="truncate font-display text-sm sm:text-base font-bold text-foreground leading-snug">
                   {displayStateName(state.name, state.slug, locale)}
                 </p>
-                <p className="text-xs text-muted">
+                <p className="text-[11px] sm:text-xs text-muted truncate">
                   {state.elections[0] ? `${t.statesSection.assemblyElection} ${state.elections[0].year}` : t.statesSection.comingSoon}
                 </p>
                 <Link
                   href={`/${state.slug}`}
-                  className="mt-1.5 inline-flex items-center gap-1.5 text-xs font-bold text-accent hover:text-accent-2"
+                  className="mt-1 sm:mt-1.5 inline-flex items-center gap-1 sm:gap-1.5 text-xs font-bold text-accent hover:text-accent-2"
                 >
                   {t.statesSection.viewNow} <ArrowRight size={12} />
                 </Link>

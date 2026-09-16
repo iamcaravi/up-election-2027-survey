@@ -21,9 +21,9 @@ export function SurveyResponseOverview({
 }) {
   const { t } = useLocale();
   return (
-    <div className="card-surface rounded-2xl p-5">
+    <div className="card-surface rounded-2xl p-3.5 sm:p-5">
       <h2 className="font-display text-sm font-bold uppercase tracking-wide text-muted">{t.analysisHub.responseOverviewHeading}</h2>
-      <div className="mt-3 grid grid-cols-2 gap-3">
+      <div className="mt-3 grid grid-cols-2 gap-2.5 sm:gap-3">
         <SummaryCard
           icon={<Users size={17} />}
           tone="blue"

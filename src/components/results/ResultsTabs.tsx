@@ -94,12 +94,12 @@ export function ResultsTabs({
           "View methodology" link — this only removes the pointless
           always-first-tab nav bar, not the sections themselves). */}
       {activeHasResults && (
-        <div className="mb-6 flex justify-end border-b border-border pb-3 text-xs text-muted">
-          <span className="whitespace-nowrap">
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-2 border-b border-border pb-3 text-xs text-muted sm:justify-end sm:gap-4">
+          <span className="text-xs text-muted">
             {t.results.lastUpdated}: {activeLastResponseAt ? dateTimeFormatter.format(new Date(activeLastResponseAt)) : "—"}
           </span>
-          <span className="ml-4 flex items-center gap-1.5 whitespace-nowrap font-bold text-ink">
-            <Users size={14} /> {t.results.totalResponsesCard} {numberFormatter.format(activeValidResponseCount ?? 0)}
+          <span className="flex items-center gap-1.5 font-bold text-ink sm:ml-4">
+            <Users size={14} className="shrink-0" /> {t.results.totalResponsesCard} {numberFormatter.format(activeValidResponseCount ?? 0)}
           </span>
         </div>
       )}

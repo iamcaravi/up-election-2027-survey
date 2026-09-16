@@ -53,6 +53,7 @@ function FieldSelect<T extends { id: string }>({
   items,
   disabled,
   getLabel,
+  getSearchTerms,
   onSelect,
   icon,
   iconClass,
@@ -63,6 +64,7 @@ function FieldSelect<T extends { id: string }>({
   items: T[];
   disabled?: boolean;
   getLabel: (item: T) => string;
+  getSearchTerms?: (item: T) => string[];
   onSelect: (item: T) => void;
   icon: ReactNode;
   iconClass: string;
@@ -99,15 +101,19 @@ function FieldSelect<T extends { id: string }>({
     setHighlightedIndex(-1);
   }, [items]);
 
-  // Type-to-filter: typing while the control is focused narrows the list to
-  // items whose label starts with what's been typed so far (e.g. "g" then
-  // "go" then "gon"). The filter stays applied for as long as the dropdown
-  // is open — it used to clear itself on a short timer, which reset the
-  // visible (unfiltered) list out from under the user's cursor whenever
-  // moving the mouse toward an option took longer than that timeout. The
-  // filter now only clears on close, select, or the field being reset above.
-  const filteredItems = query.trim()
-    ? items.filter((item) => getLabel(item).toLowerCase().startsWith(query.trim().toLowerCase()))
+  // Case-insensitive substring matching against label and any extra search
+  // terms (English/Hindi aliases, district slugs, constituency numbers)
+  const normalizedQuery = query.trim().toLowerCase();
+  const filteredItems = normalizedQuery
+    ? items.filter((item) => {
+        const label = getLabel(item).toLowerCase();
+        if (label.includes(normalizedQuery)) return true;
+        if (getSearchTerms) {
+          const terms = getSearchTerms(item);
+          return terms.some((term) => term.toLowerCase().includes(normalizedQuery));
+        }
+        return false;
+      })
     : items;
 
   useEffect(() => {
@@ -343,6 +349,16 @@ export function SurveyEntryCard({ states, heading }: SurveyEntryCardProps) {
           value={selectedState}
           items={states}
           getLabel={(s) => displayStateName(s.name, s.slug, locale)}
+          getSearchTerms={(s) => [
+            s.name,
+            s.slug,
+            displayStateName(s.name, s.slug, "hi"),
+            displayStateName(s.name, s.slug, "en"),
+            "uttar pradesh",
+            "up",
+            "उत्तर प्रदेश",
+            "यूपी",
+          ]}
           onSelect={setSelectedState}
           icon={<MapPin size={13} strokeWidth={2.5} />}
           iconClass="bg-blue-100 text-blue-700"
@@ -354,6 +370,7 @@ export function SurveyEntryCard({ states, heading }: SurveyEntryCardProps) {
           items={districts}
           disabled={!selectedState || loadingDistricts}
           getLabel={(d) => d.name}
+          getSearchTerms={(d) => [d.name, d.slug]}
           onSelect={setSelectedDistrict}
           icon={<Building2 size={13} strokeWidth={2.5} />}
           iconClass="bg-emerald-100 text-emerald-700"
@@ -365,6 +382,13 @@ export function SurveyEntryCard({ states, heading }: SurveyEntryCardProps) {
           items={constituencies}
           disabled={!selectedDistrict || loadingConstituencies}
           getLabel={(c) => `${c.number}. ${c.name}`}
+          getSearchTerms={(c) => [
+            c.name,
+            c.slug,
+            String(c.number),
+            `${c.number}. ${c.name}`,
+            `${c.number} ${c.name}`,
+          ]}
           onSelect={setSelectedConstituency}
           icon={<Users size={13} strokeWidth={2.5} />}
           iconClass="bg-rose-100 text-rose-700"

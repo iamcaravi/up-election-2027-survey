@@ -70,7 +70,7 @@ export function AnalysisResultsView({
   const { statewide } = data;
   const hasResults = statewide.sample.validResponseCount > 0;
   const hasReligion = data.religionPartyRows.length > 0;
-  const hasCaste = data.castePartyRows.length > 0;
+  const hasCaste = data.casteDistribution.state !== "unavailable" || data.castePartyRows.length > 0;
   // Same key→color assignment IssuesDonutChart computes internally for this
   // exact distribution (available buckets in their original order, index
   // fallback into the shared ISSUE_COLORS palette) — kept in sync here so

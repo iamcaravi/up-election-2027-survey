@@ -125,8 +125,8 @@ export function SiteFooter({ resultsHref, analysisHref, socialLinks }: SiteFoote
               </ul>
             </div>
 
-            {/* Column 3: नवीनतम अपडेट पाएं */}
-            <div>
+            {/* Column 3: नवीनतम अपडेट पाएं (Desktop only) */}
+            <div className="hidden sm:block">
               <p className="text-base font-bold mb-2">{t.siteFooter.newsletterHeading}</p>
               <p className="text-[15px] text-muted mb-2.5">{t.siteFooter.newsletterBody}</p>
               {/* No subscription backend exists yet (see src/lib/social-links.ts's
@@ -166,6 +166,17 @@ export function SiteFooter({ resultsHref, analysisHref, socialLinks }: SiteFoote
             <Link href="/admin/login" className="whitespace-nowrap hover:text-foreground transition-colors">
               {t.siteFooter.adminLogin}
             </Link>
+            <span className="text-border" aria-hidden="true">
+              |
+            </span>
+            <a
+              href="https://www.netlify.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="whitespace-nowrap hover:text-foreground transition-colors inline-flex items-center gap-1"
+            >
+              Powered by <span className="font-semibold text-ink dark:text-white">Netlify</span>
+            </a>
           </div>
           <p className="text-center sm:whitespace-nowrap">
             {t.siteFooter.madeWithLove}&nbsp;&nbsp;|&nbsp;&nbsp;{t.siteFooter.madeInIndia}

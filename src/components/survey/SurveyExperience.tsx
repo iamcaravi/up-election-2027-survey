@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
@@ -94,6 +94,26 @@ export function SurveyExperience({
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
 
+  useEffect(() => {
+    if (done) {
+      if (typeof document !== "undefined" && document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+      }
+      const resetScroll = () => {
+        window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+        if (document.documentElement) document.documentElement.scrollTop = 0;
+        if (document.body) document.body.scrollTop = 0;
+      };
+      resetScroll();
+      const rafId = requestAnimationFrame(resetScroll);
+      const timeoutId = setTimeout(resetScroll, 50);
+      return () => {
+        cancelAnimationFrame(rafId);
+        clearTimeout(timeoutId);
+      };
+    }
+  }, [done]);
+
   const steps: SurveyStepDef[] = [
     { key: "party_preference", label: t.surveyFlow.stepParty },
     { key: "top_issue", label: t.surveyFlow.stepIssue },
@@ -110,11 +130,42 @@ export function SurveyExperience({
   const optionLabels = t.surveyQuestions.options as Record<string, string>;
   const localize = (items: SurveyOptionItem[]) =>
     items.map((item) => ({ ...item, label: optionLabels[item.key] ?? item.label }));
-  // Party option keys (e.g. "other") can collide with generic demographic
-  // option keys in `optionLabels` — parties keep their own English/Hindi
-  // names (already resolved server-side via getPartyDisplayName as
-  // label/labelHi) instead of running through the shared translation table.
-  const localizedParties = parties;
+
+  const localizedParties = parties.map((party) => {
+    const isJansatta =
+      party.key.toLowerCase().includes("jansatta") ||
+      (party.label ?? "").toLowerCase().includes("jansatta") ||
+      (party.abbreviation ?? "").toLowerCase() === "jdlp";
+    if (isJansatta) {
+      return {
+        ...party,
+        label: "JDLP",
+        labelHi: "जनसत्ता दल (JDLP)",
+      };
+    }
+    if (party.key === "other") {
+      return {
+        ...party,
+        label: "Other",
+        labelHi: "अन्य",
+      };
+    }
+    if (party.key === "nota") {
+      return {
+        ...party,
+        label: "NOTA",
+        labelHi: "इनमें से कोई नहीं",
+      };
+    }
+    if (party.key === "undecided") {
+      return {
+        ...party,
+        label: "Undecided",
+        labelHi: "अनिर्णीत",
+      };
+    }
+    return party;
+  });
   const localizedIssues = localize(issues);
   const localizedAgeGroups = localize(ageGroups);
   const localizedGenders = localize(genders);
@@ -158,6 +209,9 @@ export function SurveyExperience({
         return;
       }
       setDone(true);
+      if (typeof window !== "undefined") {
+        window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+      }
     } catch {
       setError(t.vote.networkError);
     } finally {
@@ -185,7 +239,7 @@ export function SurveyExperience({
       <SurveyStepper steps={steps} currentIndex={pageIndex} />
 
       <div className="mt-3">
-        <p className="text-base font-bold uppercase tracking-wider text-accent sm:text-lg">{questionOfLabel}</p>
+        <p className="hidden sm:block text-base font-bold uppercase tracking-wider text-accent sm:text-lg">{questionOfLabel}</p>
 
         {
           // No AnimatePresence/exit animation here on purpose: gating the
@@ -218,7 +272,7 @@ export function SurveyExperience({
 
             {pageKey === "top_issue" && (
               <StepBody heading={t.surveyFlow.issueHeading} subtitle={t.surveyFlow.issueSubtitle}>
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+                <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
                   {localizedIssues.map((issue) => (
                     <IconOptionCard
                       key={issue.key}
@@ -233,7 +287,7 @@ export function SurveyExperience({
 
             {pageKey === "personal_info" && (
               <StepBody heading={t.demographics.title} subtitle={t.demographics.subtitle}>
-                <div className="divide-y divide-border overflow-hidden rounded-2xl border border-border">
+                <div className="flex flex-col gap-3">
                   <PersonalInfoRow
                     index={1}
                     icon={Users}
@@ -241,7 +295,12 @@ export function SurveyExperience({
                     question={t.surveyFlow.ageHeading}
                     subtitle={t.surveyFlow.ageRowSubtitle}
                   >
-                    <ChipGroup options={localizedAgeGroups} selected={answers.age_group} onSelect={(v) => select("age_group", v)} />
+                    <ChipGroup
+                      options={localizedAgeGroups}
+                      selected={answers.age_group}
+                      onSelect={(v) => select("age_group", v)}
+                      activeColor={PERSONAL_INFO_ROW_COLORS.blue.chipActive}
+                    />
                   </PersonalInfoRow>
                   <PersonalInfoRow
                     index={2}
@@ -250,7 +309,12 @@ export function SurveyExperience({
                     question={t.surveyFlow.genderHeading}
                     subtitle={t.surveyFlow.genderRowSubtitle}
                   >
-                    <ChipGroup options={localizedGenders} selected={answers.gender} onSelect={(v) => select("gender", v)} />
+                    <ChipGroup
+                      options={localizedGenders}
+                      selected={answers.gender}
+                      onSelect={(v) => select("gender", v)}
+                      activeColor={PERSONAL_INFO_ROW_COLORS.pink.chipActive}
+                    />
                   </PersonalInfoRow>
                   <PersonalInfoRow
                     index={3}
@@ -263,6 +327,7 @@ export function SurveyExperience({
                       options={localizedSocialCategories}
                       selected={answers.social_category}
                       onSelect={(v) => select("social_category", v)}
+                      activeColor={PERSONAL_INFO_ROW_COLORS.green.chipActive}
                     />
                   </PersonalInfoRow>
                   <PersonalInfoRow
@@ -272,7 +337,12 @@ export function SurveyExperience({
                     question={t.surveyFlow.religionHeading}
                     subtitle={t.surveyFlow.religionRowSubtitle}
                   >
-                    <ChipGroup options={localizedReligions} selected={answers.religion} onSelect={(v) => select("religion", v)} />
+                    <ChipGroup
+                      options={localizedReligions}
+                      selected={answers.religion}
+                      onSelect={(v) => select("religion", v)}
+                      activeColor={PERSONAL_INFO_ROW_COLORS.purple.chipActive}
+                    />
                   </PersonalInfoRow>
                 </div>
               </StepBody>
@@ -285,12 +355,12 @@ export function SurveyExperience({
           </p>
         )}
 
-        <div className="mt-8">
-          <div className="flex items-start gap-3 rounded-xl border border-ink/15 bg-ink/5 px-4 py-3.5 text-sm text-foreground sm:max-w-sm">
-            <ShieldCheck size={18} className="mt-0.5 shrink-0 text-ink" />
+        <div className="mt-6 sm:mt-8">
+          <div className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3 text-sm text-foreground sm:max-w-md">
+            <ShieldCheck size={18} className="mt-0.5 shrink-0 text-slate-700" />
             <div>
-              <p className="font-bold">{t.surveyFlow.privacyTitle}</p>
-              <p className="mt-0.5 text-muted">{t.surveyFlow.privacyBody}</p>
+              <p className="font-bold text-xs sm:text-sm text-ink">{t.surveyFlow.privacyTitle}</p>
+              <p className="mt-0.5 text-xs text-muted leading-relaxed">{t.surveyFlow.privacyBody}</p>
             </div>
           </div>
         </div>
@@ -298,33 +368,34 @@ export function SurveyExperience({
         {/* Bottom padding so the floating Previous/Next controls below never
             overlap the last piece of content (privacy notice / last answer
             option). */}
-        <div className="pb-20 sm:pb-4" aria-hidden="true" />
+        <div className="pb-28 sm:pb-8" aria-hidden="true" />
       </div>
 
-      {/* Previous and Next float together in the fixed bottom-right corner
-          (not in the normal document flow) so neither ever requires
-          scrolling to reach. Grouped side-by-side rather than in opposite
-          corners so they read as one navigation control; Previous only
-          renders when a previous step exists, per the existing !isFirst
-          survey-navigation rule. Icon-only below `sm:` keeps both compact
-          enough to fit side-by-side without overflow at 320px. */}
-      <div className="fixed bottom-5 right-4 z-40 flex items-center gap-2 sm:bottom-6 sm:right-16 sm:gap-3 lg:right-24">
-        {!isFirst && (
+      {/* Fixed bottom navigation bar */}
+      <div className="fixed bottom-0 inset-x-0 p-3 sm:p-0 z-40 bg-white/95 backdrop-blur border-t border-slate-200/80 dark:bg-ink/95 dark:border-slate-800 sm:bg-transparent sm:backdrop-blur-none sm:border-0 sm:bottom-6 sm:right-16 sm:inset-x-auto flex items-center justify-between gap-3 sm:gap-3 sm:justify-end lg:right-24">
+        {!isFirst ? (
           <Button
             variant="outline"
             size="lg"
-            // Mobile: the outline variant's bg-transparent read as too weak
-            // floating over whatever content happens to be scrolled behind
-            // it (photos, colored sections), so it gets a solid surface +
-            // stronger border here — sm: resets both back to the original
-            // transparent outline look, unchanged on desktop.
-            className="border-ink/60 bg-white text-base text-ink shadow-[var(--shadow-card)] hover:bg-ink/5 sm:border-ink/40 sm:bg-transparent"
+            className="flex-1 sm:flex-initial justify-center text-sm sm:text-base font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200 sm:border sm:border-ink/40 sm:bg-transparent sm:text-ink sm:shadow-none hover:sm:bg-ink/5"
             onClick={() => setPageIndex((i) => i - 1)}
             disabled={submitting}
             aria-label={t.surveyFlow.previous}
           >
-            <ChevronLeft size={20} />
-            <span className="hidden sm:inline">{t.surveyFlow.previous}</span>
+            <ChevronLeft size={18} className="sm:h-5 sm:w-5" />
+            <span>{t.surveyFlow.previous}</span>
+          </Button>
+        ) : (
+          <Button
+            variant="outline"
+            size="lg"
+            className="flex-1 sm:hidden justify-center text-sm font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200"
+            onClick={() => router.push(basePath)}
+            disabled={submitting}
+            aria-label={t.surveyFlow.previous}
+          >
+            <ChevronLeft size={18} />
+            <span>{t.surveyFlow.previous}</span>
           </Button>
         )}
 
@@ -333,14 +404,14 @@ export function SurveyExperience({
           size="lg"
           onClick={handlePrimary}
           disabled={!canAdvance || submitting}
-          className="min-w-[10.5rem] justify-center text-base shadow-[0_8px_24px_-6px_rgba(234,88,12,0.5)]"
+          className="flex-1 sm:flex-initial min-w-0 sm:min-w-[10.5rem] justify-center text-sm sm:text-base font-bold shadow-[0_8px_24px_-6px_rgba(234,88,12,0.5)] bg-orange-600 hover:bg-orange-700 text-white"
         >
           {submitting ? (
             <Loader2 size={18} className="animate-spin" />
           ) : (
             <>
-              {isLast ? t.surveyFlow.submitSurvey : t.surveyFlow.next}
-              {!isLast && <ChevronRight size={20} />}
+              <span>{isLast ? t.surveyFlow.submitSurvey : t.surveyFlow.next}</span>
+              {!isLast && <ChevronRight size={18} className="sm:h-5 sm:w-5" />}
             </>
           )}
         </Button>
@@ -351,19 +422,41 @@ export function SurveyExperience({
 
 function StepBody({ heading, subtitle, children }: { heading: string; subtitle: string; children: React.ReactNode }) {
   return (
-    <fieldset className="mt-1.5">
-      <legend className="font-display text-3xl font-extrabold text-ink sm:text-4xl">{heading}</legend>
-      <p className="mt-2.5 text-lg text-muted sm:text-xl">{subtitle}</p>
-      <div className="mt-6">{children}</div>
-    </fieldset>
+    <div className="w-full mt-1.5">
+      <h1 className="font-display text-2xl sm:text-3xl lg:text-4xl font-extrabold text-ink leading-[1.35] py-1 break-words overflow-visible">
+        {heading}
+      </h1>
+      <p className="mt-1 text-sm sm:text-base text-muted leading-relaxed">{subtitle}</p>
+      <div className="mt-4 sm:mt-6">{children}</div>
+    </div>
   );
 }
 
 const PERSONAL_INFO_ROW_COLORS = {
-  blue: { bg: "bg-blue-50/60", icon: "bg-blue-500" },
-  pink: { bg: "bg-pink-50/60", icon: "bg-pink-500" },
-  green: { bg: "bg-green-50/60", icon: "bg-green-600" },
-  purple: { bg: "bg-purple-50/60", icon: "bg-purple-500" },
+  blue: {
+    bg: "bg-blue-50/50 dark:bg-blue-950/30",
+    border: "border-blue-200 dark:border-blue-900",
+    icon: "bg-blue-600",
+    chipActive: "border-blue-600 bg-blue-600 text-white",
+  },
+  pink: {
+    bg: "bg-pink-50/50 dark:bg-pink-950/30",
+    border: "border-pink-200 dark:border-pink-900",
+    icon: "bg-pink-500",
+    chipActive: "border-pink-600 bg-pink-600 text-white",
+  },
+  green: {
+    bg: "bg-emerald-50/50 dark:bg-emerald-950/30",
+    border: "border-emerald-200 dark:border-emerald-900",
+    icon: "bg-emerald-600",
+    chipActive: "border-emerald-600 bg-emerald-600 text-white",
+  },
+  purple: {
+    bg: "bg-purple-50/50 dark:bg-purple-950/30",
+    border: "border-purple-200 dark:border-purple-900",
+    icon: "bg-purple-600",
+    chipActive: "border-purple-600 bg-purple-600 text-white",
+  },
 } as const;
 
 function PersonalInfoRow({
@@ -383,16 +476,16 @@ function PersonalInfoRow({
 }) {
   const palette = PERSONAL_INFO_ROW_COLORS[color];
   return (
-    <div className={cn("flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:gap-5 sm:p-4", palette.bg)}>
+    <div className={cn("flex flex-col gap-3 rounded-2xl border p-3.5 sm:p-4 sm:flex-row sm:items-center sm:gap-5", palette.bg, palette.border)}>
       <div className="flex items-start gap-3 sm:w-72 sm:shrink-0">
-        <span className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white", palette.icon)}>
+        <span className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white shadow-sm", palette.icon)}>
           <Icon size={18} />
         </span>
         <div>
-          <p className="font-display text-base font-extrabold leading-snug text-ink sm:text-lg">
+          <p className="font-display text-sm sm:text-base font-extrabold leading-snug text-ink">
             {index}. {question}
           </p>
-          <p className="mt-0.5 text-xs text-muted">{subtitle}</p>
+          <p className="mt-0.5 text-xs text-muted leading-snug">{subtitle}</p>
         </div>
       </div>
       <div className="sm:flex-1">{children}</div>
@@ -410,54 +503,75 @@ function PartyOptionCard({
   onSelect: () => void;
 }) {
   const { locale } = useLocale();
-  const displayName = locale === "hi" ? option.labelHi ?? option.label : option.label;
+  const isJansatta =
+    option.key.toLowerCase().includes("jansatta") ||
+    (option.label ?? "").toLowerCase().includes("jansatta") ||
+    (option.abbreviation ?? "").toLowerCase() === "jdlp";
+  const displayName = isJansatta
+    ? (locale === "hi" ? "जनसत्ता दल (JDLP)" : "JDLP")
+    : (locale === "hi" ? (option.labelHi || option.label) : option.label);
+
   return (
     <label
       className={cn(
-        "card-surface relative flex cursor-pointer flex-col items-center gap-1 rounded-2xl p-2 text-center transition-all focus-within:ring-2 focus-within:ring-ink/40 hover:-translate-y-0.5 hover:shadow-[var(--shadow-soft)]",
-        selected && "border-ink bg-ink/[0.04] ring-2 ring-ink/25"
+        "card-surface relative flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border border-border p-3 text-center transition-all focus-within:ring-2 focus-within:ring-ink/40 hover:-translate-y-0.5 hover:shadow-[var(--shadow-soft)] min-h-[110px] sm:min-h-[130px]",
+        selected && "border-accent bg-orange-50/50 ring-2 ring-accent dark:bg-orange-950/20"
       )}
     >
       <input type="radio" name="party_preference" checked={selected} onChange={onSelect} className="sr-only" />
       {selected && (
-        <span className="absolute right-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-ink text-white">
-          <Check size={12} />
+        <span className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-accent text-white">
+          <Check size={12} strokeWidth={3} />
         </span>
       )}
-      <span className="flex h-16 w-16 items-center justify-center sm:h-20 sm:w-20">
+      <span className="flex h-12 w-12 items-center justify-center sm:h-16 sm:w-16">
         {option.logoUrl ? (
           <Image src={option.logoUrl} alt="" width={80} height={80} className="h-full w-full object-contain" />
         ) : (
           <span
-            className="flex h-14 w-14 items-center justify-center rounded-full text-sm font-extrabold text-white sm:h-16 sm:w-16"
+            className="flex h-10 w-10 sm:h-14 sm:w-14 items-center justify-center rounded-full text-xs sm:text-sm font-extrabold text-white"
             style={{ backgroundColor: option.colorHex ?? "#6b7280" }}
           >
             {(option.abbreviation ?? option.label).slice(0, 3).toUpperCase()}
           </span>
         )}
       </span>
-      <span className="font-display text-xs font-extrabold leading-tight text-ink sm:text-sm">{displayName}</span>
+      <span className="font-display text-xs font-extrabold leading-snug text-ink sm:text-sm text-center px-1">
+        {displayName}
+      </span>
     </label>
   );
 }
 
-// Per-issue pastel tint (card background + border + icon color), matching
-// the reference design's colour-coded issue grid. Keyed by the DEFAULT_ISSUES
-// key (src/lib/enums.ts) — an issue key without an entry here (e.g. one an
-// admin adds later) falls back to the neutral "other" palette.
-const ISSUE_STYLES: Record<string, { bg: string; border: string; icon: string }> = {
-  rojgar: { bg: "bg-blue-50", border: "border-blue-100", icon: "text-blue-600" },
-  mahangai: { bg: "bg-green-50", border: "border-green-100", icon: "text-green-600" },
-  sadak: { bg: "bg-amber-50", border: "border-amber-100", icon: "text-slate-700" },
-  bijli: { bg: "bg-violet-50", border: "border-violet-100", icon: "text-violet-600" },
-  pani: { bg: "bg-cyan-50", border: "border-cyan-100", icon: "text-cyan-600" },
-  shiksha: { bg: "bg-pink-50", border: "border-pink-100", icon: "text-pink-600" },
-  swasthya: { bg: "bg-yellow-50", border: "border-yellow-100", icon: "text-orange-500" },
-  kanoon_vyavastha: { bg: "bg-emerald-50", border: "border-emerald-100", icon: "text-emerald-700" },
-  krishi: { bg: "bg-rose-50", border: "border-rose-100", icon: "text-rose-700" },
-  parivahan: { bg: "bg-indigo-50", border: "border-indigo-100", icon: "text-indigo-600" },
-  jal_nikasi: { bg: "bg-sky-50", border: "border-sky-100", icon: "text-sky-600" },
-  other: { bg: "bg-gray-100", border: "border-gray-200", icon: "text-gray-600" },
+// Per-issue styling matching the user's reference design
+const ISSUE_STYLES: Record<string, { bg: string; border: string; iconBox: string; iconColor: string }> = {
+  rojgar: { bg: "bg-white", border: "border-blue-200", iconBox: "bg-blue-500", iconColor: "text-white" },
+  mahangai: { bg: "bg-white", border: "border-emerald-200", iconBox: "bg-emerald-100", iconColor: "text-emerald-600" },
+  sadak: { bg: "bg-white", border: "border-amber-200", iconBox: "bg-amber-100", iconColor: "text-slate-800" },
+  bijli: { bg: "bg-white", border: "border-purple-200", iconBox: "bg-purple-100", iconColor: "text-purple-600" },
+  pani: { bg: "bg-white", border: "border-sky-200", iconBox: "bg-sky-100", iconColor: "text-sky-600" },
+  shiksha: { bg: "bg-white", border: "border-pink-200", iconBox: "bg-pink-100", iconColor: "text-pink-600" },
+  swasthya: { bg: "bg-white", border: "border-rose-200", iconBox: "bg-rose-100", iconColor: "text-rose-500" },
+  kanoon_vyavastha: { bg: "bg-white", border: "border-emerald-200", iconBox: "bg-emerald-600", iconColor: "text-white" },
+  krishi: { bg: "bg-white", border: "border-pink-200", iconBox: "bg-pink-100", iconColor: "text-rose-600" },
+  parivahan: { bg: "bg-white", border: "border-indigo-200", iconBox: "bg-blue-600", iconColor: "text-white" },
+  jal_nikasi: { bg: "bg-white", border: "border-cyan-200", iconBox: "bg-cyan-100", iconColor: "text-cyan-600" },
+  other: { bg: "bg-white", border: "border-slate-200", iconBox: "bg-slate-200", iconColor: "text-slate-600" },
+};
+
+const ISSUE_DESCRIPTIONS: Record<string, { hi: string; en: string }> = {
+  rojgar: { hi: "अधिक अवसर, बेहतर भविष्य", en: "More opportunities, better future" },
+  mahangai: { hi: "कीमतों पर नियंत्रण", en: "Control on prices" },
+  sadak: { hi: "बेहतर सड़क और बुनियादी ढांचा", en: "Better roads and infrastructure" },
+  bijli: { hi: "निश्चित और सस्ती बिजली", en: "Reliable and affordable electricity" },
+  pani: { hi: "स्वच्छ पेयजल और जलापूर्ति", en: "Clean drinking water & supply" },
+  shiksha: { hi: "बेहतर शिक्षा, उज्ज्वल भविष्य", en: "Better education, bright future" },
+  swasthya: { hi: "अच्छी स्वास्थ्य सुविधाएँ", en: "Good healthcare facilities" },
+  kanoon_vyavastha: { hi: "सुरक्षित और शांतिपूर्ण समाज", en: "Safe and peaceful society" },
+  krishi: { hi: "किसानों के लिए बेहतर नीतियाँ", en: "Better policies for farmers" },
+  parivahan: { hi: "बेहतर सार्वजनिक परिवहन सुविधा", en: "Better public transport" },
+  jal_nikasi: { hi: "बेहतर नाली और बाढ़ नियंत्रण", en: "Better drainage & flood control" },
+  other: { hi: "कोई अन्य मुद्दा", en: "Any other issue" },
 };
 
 function IconOptionCard({
@@ -469,30 +583,44 @@ function IconOptionCard({
   selected: boolean;
   onSelect: () => void;
 }) {
+  const { locale } = useLocale();
   const iconRegistry = Icons as unknown as Record<string, typeof HelpCircle>;
   const IconComponent = (option.icon && iconRegistry[option.icon]) || HelpCircle;
   const style = ISSUE_STYLES[option.key] ?? ISSUE_STYLES.other;
+  const desc = ISSUE_DESCRIPTIONS[option.key]?.[locale === "en" ? "en" : "hi"] ?? "";
+
   return (
     <label
       className={cn(
-        "relative flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-2xl border p-3.5 text-center transition-all hover:-translate-y-0.5 hover:shadow-[var(--shadow-soft)]",
+        "relative flex cursor-pointer items-center gap-2 sm:gap-2.5 rounded-2xl border p-2.5 sm:p-3 text-left transition-all hover:shadow-[var(--shadow-soft)] min-h-[72px] sm:min-h-[80px]",
         style.bg,
         style.border,
-        selected && "border-blue-500 ring-2 ring-blue-500"
+        selected && "border-blue-500 ring-2 ring-blue-400/50 bg-blue-50/40 dark:bg-blue-950/20"
       )}
     >
       <input type="checkbox" checked={selected} onChange={onSelect} className="sr-only" />
+      <span className={cn("flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-xl", style.iconBox, style.iconColor)}>
+        <IconComponent size={20} />
+      </span>
+      <div className="flex-1 min-w-0 pr-1">
+        <div className="font-display font-bold text-xs sm:text-sm text-ink leading-tight truncate sm:whitespace-normal">
+          {option.label}
+        </div>
+        {desc && (
+          <div className="text-[10px] sm:text-xs text-muted leading-tight mt-0.5 line-clamp-2">
+            {desc}
+          </div>
+        )}
+      </div>
       <span
         aria-hidden="true"
         className={cn(
-          "absolute right-2.5 top-2.5 flex h-5 w-5 items-center justify-center rounded-full border-2 bg-white/70",
-          selected ? "border-blue-600 bg-blue-600 text-white" : "border-ink/15 text-transparent"
+          "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors",
+          selected ? "border-blue-600 bg-blue-600 text-white" : "border-slate-300 bg-white dark:border-slate-600 dark:bg-slate-800 text-transparent"
         )}
       >
-        <Check size={12} />
+        <Check size={12} strokeWidth={3} />
       </span>
-      <IconComponent size={23} className={style.icon} />
-      <span className="font-display text-sm font-bold text-ink">{option.label}</span>
     </label>
   );
 }
@@ -501,10 +629,12 @@ function ChipGroup({
   options,
   selected,
   onSelect,
+  activeColor = "border-ink bg-ink text-white",
 }: {
   options: SurveyOptionItem[];
   selected?: string;
   onSelect: (value: string) => void;
+  activeColor?: string;
 }) {
   return (
     <div className="flex flex-wrap gap-2">
@@ -517,8 +647,10 @@ function ChipGroup({
             aria-pressed={isSelected}
             onClick={() => onSelect(option.key)}
             className={cn(
-              "rounded-full border px-4 py-1.5 text-sm font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/40",
-              isSelected ? "border-ink bg-ink text-white" : "border-border bg-surface text-ink hover:bg-surface-2"
+              "rounded-full border px-4 py-1.5 text-xs sm:text-sm font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/40 shadow-sm",
+              isSelected
+                ? activeColor
+                : "border-slate-200 bg-white text-slate-800 hover:bg-slate-50 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
             )}
           >
             {option.label}
@@ -540,6 +672,24 @@ function SuccessScreen({
 }) {
   const { t, locale } = useLocale();
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (typeof document !== "undefined" && document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+    const resetScroll = () => {
+      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+      if (document.documentElement) document.documentElement.scrollTop = 0;
+      if (document.body) document.body.scrollTop = 0;
+    };
+    resetScroll();
+    const rafId = requestAnimationFrame(resetScroll);
+    const timeoutId = setTimeout(resetScroll, 50);
+    return () => {
+      cancelAnimationFrame(rafId);
+      clearTimeout(timeoutId);
+    };
+  }, []);
   // Deliberately the site's homepage, not the results page for this
   // specific constituency+party breakdown — the share text below already
   // names the constituency (which is fine to disclose), but the link

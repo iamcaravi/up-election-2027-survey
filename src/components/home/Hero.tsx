@@ -34,7 +34,7 @@ const MOBILE_HERO_ASPECT_RATIO = "941 / 1672";
 // aspect ratio (1672/941 ≈ 1.777x width) — the raised Indian flag begins
 // at roughly 69% of the image's height, so the card is pulled up to start
 // right there. A different poster image would need this retuned.
-const MOBILE_HERO_CARD_OVERLAP = 55;
+const MOBILE_HERO_CARD_OVERLAP = 36;
 
 // The Hero's text is admin-positioned pixel-by-pixel (see hero-config.ts) and
 // stored as a single plain string per element — there's no per-locale field
@@ -118,7 +118,7 @@ function tierRules(
     // position:absolute), so it still reserves its own space and can never
     // overlap whatever section follows the hero.
     rules.push(
-      `[data-hero-card]{position:relative;margin-top:-${MOBILE_HERO_CARD_OVERLAP}%;margin-left:auto;margin-right:auto;width:calc(100% - 2rem);}`
+      `[data-hero-card]{position:relative;margin-top:-${MOBILE_HERO_CARD_OVERLAP}%;margin-left:auto;margin-right:auto;margin-bottom:1.5rem;width:calc(100% - 2rem);}`
     );
     rules.push(`[data-hero-text="features"]{flex-direction:column;gap:0.5rem;max-width:44%;}`);
   } else if (tier === "tablet") {
@@ -556,7 +556,7 @@ export function Hero({
         </div>
       )}
 
-      <div data-section="surveyCta">
+      <div data-section="surveyCta" className="relative z-20 pb-6 sm:pb-0">
         <SurveyEntryCard states={surveyStates} heading={config.surveyHeading} />
       </div>
     </section>

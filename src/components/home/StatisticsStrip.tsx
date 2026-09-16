@@ -37,13 +37,13 @@ export function StatisticsStrip({ stats }: StatisticsStripProps) {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-20px" }}
                 transition={{ duration: 0.4, delay: i * 0.05 }}
-                className="flex items-center gap-3 lg:pl-4 lg:first:pl-0"
+                className="flex items-center gap-3 lg:pl-4 lg:first:pl-0 last:col-span-2 sm:last:col-span-1"
               >
                 <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-ink/10 text-ink dark:bg-white/10 dark:text-white">
                   <Icon size={20} />
                 </span>
                 <div>
-                  <p className="font-display text-xl font-extrabold leading-none text-foreground sm:text-2xl">
+                  <p className="font-display text-xl font-extrabold leading-snug text-foreground sm:text-2xl">
                     {item.primary ?? (item.value !== null ? <AnimatedCounter value={item.value} /> : item.suffix || formatNumber(0))}
                   </p>
                   <p className="mt-1 text-xs font-medium leading-snug text-muted">{item.label}</p>

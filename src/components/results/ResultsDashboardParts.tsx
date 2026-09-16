@@ -52,10 +52,10 @@ export function SummaryCard({
 }) {
   const { bg, border, icon: iconClass } = SUMMARY_CARD_TONES[tone];
   return (
-    <div className={`rounded-2xl border ${border} ${bg} px-4 py-3.5 shadow-[var(--shadow-card)]`}>
+    <div className={`rounded-2xl border ${border} ${bg} px-3.5 py-3 sm:px-4 sm:py-3.5 shadow-[var(--shadow-card)]`}>
       <span className={`flex h-9 w-9 items-center justify-center rounded-xl ${iconClass}`}>{icon}</span>
-      <p className="mt-2.5 truncate font-display text-2xl font-extrabold text-ink">{value}</p>
-      <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-muted">
+      <p className="mt-2 sm:mt-2.5 truncate font-display text-xl sm:text-2xl font-extrabold leading-snug text-ink">{value}</p>
+      <p className="mt-0.5 flex flex-wrap items-center gap-1 sm:gap-1.5 text-xs leading-snug text-muted">
         {label}
         {typeof delta === "number" && (
           <span className={delta >= 0 ? "font-bold text-positive" : "font-bold text-danger"}>

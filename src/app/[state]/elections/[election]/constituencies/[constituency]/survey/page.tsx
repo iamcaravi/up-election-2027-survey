@@ -63,7 +63,17 @@ export default async function SurveyPage({
   // Already ordered correctly by the DB query (options are stored in the
   // order syncPartyPreferenceOptions gave them: this state's featured
   // parties, then Other/NOTA/Undecided last).
-  const partyOptions = questionByKey.get("party_preference")?.options ?? [];
+  const rawPartyOptions = questionByKey.get("party_preference")?.options ?? [];
+  const partyOptions = rawPartyOptions.filter((option) => {
+    const slug = (option.party?.slug ?? option.key).toLowerCase();
+    const shortName = (option.party?.shortName ?? option.label).toLowerCase();
+    if (state.slug === "uttar-pradesh") {
+      if (slug === "ncp" || slug.includes("nationalist-congress") || shortName === "ncp") {
+        return false;
+      }
+    }
+    return true;
+  });
   const parties: SurveyOptionItem[] = partyOptions.map((option) => {
     const shortName = option.party?.shortName ?? option.label;
     const slugForLogo = option.party?.slug ?? option.key;
@@ -74,8 +84,8 @@ export default async function SurveyPage({
       slugForLogo === "other" ? "OTH" : slugForLogo === "nota" ? "NOTA" : slugForLogo === "undecided" ? "N/A" : shortName;
     return {
       key: option.key,
-      label: option.party?.nameEnglish ?? option.label,
-      labelHi: getPartyDisplayName(option.party, option.party?.nameEnglish ?? option.label),
+      label: getPartyDisplayName(option.party, option.party?.nameEnglish ?? option.label, "en"),
+      labelHi: getPartyDisplayName(option.party, option.party?.nameEnglish ?? option.label, "hi"),
       abbreviation,
       logoUrl: getPartyLogoUrl(option.party),
       colorHex: option.party?.colorHex ?? null,

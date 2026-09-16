@@ -133,7 +133,7 @@ export function SurveyHero({
             <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-accent">
               <MapPin size={12} /> {stateName}
             </p>
-            <h1 className="mt-1 font-display text-2xl font-extrabold leading-tight text-ink sm:text-3xl lg:text-4xl">
+            <h1 className="mt-1 font-display text-2xl font-extrabold leading-[1.35] py-0.5 break-words text-ink sm:text-3xl lg:text-4xl">
               {constituencyName}
             </h1>
             <p className="mt-1 text-sm font-medium text-muted">

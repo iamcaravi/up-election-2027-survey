@@ -58,7 +58,7 @@ export function FeatureCards({ surveyHref, resultsHref, analyticsHref }: Feature
 
   return (
     <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
         {cards.map((card, i) => {
           const Icon = card.icon;
           return (
@@ -71,17 +71,17 @@ export function FeatureCards({ surveyHref, resultsHref, analyticsHref }: Feature
             >
               <Link href={card.href}>
                 <div
-                  className={`group flex flex-col gap-3 rounded-2xl border ${card.border} ${card.cardBg} p-5 transition-all hover:-translate-y-0.5 hover:shadow-[var(--shadow-soft)] cursor-pointer`}
+                  className={`group flex flex-col gap-2 sm:gap-3 rounded-xl sm:rounded-2xl border ${card.border} ${card.cardBg} p-3.5 sm:p-5 transition-all hover:-translate-y-0.5 hover:shadow-[var(--shadow-soft)] cursor-pointer h-full`}
                 >
-                  <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${card.iconBg} text-white`}>
-                    <Icon size={20} />
+                  <div className={`flex h-9 w-9 sm:h-11 sm:w-11 items-center justify-center rounded-lg sm:rounded-xl ${card.iconBg} text-white`}>
+                    <Icon size={18} className="sm:h-5 sm:w-5" />
                   </div>
                   <div className="flex-1">
-                    <h3 className={`font-display text-base font-bold ${card.text}`}>{card.title}</h3>
-                    <p className="mt-1 text-sm text-muted">{card.description}</p>
+                    <h3 className={`font-display text-sm sm:text-base font-bold leading-snug ${card.text}`}>{card.title}</h3>
+                    <p className="mt-0.5 sm:mt-1 text-xs sm:text-sm text-muted line-clamp-2 sm:line-clamp-none leading-snug">{card.description}</p>
                   </div>
-                  <div className={`flex items-center gap-1.5 text-sm font-semibold ${card.text} group-hover:gap-2.5 transition-all`}>
-                    <ArrowRight size={15} />
+                  <div className={`flex items-center gap-1 sm:gap-1.5 text-xs sm:text-sm font-semibold ${card.text} group-hover:gap-2.5 transition-all`}>
+                    <ArrowRight size={14} className="sm:h-4 sm:w-4" />
                   </div>
                 </div>
               </Link>
