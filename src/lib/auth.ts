@@ -5,11 +5,16 @@ import bcrypt from "bcryptjs";
 import { prisma } from "./prisma";
 import type { AdminRole } from "./enums";
 
-const sessionSecret = process.env.SESSION_SECRET;
-if (!sessionSecret) throw new Error("SESSION_SECRET must be configured.");
-const SECRET = new TextEncoder().encode(sessionSecret);
 const COOKIE_NAME = "up2027_admin_session";
 const SESSION_DURATION = 60 * 60 * 8; // 8 hours
+
+function getSessionSecret(): Uint8Array {
+  const sessionSecret = process.env.SESSION_SECRET;
+  if (!sessionSecret) {
+    throw new Error("SESSION_SECRET must be configured.");
+  }
+  return new TextEncoder().encode(sessionSecret);
+}
 
 export interface AdminSession {
   sub: string;
@@ -24,7 +29,7 @@ export async function createAdminSession(user: AdminSession) {
     .setSubject(user.sub)
     .setIssuedAt()
     .setExpirationTime(`${SESSION_DURATION}s`)
-    .sign(SECRET);
+    .sign(getSessionSecret());
 
   const store = await cookies();
   store.set(COOKIE_NAME, token, {
@@ -46,7 +51,7 @@ export async function getAdminSession(): Promise<AdminSession | null> {
   const token = store.get(COOKIE_NAME)?.value;
   if (!token) return null;
   try {
-    const { payload } = await jwtVerify(token, SECRET);
+    const { payload } = await jwtVerify(token, getSessionSecret());
     return {
       sub: payload.sub as string,
       email: payload.email as string,

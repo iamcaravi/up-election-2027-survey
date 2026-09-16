@@ -1,10 +1,15 @@
 import { createHash } from "crypto";
 
-const SECRET = process.env.SESSION_SECRET;
-if (!SECRET) throw new Error("SESSION_SECRET must be configured.");
+function getSessionSecret(): string {
+  const secret = process.env.SESSION_SECRET;
+  if (!secret) {
+    throw new Error("SESSION_SECRET must be configured.");
+  }
+  return secret;
+}
 
 export function saltedHash(value: string): string {
-  return createHash("sha256").update(`${SECRET}:${value}`).digest("hex");
+  return createHash("sha256").update(`${getSessionSecret()}:${value}`).digest("hex");
 }
 
 export function getClientIp(headers: Headers): string {

@@ -78,3 +78,6 @@ next-env.d.ts
 
 # Scratch output from one-off data-migration scripts (scripts/phase19-*.ts)
 scripts/.out-*.json
+
+# Local Netlify folder
+.netlify
