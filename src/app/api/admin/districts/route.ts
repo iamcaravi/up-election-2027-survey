@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
   const districts = await prisma.district.findMany({
     where: {
       stateId,
-      ...(q ? { name: { contains: q } } : {}),
+      ...(q ? { name: { contains: q, mode: "insensitive" } } : {}),
     },
     include: { _count: { select: { constituencies: true } } },
     orderBy: { name: "asc" },

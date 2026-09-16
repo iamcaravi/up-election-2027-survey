@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
     where: {
       stateId,
       ...(districtId ? { districtId } : {}),
-      ...(q ? { name: { contains: q } } : {}),
+      ...(q ? { name: { contains: q, mode: "insensitive" } } : {}),
     },
     include: {
       district: { select: { id: true, name: true } },

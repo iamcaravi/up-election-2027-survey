@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { ArrowRight, Building2, ChevronDown, MapPin, Users } from "lucide-react";
 import type { ReactNode } from "react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { displayStateName } from "@/lib/utils";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -70,7 +70,7 @@ function FieldSelect<T extends { id: string }>({
   const { t } = useLocale();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const queryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const noOptionsLabel = t.heroSurvey.noOptions;
   const closeOptionsLabel = t.heroSurvey.closeOptions;
 
@@ -79,41 +79,68 @@ function FieldSelect<T extends { id: string }>({
   // doesn't silently hide the freshly-loaded list.
   useEffect(() => {
     setQuery("");
+    setHighlightedIndex(-1);
   }, [items]);
 
   // Type-to-filter: typing while the control is focused narrows the list to
   // items whose label starts with what's been typed so far (e.g. "g" then
-  // "go" then "gon"), like a native <select>'s typeahead but filtering the
-  // visible list instead of just jumping to the first match. The buffer
-  // resets after a short pause so a later, unrelated keypress starts fresh.
-  function queueQueryReset() {
-    if (queryTimeoutRef.current) clearTimeout(queryTimeoutRef.current);
-    queryTimeoutRef.current = setTimeout(() => setQuery(""), 1200);
+  // "go" then "gon"). The filter stays applied for as long as the dropdown
+  // is open — it used to clear itself on a short timer, which reset the
+  // visible (unfiltered) list out from under the user's cursor whenever
+  // moving the mouse toward an option took longer than that timeout. The
+  // filter now only clears on close, select, or the field being reset above.
+  const filteredItems = query.trim()
+    ? items.filter((item) => getLabel(item).toLowerCase().startsWith(query.trim().toLowerCase()))
+    : items;
+
+  useEffect(() => {
+    setHighlightedIndex(-1);
+  }, [query]);
+
+  function closeDropdown() {
+    setOpen(false);
+    setQuery("");
+    setHighlightedIndex(-1);
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLButtonElement>) {
     if (disabled) return;
     if (e.key === "Escape") {
-      setOpen(false);
-      setQuery("");
+      closeDropdown();
+      return;
+    }
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setOpen(true);
+      setHighlightedIndex((i) => Math.min(filteredItems.length - 1, i + 1));
+      return;
+    }
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setOpen(true);
+      setHighlightedIndex((i) => Math.max(0, i - 1));
+      return;
+    }
+    if (e.key === "Enter") {
+      if (!open) return;
+      e.preventDefault();
+      const item = filteredItems[highlightedIndex >= 0 ? highlightedIndex : 0];
+      if (item) {
+        onSelect(item);
+        closeDropdown();
+      }
       return;
     }
     if (e.key === "Backspace") {
       setQuery((prev) => prev.slice(0, -1));
-      queueQueryReset();
       return;
     }
     if (e.key.length === 1 && /[a-zA-Z0-9ऀ-ॿ]/.test(e.key)) {
       e.preventDefault();
       setOpen(true);
       setQuery((prev) => prev + e.key);
-      queueQueryReset();
     }
   }
-
-  const filteredItems = query.trim()
-    ? items.filter((item) => getLabel(item).toLowerCase().startsWith(query.trim().toLowerCase()))
-    : items;
 
   return (
     <div className="relative">
@@ -137,10 +164,7 @@ function FieldSelect<T extends { id: string }>({
             type="button"
             aria-label={closeOptionsLabel}
             className="fixed inset-0 z-30 cursor-default"
-            onClick={() => {
-              setOpen(false);
-              setQuery("");
-            }}
+            onClick={closeDropdown}
           />
           {/* Opens DOWNWARD (top-full) by default — mobile, where this card
               now sits high up the page (overlapping the hero poster), so an
@@ -154,16 +178,18 @@ function FieldSelect<T extends { id: string }>({
               that same sticky header (z-40) in either direction. */}
           <div className="absolute left-0 right-0 top-full z-50 mt-2 max-h-64 min-w-[13rem] overflow-y-auto rounded-xl border border-[#101A3A]/15 bg-white shadow-xl sm:bottom-full sm:top-auto sm:mb-2 sm:mt-0">
             {filteredItems.length === 0 && <p className="px-4 py-3 text-sm text-[#101A3A]/60">{noOptionsLabel}</p>}
-            {filteredItems.map((item) => (
+            {filteredItems.map((item, idx) => (
               <button
                 key={item.id}
                 type="button"
+                onMouseEnter={() => setHighlightedIndex(idx)}
                 onClick={() => {
                   onSelect(item);
-                  setOpen(false);
-                  setQuery("");
+                  closeDropdown();
                 }}
-                className="block w-full border-b border-[#101A3A]/10 px-4 py-2.5 text-left text-sm font-medium text-[#101A3A] last:border-b-0 hover:bg-[#101A3A]/5"
+                className={`block w-full border-b border-[#101A3A]/10 px-4 py-2.5 text-left text-sm font-medium text-[#101A3A] last:border-b-0 hover:bg-[#101A3A]/5 ${
+                  highlightedIndex === idx ? "bg-[#101A3A]/5" : ""
+                }`}
               >
                 {getLabel(item)}
               </button>
