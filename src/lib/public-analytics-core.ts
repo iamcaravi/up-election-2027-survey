@@ -142,6 +142,15 @@ export function protectPublicCells(
   denominator: number,
   minRequired: number
 ): PublicAnalyticsBucket[] {
+  if (minRequired <= 1) {
+    return cells.map(({ count, ...metadata }) => ({
+      ...metadata,
+      state: "available" as const,
+      count,
+      percentage: roundPublicPercentage(count, denominator),
+    }));
+  }
+
   const suppressedIndexes = new Set<number>();
   cells.forEach((cell, index) => {
     if (cell.count < minRequired) suppressedIndexes.add(index);

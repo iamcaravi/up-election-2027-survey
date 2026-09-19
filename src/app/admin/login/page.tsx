@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { ArrowRight, ArrowLeft, BarChart3, Eye, EyeOff, Quote, ShieldCheck, Users2 } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { ArrowRight, ArrowLeft, BarChart3, CheckCircle2, Eye, EyeOff, Quote, ShieldCheck, Users2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 
 const FEATURES = [
@@ -13,8 +13,10 @@ const FEATURES = [
   { icon: Users2, title: "Better Governance", body: "People's voice for a better tomorrow" },
 ];
 
-export default function AdminLoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const resetSuccess = searchParams.get("reset") === "success";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -117,6 +119,13 @@ export default function AdminLoginPage() {
             <h2 className="font-display text-3xl font-extrabold text-ink">Admin Login</h2>
             <p className="mt-1 text-sm text-muted">Access your votersurvey.in admin dashboard</p>
 
+            {resetSuccess && (
+              <div className="mt-4 flex items-start gap-2.5 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3.5 text-sm text-emerald-800 dark:text-emerald-300">
+                <CheckCircle2 size={18} className="mt-0.5 shrink-0 text-emerald-600" />
+                <span>Password reset successfully. Please log in with your new password.</span>
+              </div>
+            )}
+
             <div className="mt-7 space-y-4">
               <div>
                 <label htmlFor="admin-email" className="mb-1.5 block text-sm font-medium text-foreground">
@@ -169,7 +178,7 @@ export default function AdminLoginPage() {
                 />
                 Keep me logged in
               </label>
-              <Link href="/admin/account" className="font-semibold text-blue-700 hover:underline">
+              <Link href="/admin/forgot-password" className="font-semibold text-blue-700 hover:underline">
                 Forgot Password?
               </Link>
             </div>
@@ -209,5 +218,13 @@ export default function AdminLoginPage() {
         </footer>
       </div>
     </div>
+  );
+}
+
+export default function AdminLoginPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-surface text-sm text-muted">Loading...</div>}>
+      <LoginForm />
+    </Suspense>
   );
 }

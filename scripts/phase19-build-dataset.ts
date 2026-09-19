@@ -30,7 +30,6 @@ function cleanName(raw: string): string {
 }
 
 const SOURCE_NAME = "Uttar Pradesh Legislative Assembly";
-const SOURCE_LISTING_URL = "https://www.upvidhansabhaproceedings.gov.in/en/member-s-information";
 
 const importRows = classified
   .filter((c) => c.status === "OK")

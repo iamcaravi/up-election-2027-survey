@@ -23,6 +23,13 @@ export async function generateMetadata({
   if (!result) return {};
   const stateName = displayStateName(result.state.name, result.state.slug, locale);
   const path = stateResultsPath(result.state.slug);
+  const ogTitle = locale === "hi" ? `${stateName} सर्वे — वर्तमान स्थिति` : `${stateName} Survey — Current Status`;
+  const ogDescription =
+    locale === "hi"
+      ? `${stateName} में दर्ज सार्वजनिक सर्वे प्रतिक्रियाओं की वर्तमान स्थिति देखें।`
+      : `View the current status of public survey responses recorded across ${stateName}.`;
+  const ogImage = `/api/og/state/${result.state.slug}?locale=${locale}`;
+
   const base = buildPageMetadata({
     title: locale === "hi" ? `${stateName} — परिणाम` : `${stateName} — Results`,
     description:
@@ -30,6 +37,9 @@ export async function generateMetadata({
         ? `${stateName} के जनमत सर्वे के परिणाम — पार्टी समर्थन, मुख्य मुद्दे और जिला/विधानसभा क्षेत्रवार परिणाम।`
         : `${stateName} public survey results — party support, key issues, and district/constituency-level results.`,
     path,
+    ogTitle,
+    ogDescription,
+    ogImage,
   });
   return applySeoOverride(base, path);
 }

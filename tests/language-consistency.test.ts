@@ -14,6 +14,7 @@ import { isLocale, LOCALE_COOKIE_NAME, DEFAULT_LOCALE } from "../src/lib/i18n/lo
 import { resolveOptionLabel } from "../src/lib/option-labels";
 import { getPartyDisplayName, getPartyLogoUrl } from "../src/lib/party-logos";
 import { resolveStaticSeoBase, resolveStateScopedSeoBase, SEO_STATIC_CATALOG } from "../src/lib/seo-catalog";
+import { getSurveyShareMessage } from "../src/lib/share-message";
 
 // Recursively collects every leaf key path ("a.b.c") of a nested string
 // dictionary — used to assert hi.ts and en.ts define EXACTLY the same set
@@ -158,5 +159,28 @@ test("13. Fallback behavior never renders a raw i18n key or an empty string for 
     const resolved = resolveOptionLabel(key, { label: "unused-fallback" }, "hi", dictionary);
     assert.notEqual(resolved, "", `${key} resolved to an empty string`);
     assert.doesNotMatch(resolved, /^surveyQuestions\./, `${key} leaked a raw translation key instead of resolved text`);
+  }
+});
+
+test("14. Survey completion share message preserves literal newlines, emoji, and contains no URL-encoded artifacts", () => {
+  const hindiMsg = getSurveyShareMessage({ locale: "hi", constituencyName: "Tarabganj" });
+  const englishMsg = getSurveyShareMessage({ locale: "en", constituencyName: "Tarabganj" });
+
+  for (const [lang, msg] of [["Hindi", hindiMsg], ["English", englishMsg]]) {
+    // Contains actual "\n" characters
+    assert.ok(msg.includes("\n"), `${lang} share message must contain literal '\\n' characters`);
+    assert.equal(msg.split("\n").length, 4, `${lang} share message must contain 4 lines separated by '\\n'`);
+
+    // Contains emoji 🗳️
+    assert.ok(msg.includes("🗳️"), `${lang} share message must contain the 🗳️ emoji`);
+
+    // Does NOT contain URL-encoded artifacts
+    assert.ok(!msg.includes("%0A"), `${lang} share message must not contain '%0A'`);
+    assert.ok(!msg.includes("%EF%B8%8F"), `${lang} share message must not contain '%EF%B8%8F'`);
+    assert.ok(!msg.includes("%20"), `${lang} share message must not contain '%20'`);
+
+    // Contains votersurvey.in exactly once
+    const matches = msg.match(/votersurvey\.in/gi);
+    assert.ok(matches && matches.length === 1, `${lang} share message must contain 'votersurvey.in' exactly once, found ${matches?.length}`);
   }
 });

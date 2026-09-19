@@ -23,6 +23,13 @@ export async function generateMetadata({
   if (!result) return {};
   const stateName = displayStateName(result.state.name, result.state.slug, locale);
   const path = statePath(result.state.slug);
+  const ogTitle = locale === "hi" ? `${stateName} सर्वे — वर्तमान स्थिति` : `${stateName} Survey — Current Status`;
+  const ogDescription =
+    locale === "hi"
+      ? `${stateName} में दर्ज सार्वजनिक सर्वे प्रतिक्रियाओं की वर्तमान स्थिति देखें।`
+      : `View the current status of public survey responses recorded across ${stateName}.`;
+  const ogImage = `/api/og/state/${result.state.slug}?locale=${locale}`;
+
   const base = buildPageMetadata({
     title: locale === "hi" ? `${stateName} चुनाव सर्वेक्षण` : `${stateName} Election Survey`,
     description:
@@ -32,6 +39,9 @@ export async function generateMetadata({
             result.election ? ` for the ${result.election.name}` : ""
           }.`,
     path,
+    ogTitle,
+    ogDescription,
+    ogImage,
   });
   return applySeoOverride(base, path);
 }
@@ -77,6 +87,7 @@ export default async function StatePage({ params }: { params: Promise<{ state: s
             basePath={electionPath(state.slug, election.slug)}
             districts={districts}
             stateName={stateName}
+            stateSlug={state.slug}
           />
         ) : (
           <NoElectionNotice />

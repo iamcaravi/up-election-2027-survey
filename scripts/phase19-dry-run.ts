@@ -8,7 +8,18 @@ async function main() {
     fs.readFileSync(path.join(__dirname, "..", "data", "up", "current-mlas.json"), "utf8")
   );
 
-  const rows: MlaImportRow[] = dataset.map((d: any) => ({
+  interface RawMlaEntry {
+    stateSlug: string;
+    constituencyNumber: string | number;
+    constituencyName: string;
+    name: string;
+    nameHindi?: string | null;
+    partyShortName?: string | null;
+    sourceName: string;
+    sourceUrl: string;
+  }
+
+  const rows: MlaImportRow[] = (dataset as RawMlaEntry[]).map((d) => ({
     state_slug: d.stateSlug,
     constituency_number: String(d.constituencyNumber),
     constituency_name: d.constituencyName,

@@ -30,7 +30,7 @@ export function CastePartyHorizontalChart({ rows }: { rows: DemographicGroupPart
 
   const usable = rows.filter((r) => !r.lowData && r.sampleSize > 0);
   if (usable.length === 0) {
-    return <InlineState>{t.results.resultsSuppressed}</InlineState>;
+    return <InlineState>{t.results.noBreakdownResponses}</InlineState>;
   }
 
   const partyMeta = usable[0].parties.map((p, index) => ({

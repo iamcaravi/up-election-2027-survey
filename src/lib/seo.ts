@@ -21,6 +21,7 @@ export function buildPageMetadata({
   path,
   ogTitle,
   ogDescription,
+  ogImage,
 }: {
   title: string;
   description: string;
@@ -29,7 +30,11 @@ export function buildPageMetadata({
    *  (e.g. a shorter, more shareable phrasing) — defaults to `title`. */
   ogTitle?: string;
   ogDescription?: string;
+  /** Custom Open Graph / Twitter image URL */
+  ogImage?: string;
 }): Metadata {
+  const images = ogImage ? [{ url: ogImage, width: 1200, height: 630 }] : undefined;
+
   return {
     title,
     description,
@@ -39,11 +44,13 @@ export function buildPageMetadata({
       description: ogDescription ?? description,
       url: path,
       type: "website",
+      ...(images ? { images } : {}),
     },
     twitter: {
       card: "summary_large_image",
       title: ogTitle ?? title,
       description: ogDescription ?? description,
+      ...(images ? { images: [ogImage!] } : {}),
     },
   };
 }

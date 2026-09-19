@@ -1,5 +1,5 @@
 // The promotional "hook" text, with no URL in it — used on its own for X's
-// intent endpoint (which takes `text` and `url` as separate params) and
+// intent endpoint (which takes 	ext and url as separate params) and
 // combined with the URL below for WhatsApp/clipboard/native share, so the
 // exact same hook copy backs every share surface instead of being
 // duplicated per platform.
@@ -30,10 +30,10 @@ export function buildResultShareMessage(args: { locale: "hi" | "en"; electionYea
 // never the party/candidate/option the respondent actually picked, which
 // this function has no access to in the first place by design. Every
 // share surface (native Web Share, WhatsApp, clipboard fallback) must
-// route through this one function rather than building its own text, so
+// route through this one centralized function rather than building its own text, so
 // there is exactly one place that decides what a completed survey is
 // allowed to say when shared.
-export function buildSurveyCompletionShareMessage({
+export function getSurveyShareMessage({
   locale,
   constituencyName,
 }: {
@@ -41,7 +41,10 @@ export function buildSurveyCompletionShareMessage({
   constituencyName: string;
 }): string {
   if (locale === "hi") {
-    return `🗳️ मैंने VoterSurvey पर अपनी राय दी!\n📍 मेरी विधानसभा: ${constituencyName}\n\nअब देखिए आपके क्षेत्र में जनता का मूड क्या है।\nआप भी अपनी राय दें।\n\n👉 VoterSurvey.in`;
+    return `मैंने अपनी विधानसभा ${constituencyName} के सर्वे में अपनी राय दे दी है। 🗳️\nअब आपकी बारी है! आप भी अपने विधानसभा क्षेत्र का सर्वे करें और अपनी पसंद दर्ज करें।\nलोगों की राय से ही जनता का मूड सामने आएगा।\n👉 votersurvey.in`;
   }
-  return `🗳️ I shared my opinion on VoterSurvey!\n📍 My Constituency: ${constituencyName}\n\nSee what people in your constituency are thinking.\nShare your opinion too.\n\n👉 VoterSurvey.in`;
+  return `I’ve shared my opinion in the survey for my assembly constituency, ${constituencyName}. 🗳️\nNow it’s your turn! Take the survey for your constituency and share your preference.\nPublic participation helps show the current public opinion.\n👉 votersurvey.in`;
 }
+
+// Backward-compatible alias so existing callers seamlessly use the updated centralized message
+export const buildSurveyCompletionShareMessage = getSurveyShareMessage;

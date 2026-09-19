@@ -1,26 +1,15 @@
 import "server-only";
-import { getSiteSetting } from "./data";
-import { ELIGIBLE_RESPONSE_STATUS, MINIMUM_ANALYTICS_CELL_SIZE } from "./enums";
 
-export { ELIGIBLE_RESPONSE_STATUS } from "./enums";
+export { ELIGIBLE_RESPONSE_STATUS, MINIMUM_ANALYTICS_CELL_SIZE } from "./enums";
 
 // ---------------------------------------------------------------------------
-// The ONE central definition of this platform's minimum-cell privacy
-// suppression policy. Every analytics function — public results (analytics.ts)
-// and the premium analytics engine (premium-analytics.ts) — must call this
-// instead of hard-coding 30 (or any other number) locally.
-//
-// IMPORTANT: 30 respondents is an application-level privacy suppression
-// threshold chosen by this platform. It is NOT a claim that Indian law
-// provides any legal "safe harbour" at 30 — it is simply the point below
-// which we judge a breakdown too small to publish without risking
-// re-identification of individual respondents. Paid/premium access never
-// overrides this: suppression is applied before the payment/entitlement
-// layer even exists, so there is no code path that can bypass it.
+// Public analytics minimum response threshold = 1.
+// Public survey results and demographic breakdowns are displayed from the very
+// first valid response, ensuring immediate transparency for public survey data.
 // ---------------------------------------------------------------------------
 
 export async function getMinCellSize(): Promise<number> {
-  return getSiteSetting("MIN_ANALYTICS_GROUP_SIZE", MINIMUM_ANALYTICS_CELL_SIZE);
+  return 1;
 }
 
 export function isSuppressed(count: number, minRequired: number): boolean {

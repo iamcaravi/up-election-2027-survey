@@ -10,9 +10,12 @@ import path from "node:path";
 import { PrismaClient } from "@prisma/client";
 
 function baseUrl(): string {
-  const url = process.env.TEST_DATABASE_URL ?? process.env.DATABASE_URL;
+  const url = process.env.TEST_DATABASE_URL;
   if (!url) {
-    throw new Error("Set DATABASE_URL (or TEST_DATABASE_URL) to a reachable Postgres instance to run tests.");
+    throw new Error("TEST_DATABASE_URL is required for tests. Tests will never fall back to DATABASE_URL.");
+  }
+  if (process.env.DATABASE_URL && url === process.env.DATABASE_URL) {
+    throw new Error("TEST_DATABASE_URL cannot be identical to DATABASE_URL.");
   }
   return url;
 }

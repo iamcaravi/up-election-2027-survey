@@ -1,6 +1,9 @@
 // Lightweight in-memory sliding-window rate limiter.
-// NOTE: process-local — fine for a single Node instance / demo deployment.
-// For multi-instance production, back this with Redis or a DB table instead.
+// NOTE: Process-local — state is held in Node.js process memory.
+// On serverless platforms (e.g. Netlify / AWS Lambda), this provides best-effort
+// rate-limiting within each active container instance; memory does not persist across
+// cold starts or concurrent container scales. For distributed enforcement across
+// all lambda instances, a shared store (Redis/Upstash) can be introduced if needed.
 
 interface Bucket {
   timestamps: number[];

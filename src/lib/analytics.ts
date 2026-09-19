@@ -105,7 +105,7 @@ export async function getConstituencyResults(constituencyId: string, electionId:
   };
 }
 
-const DEMOGRAPHIC_DIMENSIONS = ["age_group", "gender", "social_category", "religion"] as const;
+export const DEMOGRAPHIC_DIMENSIONS = ["age_group", "gender", "social_category", "religion"] as const;
 export type DemographicDimension = (typeof DEMOGRAPHIC_DIMENSIONS)[number];
 
 export interface DemographicBreakdown {

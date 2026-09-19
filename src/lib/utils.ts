@@ -22,6 +22,11 @@ const STATE_NAME_HI: Record<string, string> = {
   "manipur": "मणिपुर",
   "himachal-pradesh": "हिमाचल प्रदेश",
   "gujarat": "गुजरात",
+  "maharashtra": "महाराष्ट्र",
+  "bihar": "बिहार",
+  "west-bengal": "पश्चिम बंगाल",
+  "rajasthan": "राजस्थान",
+  "madhya-pradesh": "मध्य प्रदेश",
 };
 
 export function displayStateName(name: string, slug: string, locale: "hi" | "en"): string {

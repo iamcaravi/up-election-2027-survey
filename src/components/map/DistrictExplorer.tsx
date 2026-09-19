@@ -6,6 +6,7 @@ import { MapPin } from "lucide-react";
 import { cn, formatNumber } from "@/lib/utils";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { DISTRICT_COLORS } from "@/lib/district-colors";
+import { StateMap } from "@/components/map/StateMap";
 
 export interface DistrictNode {
   slug: string;
@@ -18,10 +19,12 @@ export function DistrictExplorer({
   districts,
   basePath,
   stateName,
+  stateSlug,
 }: {
   districts: DistrictNode[];
   basePath: string;
   stateName: string;
+  stateSlug?: string;
 }) {
   const { t } = useLocale();
 
@@ -34,7 +37,15 @@ export function DistrictExplorer({
         style={{ background: "radial-gradient(closest-side, var(--map-glow), transparent)" }}
       />
 
-      <div className="relative flex flex-col gap-1 pb-6 text-center">
+      <div className="relative flex flex-col items-center gap-1 pb-6 text-center">
+        {stateSlug && (
+          <div className="mb-2 flex items-center justify-center">
+            <StateMap
+              slug={stateSlug}
+              className="h-28 sm:h-36 w-auto max-w-[220px] text-ink/80 dark:text-white/80 drop-shadow-sm transition-transform duration-300 hover:scale-105"
+            />
+          </div>
+        )}
         <h3 className="font-display text-2xl font-extrabold sm:text-3xl">{stateName} {t.map.titleSuffix}</h3>
         <p className="text-sm text-muted">{t.map.subtitle} · {districts.length} {t.stats.districts.toLowerCase()}</p>
       </div>

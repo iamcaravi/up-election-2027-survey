@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
 import { VisitorPresence } from "./VisitorPresence";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import type { SocialLinksConfig, SocialPlatform } from "@/lib/social-links";
@@ -50,11 +49,11 @@ export function SiteFooter({ resultsHref, analysisHref, socialLinks }: SiteFoote
   return (
     <footer className="border-t border-border bg-surface">
       <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        {/* Top Section: Brand + Social */}
+        {/* Top Section: Brand + Links */}
         <div className="mb-4 pb-4 border-b border-border">
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-6 lg:grid-cols-12 lg:gap-8">
             {/* Brand */}
-            <div>
+            <div className="lg:col-span-5">
               <div className="flex items-center gap-2.5 mb-1.5">
                 <span className="flex items-end gap-1">
                   <span className="h-4 w-1.5 rounded-sm bg-accent" />
@@ -63,7 +62,7 @@ export function SiteFooter({ resultsHref, analysisHref, socialLinks }: SiteFoote
                 </span>
                 <span className="font-display text-lg font-bold lowercase">votersurvey.in</span>
               </div>
-              <p className="text-[15px] text-muted mb-2.5">{t.siteHeader.tagline}</p>
+              <p className="text-[15px] text-muted mb-2.5 max-w-sm">{t.siteHeader.tagline}</p>
               {/* Social Icons — a platform with no configured URL (src/lib/social-links.ts)
                   renders as a disabled, non-clickable icon rather than a dead `href="#"`. */}
               <div className="flex gap-3">
@@ -97,58 +96,35 @@ export function SiteFooter({ resultsHref, analysisHref, socialLinks }: SiteFoote
               </div>
             </div>
 
-            {/* Column 1: त्वरित लिंक */}
-            <div>
-              <p className="text-base font-bold mb-2">{t.siteFooter.quickLinks}</p>
-              <ul className="space-y-1.5 text-[15px] text-muted">
-                {quickLinks.map((item) => (
-                  <li key={item.label}>
-                    <Link href={item.href} className="hover:text-foreground transition-colors">
-                      {item.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Column 2: सहायता */}
-            <div>
-              <p className="text-base font-bold mb-2">{t.siteFooter.help}</p>
-              <ul className="space-y-1.5 text-[15px] text-muted">
-                {helpLinks.map((item) => (
-                  <li key={item.label}>
-                    <Link href={item.href} className="hover:text-foreground transition-colors">
-                      {item.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Column 3: नवीनतम अपडेट पाएं (Desktop only) */}
-            <div className="hidden sm:block">
-              <p className="text-base font-bold mb-2">{t.siteFooter.newsletterHeading}</p>
-              <p className="text-[15px] text-muted mb-2.5">{t.siteFooter.newsletterBody}</p>
-              {/* No subscription backend exists yet (see src/lib/social-links.ts's
-                  sibling reasoning) — the form is honestly disabled rather than
-                  silently accepting a submission that goes nowhere. */}
-              <div className="flex gap-2" aria-disabled="true">
-                <input
-                  type="email"
-                  disabled
-                  placeholder={t.siteFooter.emailPlaceholder}
-                  className="flex-1 cursor-not-allowed rounded-lg border border-border bg-background px-3 py-2 text-[15px] text-muted placeholder:text-muted/70 focus:outline-none"
-                />
-                <button
-                  type="button"
-                  disabled
-                  aria-label={t.siteFooter.subscribe}
-                  className="flex h-9 w-9 shrink-0 cursor-not-allowed items-center justify-center rounded-lg bg-ink/40 text-white"
-                >
-                  <ArrowRight size={16} />
-                </button>
+            {/* Links Container: 2-column responsive layout for Quick Links and Help side-by-side */}
+            <div className="grid grid-cols-2 gap-4 sm:gap-8 lg:col-span-7 lg:grid-cols-2">
+              {/* Column 1: त्वरित लिंक */}
+              <div>
+                <p className="text-base font-bold mb-2">{t.siteFooter.quickLinks}</p>
+                <ul className="space-y-1.5 text-[15px] text-muted">
+                  {quickLinks.map((item) => (
+                    <li key={item.label}>
+                      <Link href={item.href} className="hover:text-foreground transition-colors">
+                        {item.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
               </div>
-              <p className="mt-1.5 text-sm text-muted">{t.siteFooter.newsletterComingSoon}</p>
+
+              {/* Column 2: सहायता */}
+              <div>
+                <p className="text-base font-bold mb-2">{t.siteFooter.help}</p>
+                <ul className="space-y-1.5 text-[15px] text-muted">
+                  {helpLinks.map((item) => (
+                    <li key={item.label}>
+                      <Link href={item.href} className="hover:text-foreground transition-colors">
+                        {item.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
           </div>
         </div>

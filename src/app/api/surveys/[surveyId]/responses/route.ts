@@ -64,17 +64,31 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ sur
     where: { surveyId, fingerprint: fingerprintHash, createdAt: { gte: since } },
   });
 
-  // --- Burst detection: same IP submitting to many different surveys quickly -----
-  const recentFromIp = await prisma.surveyResponse.count({
-    where: { ipHash, createdAt: { gte: new Date(Date.now() - 10 * 60 * 1000) } },
-  });
+  // --- Burst detection: same IP / device submitting high volume quickly ----------
+  // Indian mobile carriers (Jio, Airtel) route large populations through shared
+  // CGNAT public IPs. To avoid false-positive flagging of distinct mobile users on
+  // the same cell tower while preserving automated burst protection, we evaluate:
+  // 1. Same IP + same device fingerprint submitting repeatedly (>5 in 10m) -> FLAGGED
+  // 2. Heavy automated network flood (>60 responses from single IP in 10m) -> FLAGGED
+  const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
+  const [recentFromIp, recentFromIpAndDevice] = await Promise.all([
+    prisma.surveyResponse.count({
+      where: { ipHash, createdAt: { gte: tenMinutesAgo } },
+    }),
+    prisma.surveyResponse.count({
+      where: { ipHash, fingerprint: fingerprintHash, createdAt: { gte: tenMinutesAgo } },
+    }),
+  ]);
 
   let status: "VALID" | "FLAGGED" | "REJECTED" = "VALID";
   let flagReason: string | null = null;
   if (recentDuplicate) {
     status = "REJECTED";
     flagReason = "Duplicate submission from the same device within 24 hours.";
-  } else if (recentFromIp > 15) {
+  } else if (recentFromIpAndDevice > 5) {
+    status = "FLAGGED";
+    flagReason = "Unusually high submission volume from this device in a short window.";
+  } else if (recentFromIp > 60) {
     status = "FLAGGED";
     flagReason = "Unusually high submission volume from this network in a short window.";
   }

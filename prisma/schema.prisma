@@ -404,8 +404,23 @@ model AdminUser {
   lastLoginAt  DateTime?
 
   auditLogs    AuditLog[]
+  passwordResetTokens PasswordResetToken[]
 
   @@map("admin_users")
+}
+
+model PasswordResetToken {
+  id          String    @id @default(cuid())
+  adminUserId String
+  adminUser   AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+  tokenHash   String    @unique
+  expiresAt   DateTime
+  usedAt      DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([adminUserId])
+  @@index([expiresAt])
+  @@map("password_reset_tokens")
 }
 
 model AuditLog {

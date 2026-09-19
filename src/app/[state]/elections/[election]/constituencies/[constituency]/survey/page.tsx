@@ -131,6 +131,8 @@ export default async function SurveyPage({
         <SurveyExperience
           surveyId={survey.id}
           constituencyName={constituency.name}
+          stateName={constituency.state.name}
+          stateSlug={state.slug}
           basePath={basePath}
           constituencySlug={slug}
           parties={parties}

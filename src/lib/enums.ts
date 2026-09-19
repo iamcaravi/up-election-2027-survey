@@ -117,5 +117,5 @@ export const CANONICAL_SPECIAL_PARTIES: Array<{
   { nameEnglish: "Undecided", nameHindi: "अनिर्णीत", shortName: "Undecided", slug: "undecided", colorHex: "#9CA3AF" },
 ];
 
-export const MINIMUM_ANALYTICS_CELL_SIZE = 30;
+export const MINIMUM_ANALYTICS_CELL_SIZE = 1;
 export const MIN_ANALYTICS_GROUP_SIZE_DEFAULT = MINIMUM_ANALYTICS_CELL_SIZE;

@@ -24,7 +24,7 @@ export function PartyIssueComparisonChart({ rows, segments }: { rows: IssueParty
           groupKey: row.issueKey,
           groupLabel: row.issueLabel,
           sampleSize: Math.max(0, ...sampleCounts),
-          lowData: row.cells.some((c) => c.lowData),
+          lowData: row.cells.every((c) => c.lowData),
           parties: row.cells.map((cell) => {
             const segment = segments.find((s) => s.key === cell.partyKey);
             return {
