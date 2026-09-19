@@ -5,7 +5,7 @@ import type { Metadata } from "next";
 // shared by layout.tsx (metadataBase), sitemap.ts and robots.ts so all three
 // always agree on one domain instead of silently drifting to different
 // placeholder domains against each other.
-export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://votersurvey.in";
+export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://votersurvey.in").replace(/\/+$/, "");
 
 // One place that turns {title, description, path} into a full, correct
 // Metadata object — canonical + Open Graph + Twitter card — so every
