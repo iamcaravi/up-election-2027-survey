@@ -36,10 +36,10 @@ export const StateCivicVisual = memo(function StateCivicVisual({
 
   const hasAssemblyImage = Boolean(config?.assemblyImage);
 
-  // Mobile dedicated composition (compact, recognizable, non-intrusive)
+  // Mobile dedicated composition (compact card tightly wrapping content, wider prominent hero image, NO MAP)
   if (variant === "mobile") {
     return (
-      <div className="relative w-full overflow-hidden rounded-2xl border border-blue-100/90 bg-gradient-to-r from-sky-50/70 via-blue-50/40 to-sky-50/70 p-2.5 sm:p-3 shadow-xs select-none">
+      <div className="relative w-full overflow-hidden rounded-2xl border border-blue-100/90 bg-gradient-to-b from-sky-50/80 via-blue-50/40 to-sky-50/80 px-3 pt-2.5 pb-2.5 sm:px-4 sm:pt-3 sm:pb-3 shadow-xs select-none">
         {/* Top: Dynamic State Typography */}
         <div className="flex flex-col items-center text-center relative z-20">
           <span className="font-display text-base sm:text-lg font-black text-slate-800 tracking-tight leading-none">
@@ -47,7 +47,7 @@ export const StateCivicVisual = memo(function StateCivicVisual({
           </span>
           {/* Delicate curved orange swoosh underline */}
           <svg
-            className="w-16 sm:w-20 h-1.5 text-orange-500 mt-0.5 overflow-visible"
+            className="w-16 sm:w-20 h-1 text-orange-500 mt-0.5 overflow-visible"
             viewBox="0 0 120 8"
             fill="none"
             preserveAspectRatio="none"
@@ -65,29 +65,29 @@ export const StateCivicVisual = memo(function StateCivicVisual({
           </span>
         </div>
 
-        {/* Center: Legislative Assembly Visual (NO MAP) */}
-        <div className="relative w-full h-32 sm:h-36 mt-1 flex items-center justify-center overflow-hidden rounded-xl bg-gradient-to-b from-sky-100/30 to-blue-50/40">
+        {/* Center: Legislative Assembly Visual (NO MAP, wider image ~86% of card width, centered, uncropped) */}
+        <div className="relative w-full mt-1.5 flex items-center justify-center">
           {hasAssemblyImage && config?.assemblyImage ? (
-            <div className="relative w-full h-full flex items-center justify-center">
+            <div className="relative w-[86%] max-w-[275px] sm:max-w-[310px] aspect-[280/294] flex items-center justify-center">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={config.assemblyImage}
                 alt={assemblyName}
-                className="w-full h-full object-contain object-center select-none pointer-events-none"
+                className="w-full h-full object-contain object-bottom select-none pointer-events-none drop-shadow-xs"
               />
               {/* Dynamic Placard Text overlay */}
               <div
-                className="absolute right-2 sm:right-4 bottom-2.5 sm:bottom-3 pointer-events-none z-30 text-center select-none"
-                style={{ transform: "rotate(3deg)", width: "62px" }}
+                className="absolute right-[1%] bottom-[3%] pointer-events-none z-30 text-center select-none"
+                style={{ transform: "rotate(3deg)", width: "34%" }}
               >
-                <p className="text-[6.5px] font-extrabold text-slate-800 leading-[1.1]">{placardLine1}</p>
-                <p className="text-[6.5px] font-extrabold text-slate-800 leading-[1.1]">{placardLine2}</p>
-                <p className="text-[7px] font-black text-[#c2410c] leading-[1.15] mt-0.5 whitespace-nowrap">{placardLine3}</p>
-                <div className="w-8/12 mx-auto h-[1.2px] bg-[#fb923c] rounded-full mt-0.5" />
+                <p className="text-[7.5px] sm:text-[8px] font-extrabold text-slate-800 leading-[1.15]">{placardLine1}</p>
+                <p className="text-[7.5px] sm:text-[8px] font-extrabold text-slate-800 leading-[1.15]">{placardLine2}</p>
+                <p className="text-[8px] sm:text-[8.5px] font-black text-[#c2410c] leading-[1.2] mt-0.5 whitespace-nowrap">{placardLine3}</p>
+                <div className="w-8/12 mx-auto h-[1.3px] bg-[#fb923c] rounded-full mt-0.5" />
               </div>
             </div>
           ) : (
-            <div className="relative w-full h-full flex items-end justify-center">
+            <div className="relative w-[86%] max-w-[275px] sm:max-w-[310px] aspect-[260/180] flex items-end justify-center">
               <StateIllustratedLandmark stateSlug={stateSlug} />
               <CitizenPlacardGroup
                 uniqueId={`${uniqueId}-mob`}

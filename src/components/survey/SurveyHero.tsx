@@ -117,7 +117,7 @@ export function SurveyHero({
       {backgroundLayer}
       <div className="absolute inset-0 -z-10 bg-gradient-to-r from-white via-white/90 to-white/25 sm:to-white/10" aria-hidden="true" />
 
-      <Container className="relative py-3.5 sm:min-h-[125px] sm:py-4">
+      <Container className="relative py-2.5 sm:min-h-[125px] sm:py-4">
         <nav aria-label={t.common.breadcrumbAriaLabel} className="flex items-center gap-1.5 overflow-x-auto whitespace-nowrap text-xs font-medium text-muted sm:text-sm">
           <Link href={stateHref} className="shrink-0 hover:text-ink">{stateName}</Link>
           <ChevronRight size={13} className="shrink-0" aria-hidden="true" />
@@ -128,33 +128,59 @@ export function SurveyHero({
           <span className="shrink-0 font-semibold text-ink">{breadcrumbLabel ?? t.surveyFlow.breadcrumbSurvey}</span>
         </nav>
 
-        <div className="mt-2.5 flex flex-col gap-2.5 sm:mt-3.5 sm:flex-row sm:items-center sm:justify-between sm:gap-7">
+        <div className="mt-2 flex flex-col gap-2 sm:mt-3.5 sm:flex-row sm:items-center sm:justify-between sm:gap-7">
           <div className="min-w-0 sm:max-w-xl sm:flex-1">
             <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-accent">
               <MapPin size={12} /> {stateName}
             </p>
-            <h1 className="mt-1 font-display text-2xl font-extrabold leading-[1.35] py-0.5 break-words text-ink sm:text-3xl lg:text-4xl">
-              {constituencyName}
-            </h1>
-            <p className="mt-1 text-sm font-medium text-muted">
-              {t.surveyFlow.constituencyNumberLabel.replace("{number}", String(constituencyNumber))}
-            </p>
 
-            <dl className="mt-2 flex flex-wrap gap-x-7 gap-y-1.5 text-sm">
-              <HeroStatContent icon={<MapPin size={14} />} label={t.surveyFlow.statState} value={stateName} />
-              <HeroStatContent icon={<Building2 size={14} />} label={t.surveyFlow.statDistrict} value={districtName} />
-              <HeroStatContent icon={<Users2 size={14} />} label={t.surveyFlow.statConstituency} value={String(constituencyNumber)} />
-              <HeroStatContent icon={<CalendarDays size={14} />} label={t.surveyFlow.statElection} value={String(electionYear)} />
+            <div className="mt-0.5 flex items-start justify-between gap-2.5 sm:block">
+              <div className="min-w-0 flex-1">
+                <h1 className="font-display text-2xl font-extrabold leading-[1.3] py-0.5 break-words text-ink sm:text-3xl lg:text-4xl">
+                  {constituencyName}
+                </h1>
+                <p className="mt-0.5 text-xs sm:mt-1 sm:text-sm font-medium text-muted">
+                  {t.surveyFlow.constituencyNumberLabel.replace("{number}", String(constituencyNumber))}
+                </p>
+              </div>
+
+              {/* Mobile-only compact "आपकी राय" pill/card */}
+              <div className="sm:hidden shrink-0 rounded-xl bg-ink/95 px-2.5 py-1.5 text-center shadow-sm border border-white/10 max-w-[125px]">
+                <div className="flex items-center justify-center gap-1.5">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/15">
+                    <Users2 size={11} className="text-white" />
+                  </span>
+                  <p className="font-display text-xs font-extrabold text-white leading-none whitespace-nowrap">
+                    {t.surveyFlow.ctaCardTitle}
+                  </p>
+                </div>
+                <p className="text-[10px] text-white/75 leading-tight mt-1 whitespace-nowrap">
+                  {t.surveyFlow.ctaCardSubtitle}
+                </p>
+                <div className="mx-auto mt-1 flex h-0.5 w-16 overflow-hidden rounded-full">
+                  <span className="w-1/3 bg-orange-500" />
+                  <span className="w-1/3 bg-white" />
+                  <span className="w-1/3 bg-green-600" />
+                </div>
+              </div>
+            </div>
+
+            <dl className="mt-2 flex flex-wrap gap-x-5 gap-y-1 sm:gap-x-7 sm:gap-y-1.5 text-xs sm:text-sm">
+              <HeroStatContent icon={<MapPin size={13} />} label={t.surveyFlow.statState} value={stateName} />
+              <HeroStatContent icon={<Building2 size={13} />} label={t.surveyFlow.statDistrict} value={districtName} />
+              <HeroStatContent icon={<Users2 size={13} />} label={t.surveyFlow.statConstituency} value={String(constituencyNumber)} />
+              <HeroStatContent icon={<CalendarDays size={13} />} label={t.surveyFlow.statElection} value={String(electionYear)} />
             </dl>
           </div>
 
-          <div className="w-full shrink-0 rounded-xl bg-ink px-4 py-2.5 text-center shadow-[var(--shadow-soft)] sm:w-[205px] sm:text-left">
-            <span className="mx-auto flex h-7 w-7 items-center justify-center rounded-full bg-white/15 sm:mx-0">
+          {/* Desktop-only full-size "आपकी राय" card (unchanged) */}
+          <div className="hidden sm:block w-[205px] shrink-0 rounded-xl bg-ink px-4 py-2.5 text-left shadow-[var(--shadow-soft)]">
+            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/15">
               <Users2 size={13} className="text-white" />
             </span>
             <p className="mt-1.5 font-display text-base font-extrabold text-white">{t.surveyFlow.ctaCardTitle}</p>
             <p className="text-xs text-white/75">{t.surveyFlow.ctaCardSubtitle}</p>
-            <div className="mx-auto mt-1.5 flex h-1 w-24 overflow-hidden rounded-full sm:mx-0">
+            <div className="mt-1.5 flex h-1 w-24 overflow-hidden rounded-full">
               <span className="w-1/3 bg-orange-500" />
               <span className="w-1/3 bg-white" />
               <span className="w-1/3 bg-green-600" />

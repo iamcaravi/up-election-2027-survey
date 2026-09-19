@@ -1011,43 +1011,70 @@ function SuccessScreen({
 
           {/* Column 2 (Center, 60%): Confirmation & Actions */}
           <div className="w-full flex flex-col justify-center text-center lg:text-left order-1 lg:order-2 px-1 sm:px-3 lg:px-6 py-1">
-            {/* Green Pill Badge */}
-            <div className="inline-flex items-center gap-1.5 self-center lg:self-start px-3 py-1 rounded-full bg-[#e6f7ef] border border-[#b2e5cc] text-[#0d824d] text-xs font-bold shadow-xs">
-              <CheckCircle2 size={14} className="text-[#0d824d]" />
-              <span>{isHindi ? "सर्वे सफलतापूर्वक दर्ज हो गया" : "Survey Successfully Recorded"}</span>
+            {/* Confirmation Header Group */}
+            <div className="flex flex-col items-center lg:items-start text-center lg:text-left order-1">
+              {/* Green Pill Badge */}
+              <div className="inline-flex items-center gap-1.5 self-center lg:self-start px-3 py-1 rounded-full bg-[#e6f7ef] border border-[#b2e5cc] text-[#0d824d] text-xs font-bold shadow-xs">
+                <CheckCircle2 size={14} className="text-[#0d824d]" />
+                <span>{isHindi ? "सर्वे सफलतापूर्वक दर्ज हो गया" : "Survey Successfully Recorded"}</span>
+              </div>
+
+              {/* Heading */}
+              <h1 className="mt-1.5 sm:mt-2 font-display text-2xl sm:text-3xl lg:text-[32px] font-black text-slate-900 tracking-tight flex items-center justify-center lg:justify-start gap-2">
+                <span>{t.surveyFlow.successTitle}</span>
+                <span className="text-2xl sm:text-3xl select-none" aria-hidden="true">👏</span>
+              </h1>
+
+              {/* Subheading */}
+              <p className="mt-0.5 font-display text-sm sm:text-base font-bold text-slate-900">
+                {t.surveyFlow.successBody}
+              </p>
+
+              {/* Dynamic Constituency Acknowledgment */}
+              <p className="mt-1 text-xs sm:text-sm text-slate-600 leading-normal">
+                {isHindi ? (
+                  <>
+                    आपने <strong className="font-bold text-slate-900">{constituencyName}</strong> विधानसभा क्षेत्र के लिए अपना मत दर्ज कर दिया है।
+                  </>
+                ) : (
+                  <>
+                    You have recorded your opinion for the <strong className="font-bold text-slate-900">{constituencyName}</strong> assembly constituency.
+                  </>
+                )}
+              </p>
+
+              {/* Secure Storage Note */}
+              <p className="mt-0.5 text-[11px] sm:text-xs text-slate-500">
+                {t.surveyFlow.successStoredSecurely}
+              </p>
             </div>
 
-            {/* Heading */}
-            <h1 className="mt-2 font-display text-2xl sm:text-3xl lg:text-[32px] font-black text-slate-900 tracking-tight flex items-center justify-center lg:justify-start gap-2">
-              <span>{t.surveyFlow.successTitle}</span>
-              <span className="text-2xl sm:text-3xl select-none" aria-hidden="true">👏</span>
-            </h1>
+            {/* 2 Action CTA Buttons (order-2 on mobile directly below thank-you content, order-4 on desktop below privacy cards) */}
+            <div className="mt-2.5 sm:mt-4 flex flex-col sm:flex-row gap-2.5 sm:gap-3 order-2 lg:order-4">
+              <Button
+                variant="cta"
+                size="lg"
+                className="flex-1 justify-center gap-2 bg-[#f9570c] hover:bg-[#ea4803] text-white font-bold shadow-md hover:shadow-lg border-0 transition-all text-sm py-2.5 sm:py-3"
+                onClick={onViewResults}
+              >
+                <Eye size={18} />
+                <span>{t.surveyFlow.viewResults}</span>
+                <ArrowRight size={17} />
+              </Button>
 
-            {/* Subheading */}
-            <p className="mt-0.5 font-display text-sm sm:text-base font-bold text-slate-900">
-              {t.surveyFlow.successBody}
-            </p>
+              <Button
+                variant="outline"
+                size="lg"
+                className="flex-1 justify-center gap-2 border-slate-300 bg-white text-slate-800 font-bold hover:bg-slate-50 shadow-sm transition-all text-sm py-2.5 sm:py-3"
+                onClick={handleShare}
+              >
+                <Share2 size={16} />
+                <span>{copied ? t.surveyFlow.shareCopied : t.surveyFlow.shareSurvey}</span>
+              </Button>
+            </div>
 
-            {/* Dynamic Constituency Acknowledgment */}
-            <p className="mt-1 text-xs sm:text-sm text-slate-600 leading-normal">
-              {isHindi ? (
-                <>
-                  आपने <strong className="font-bold text-slate-900">{constituencyName}</strong> विधानसभा क्षेत्र के लिए अपना मत दर्ज कर दिया है।
-                </>
-              ) : (
-                <>
-                  You have recorded your opinion for the <strong className="font-bold text-slate-900">{constituencyName}</strong> assembly constituency.
-                </>
-              )}
-            </p>
-
-            {/* Secure Storage Note */}
-            <p className="mt-0.5 text-[11px] sm:text-xs text-slate-500">
-              {t.surveyFlow.successStoredSecurely}
-            </p>
-
-            {/* Dedicated Mobile State Legislative Assembly Visual (NO MAP, compact, recognizable) */}
-            <div className="lg:hidden mt-2.5 mb-1 w-full">
+            {/* Dedicated Mobile State Legislative Assembly Visual (Compact, current-size image, order-3 on mobile) */}
+            <div className="lg:hidden mt-2.5 mb-1 w-full order-3">
               <StateCivicVisual
                 stateName={stateName}
                 stateSlug={stateSlug}
@@ -1056,8 +1083,8 @@ function SuccessScreen({
               />
             </div>
 
-            {/* 3 Privacy / Trust Cards */}
-            <div className="mt-3 sm:mt-3.5 grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-2.5">
+            {/* 3 Privacy / Trust Cards (order-4 on mobile below CTAs, order-3 on desktop above CTAs) */}
+            <div className="mt-3 sm:mt-3.5 grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-2.5 order-4 lg:order-3">
               <div className="flex items-center gap-2 rounded-xl border border-slate-100/90 bg-white p-2.5 shadow-sm">
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
                   <Lock size={15} />
@@ -1099,30 +1126,6 @@ function SuccessScreen({
                   </p>
                 </div>
               </div>
-            </div>
-
-            {/* 2 Action CTA Buttons */}
-            <div className="mt-3.5 sm:mt-4 flex flex-col sm:flex-row gap-2.5 sm:gap-3">
-              <Button
-                variant="cta"
-                size="lg"
-                className="flex-1 justify-center gap-2 bg-[#f9570c] hover:bg-[#ea4803] text-white font-bold shadow-md hover:shadow-lg border-0 transition-all text-sm py-2.5 sm:py-3"
-                onClick={onViewResults}
-              >
-                <Eye size={18} />
-                <span>{t.surveyFlow.viewResults}</span>
-                <ArrowRight size={17} />
-              </Button>
-
-              <Button
-                variant="outline"
-                size="lg"
-                className="flex-1 justify-center gap-2 border-slate-300 bg-white text-slate-800 font-bold hover:bg-slate-50 shadow-sm transition-all text-sm py-2.5 sm:py-3"
-                onClick={handleShare}
-              >
-                <Share2 size={16} />
-                <span>{copied ? t.surveyFlow.shareCopied : t.surveyFlow.shareSurvey}</span>
-              </Button>
             </div>
           </div>
 
