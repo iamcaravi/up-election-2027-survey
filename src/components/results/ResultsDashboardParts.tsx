@@ -11,12 +11,15 @@ import Link from "next/link";
 import Image from "next/image";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import type { TooltipContentProps, PieLabelRenderProps } from "recharts";
-import { FlaskConical, Info, Share2, ShieldCheck } from "lucide-react";
+import { CheckCircle2, FlaskConical, Info, Share2, ShieldCheck, UserX } from "lucide-react";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { resolveOptionLabel } from "@/lib/option-labels";
 import { buildResultShareHook, buildResultShareMessage } from "@/lib/share-message";
 import { LinkButton } from "@/components/ui/Button";
 import { SocialShareButtons } from "./SocialShareButtons";
+import { CandidateAvatar } from "@/components/candidate/CandidateAvatar";
+import { MLA_SATISFACTION_OPTIONS } from "@/lib/enums";
+import type { CurrentMlaInfo } from "@/lib/current-mla";
 import type { PublicAnalyticsBucket, PublicDistribution } from "@/lib/public-analytics-core";
 
 export const ISSUE_COLORS = ["#138a4b", "#2563eb", "#ff5a00", "#dc2626", "#7c3aed", "#78350f", "#94a3b8", "#0891b2"];
@@ -669,3 +672,178 @@ export function DisclaimerShareBar({ shareTitle, electionYear }: { shareTitle: s
     </div>
   );
 }
+
+export function MlaIdentityCard({
+  mla,
+  locale = "hi",
+}: {
+  mla?: CurrentMlaInfo | null;
+  locale?: string;
+}) {
+  const { t } = useLocale();
+
+  if (!mla || !mla.isVerified || !mla.name) {
+    return (
+      <div className="flex items-center gap-3.5 rounded-2xl border border-dashed border-border bg-surface-2 p-4">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-ink/5 text-muted">
+          <UserX size={22} />
+        </div>
+        <div>
+          <p className="text-[11px] font-bold uppercase tracking-wider text-muted">{t.results.currentMla}</p>
+          <p className="text-sm font-bold text-ink">{t.results.noMlaData}</p>
+          <p className="text-xs text-muted">{t.results.currentMlaRepresentative}</p>
+        </div>
+      </div>
+    );
+  }
+
+  const displayName = locale === "hi" && mla.nameHindi ? mla.nameHindi : mla.name;
+  const displayParty = locale === "hi" && mla.partyHindi ? mla.partyHindi : (mla.party ?? mla.partyShortName);
+  const acInfo = mla.constituencyNumber
+    ? `${mla.constituencyName} (AC #${mla.constituencyNumber})`
+    : mla.constituencyName;
+
+  return (
+    <div className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-4 shadow-[var(--shadow-card)] sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex items-center gap-3.5 min-w-0">
+        <CandidateAvatar
+          name={displayName}
+          photoUrl={mla.photoUrl}
+          size={52}
+          className="shrink-0 rounded-xl"
+        />
+        <div className="min-w-0">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-muted">{t.results.currentMla}</span>
+            <span className="inline-flex items-center gap-0.5 rounded-full bg-positive/10 px-2 py-0.5 text-[10px] font-semibold text-positive">
+              <CheckCircle2 size={11} /> {t.results.verifiedRepresentative}
+            </span>
+          </div>
+          <h3 className="truncate font-display text-base font-bold text-ink sm:text-lg">{displayName}</h3>
+          <p className="truncate text-xs text-muted">
+            <span className="font-semibold text-foreground">{displayParty}</span>
+            <span className="mx-1.5 text-muted/60">•</span>
+            <span>{acInfo}</span>
+          </p>
+        </div>
+      </div>
+      <div className="border-t border-border pt-2 text-right sm:border-t-0 sm:pt-0">
+        <span className="inline-flex items-center gap-1 text-[11px] text-muted">
+          <ShieldCheck size={12} className="text-positive" />
+          {mla.sourceName ? `${mla.sourceName}` : t.results.officialAssemblyRecords}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+export function MlaSatisfactionChart({
+  distribution,
+  locale = "hi",
+}: {
+  distribution: PublicDistribution;
+  locale?: string;
+}) {
+  const { t } = useLocale();
+  const numberFormatter = new Intl.NumberFormat(locale === "hi" ? "hi-IN" : "en-IN");
+
+  if (distribution.state === "unavailable") {
+    return (
+      <div className="rounded-xl border border-dashed border-border bg-surface-2 p-6 text-center text-sm text-muted">
+        {t.results.zeroMlaSatisfaction}
+      </div>
+    );
+  }
+
+  if (distribution.state === "suppressed") {
+    return (
+      <div className="rounded-xl border border-dashed border-border bg-surface-2 p-6 text-center text-sm text-muted">
+        {t.results.resultsSuppressed}
+      </div>
+    );
+  }
+
+  const total = distribution.denominator;
+  const bucketsByKey = new Map(distribution.buckets.map((b) => [b.key, b]));
+
+  const rows = MLA_SATISFACTION_OPTIONS.map((opt) => {
+    const bucket = bucketsByKey.get(opt.key);
+    const label = locale === "hi" ? opt.label : opt.labelEn;
+    const sublabel = locale === "hi" ? opt.sublabel : opt.sublabelEn;
+    const isSuppressed = bucket?.state === "suppressed";
+    const count = bucket && bucket.state === "available" ? bucket.count : 0;
+    const percentage = bucket && bucket.state === "available" ? bucket.percentage : 0;
+
+    return {
+      key: opt.key,
+      label,
+      sublabel,
+      color: opt.colorHex,
+      count,
+      percentage,
+      isSuppressed,
+    };
+  });
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-3 text-xs text-muted">
+        <span>
+          <span className="font-bold text-foreground">{t.results.totalResponsesCard}:</span> {numberFormatter.format(total)}
+        </span>
+        <span className="text-[11px] text-muted">{t.results.mlaSatisfactionDenominator}</span>
+      </div>
+
+      <div className="flex h-3.5 w-full overflow-hidden rounded-full bg-surface-2">
+        {rows.map((row) => {
+          if (row.isSuppressed || row.percentage <= 0) return null;
+          return (
+            <div
+              key={row.key}
+              style={{ width: `${row.percentage}%`, backgroundColor: row.color }}
+              title={`${row.label}: ${row.percentage}%`}
+              className="h-full transition-all duration-500 first:rounded-l-full last:rounded-r-full"
+            />
+          );
+        })}
+      </div>
+
+      <div className="space-y-2.5 pt-2">
+        {rows.map((row) => (
+          <div key={row.key} className="rounded-xl border border-border/70 bg-surface p-3 transition-colors">
+            <div className="flex items-center justify-between gap-3 text-sm">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: row.color }} />
+                <span className="truncate font-semibold text-ink">{row.label}</span>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                {row.isSuppressed ? (
+                  <span className="text-xs font-semibold text-muted">{t.results.suppressed}</span>
+                ) : (
+                  <>
+                    <span className="font-display text-sm font-bold tabular-nums text-ink">{row.percentage}%</span>
+                    <span className="hidden text-xs tabular-nums text-muted sm:inline">({numberFormatter.format(row.count)})</span>
+                  </>
+                )}
+              </div>
+            </div>
+
+            <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-surface-2">
+              {!row.isSuppressed && (
+                <div
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{ width: `${Math.min(100, Math.max(0, row.percentage))}%`, backgroundColor: row.color }}
+                />
+              )}
+            </div>
+
+            {row.sublabel && (
+              <p className="mt-1 text-[11px] text-muted truncate">{row.sublabel}</p>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+

@@ -1,7 +1,7 @@
 "use client";
 
 import { LinkButton } from "@/components/ui/Button";
-import { PartySupportChart, IssuesDonutChart, PrivacyPill, SyntheticDataBanner, ISSUE_COLORS } from "@/components/results/ResultsDashboardParts";
+import { PartySupportChart, IssuesDonutChart, PrivacyPill, SyntheticDataBanner, ISSUE_COLORS, MlaSatisfactionChart } from "@/components/results/ResultsDashboardParts";
 import { VotePreferenceTrendChart } from "@/components/analysis/VotePreferenceTrendChart";
 import { PartyMomentumSection } from "@/components/analysis/PartyMomentumSection";
 import { KeyIssuesByParty } from "@/components/analysis/KeyIssuesByParty";
@@ -169,6 +169,21 @@ export function AnalysisResultsView({
               )}
             </div>
             <KeyReading lines={partySupportReading} />
+          </section>
+
+          {/* Section: MLA Satisfaction Breakdown */}
+          <section className="mt-8 card-surface rounded-2xl p-5 sm:p-6">
+            <SectionHeader
+              eyebrow={locale === "hi" ? "जनप्रतिनिधि मूल्यांकन" : "Representative Evaluation"}
+              title={t.results.mlaSatisfaction}
+              subtitle={t.results.mlaSatisfactionSubtitle}
+            />
+            <div className="mt-5">
+              <MlaSatisfactionChart
+                distribution={statewide.mlaSatisfaction}
+                locale={locale}
+              />
+            </div>
           </section>
 
           {/* Section D — Vote Preference Trend */}

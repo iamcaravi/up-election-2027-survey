@@ -9,6 +9,8 @@ import {
   SummaryCard,
   PartySupportChart,
   KeyIssuesPanel,
+  MlaIdentityCard,
+  MlaSatisfactionChart,
   StateCard,
   PrivacyPill,
   InlineState,
@@ -120,6 +122,27 @@ export function PublicResultsView({
 
       {data.visibility.state === "visible" && !isZeroState && (
         <>
+          <section id="mla-satisfaction" className="card-surface scroll-mt-24 mt-6 rounded-2xl p-5 sm:p-6" aria-labelledby="mla-satisfaction-heading">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h2 id="mla-satisfaction-heading" className="font-display text-xl font-bold">{t.results.mlaSatisfaction}</h2>
+                <p className="mt-1 text-xs text-muted">{t.results.mlaSatisfactionSubtitle}</p>
+              </div>
+              <PrivacyPill />
+            </div>
+
+            <div className="mt-5">
+              <MlaIdentityCard mla={data.mla} locale={locale} />
+            </div>
+
+            <div className="mt-6">
+              <MlaSatisfactionChart
+                distribution={data.mlaSatisfaction ?? data.analytics?.mlaSatisfaction ?? { state: "unavailable", reason: "no_responses", minRequired: data.sample.minCellSize }}
+                locale={locale}
+              />
+            </div>
+          </section>
+
           <section id="party" className="card-surface scroll-mt-24 mt-6 rounded-2xl p-5 sm:p-6" aria-labelledby="party-results-heading">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>

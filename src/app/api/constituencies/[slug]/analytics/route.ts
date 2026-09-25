@@ -35,6 +35,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
       visibility: results.visibility,
       sample: results.sample,
       demographics: results.analytics?.demographics ?? null,
+      mlaSatisfaction: results.analytics?.mlaSatisfaction ?? results.mlaSatisfaction ?? null,
     },
     { headers: { "Cache-Control": "no-store" } }
   );

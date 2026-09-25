@@ -8,6 +8,7 @@ import {
   SummaryCard,
   PartySupportChart,
   KeyIssuesPanel,
+  MlaSatisfactionChart,
   StateCard,
   PrivacyPill,
   InlineState,
@@ -81,6 +82,19 @@ export function StatewideResultsView({
 
       {!isZeroState && (
         <>
+          <section id="mla-satisfaction" className="card-surface scroll-mt-24 mt-6 rounded-2xl p-5 sm:p-6" aria-labelledby="statewide-mla-heading">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h2 id="statewide-mla-heading" className="font-display text-xl font-bold">{t.results.mlaSatisfaction}</h2>
+                <p className="mt-1 text-xs text-muted">{t.results.mlaSatisfactionSubtitle}</p>
+              </div>
+              <PrivacyPill />
+            </div>
+            <div className="mt-5">
+              <MlaSatisfactionChart distribution={data.mlaSatisfaction} locale={locale} />
+            </div>
+          </section>
+
           <section id="party" className="card-surface scroll-mt-24 mt-6 rounded-2xl p-5 sm:p-6" aria-labelledby="statewide-party-heading">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>

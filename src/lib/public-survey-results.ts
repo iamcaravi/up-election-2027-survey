@@ -12,10 +12,13 @@ import {
   type PublicCandidateOptionInput,
   type PublicDemographicCountInput,
   type PublicDemographicOptionInput,
+  type PublicDistribution,
   type PublicPartyOptionInput,
   type PublicPreferenceAnswerInput,
   type ResultsVisibility,
 } from "./public-analytics-core";
+import { getCurrentMlaForConstituency, type CurrentMlaInfo } from "./current-mla";
+import { ensureMlaSatisfactionQuestion } from "./survey-template-data";
 import { REAL_DATA_SOURCE, SYNTHETIC_DATA_MODE_KEY, SYNTHETIC_DATA_SOURCE } from "./synthetic-data";
 
 const PUBLIC_DEMOGRAPHIC_KEYS = ["gender", "age_group", "social_category", "religion", "top_issue"] as const;
@@ -48,6 +51,8 @@ export interface PublicSurveyResultsDto {
   };
   /** True when Demo Data Mode is on and this DTO is built from synthetic_demo rows rather than real responses. */
   isSynthetic: boolean;
+  mla: CurrentMlaInfo | null;
+  mlaSatisfaction: PublicDistribution;
   analytics: PublicAnalyticsResult | null;
   methodology: {
     eligibleResponseStatus: typeof ELIGIBLE_RESPONSE_STATUS;
@@ -115,6 +120,8 @@ export async function getPublicSurveyResults(
     },
   };
 
+  const mla = await getCurrentMlaForConstituency(survey.constituency.id, electionId);
+
   if (visibility.state === "hidden") {
     return {
       ...base,
@@ -127,13 +134,31 @@ export async function getPublicSurveyResults(
         lastResponseAt: null,
       },
       isSynthetic,
+      mla,
+      mlaSatisfaction: { state: "unavailable", reason: "no_responses", minRequired: minCellSize },
       analytics: null,
     };
   }
 
-  const questionByKey = new Map(survey.questions.map((question) => [question.key, question]));
+  let questions = survey.questions;
+  if (!questions.some((q) => q.key === "mla_satisfaction")) {
+    await ensureMlaSatisfactionQuestion(prisma, survey.id);
+    questions = await prisma.surveyQuestion.findMany({
+      where: { surveyId: survey.id },
+      include: {
+        options: {
+          where: { isActive: true },
+          include: { party: true },
+          orderBy: { order: "asc" },
+        },
+      },
+    });
+  }
+
+  const questionByKey = new Map(questions.map((question) => [question.key, question]));
   const partyQuestion = questionByKey.get("party_preference");
   const candidateQuestion = questionByKey.get("candidate_choice");
+  const mlaQuestion = questionByKey.get("mla_satisfaction");
   if (!partyQuestion || !candidateQuestion) return null;
 
   const demographicQuestionIds = new Map(
@@ -142,9 +167,10 @@ export async function getPublicSurveyResults(
       return question ? [[question.id, key] as const] : [];
     })
   );
+  const mlaOptionIds = mlaQuestion ? mlaQuestion.options.map((option) => option.id) : [];
   const candidateRefs = candidateQuestion.options.flatMap((option) => option.candidateRef ? [option.candidateRef] : []);
 
-  const [responses, preferenceAnswers, candidates, groupedDemographics] = await Promise.all([
+  const [responses, preferenceAnswers, candidates, groupedDemographics, groupedMla] = await Promise.all([
     prisma.surveyResponse.findMany({
       where: { surveyId: survey.id, status: ELIGIBLE_RESPONSE_STATUS, dataSource: activeDataSource },
       select: { id: true, status: true, createdAt: true },
@@ -177,6 +203,17 @@ export async function getPublicSurveyResults(
           by: ["questionId", "optionId"],
           where: {
             questionId: { in: Array.from(demographicQuestionIds.keys()) },
+            optionId: { not: null },
+            response: { surveyId: survey.id, status: ELIGIBLE_RESPONSE_STATUS, dataSource: activeDataSource },
+          },
+          _count: { _all: true },
+        })
+      : Promise.resolve([]),
+    mlaOptionIds.length
+      ? prisma.surveyAnswer.groupBy({
+          by: ["optionId"],
+          where: {
+            questionId: mlaQuestion!.id,
             optionId: { not: null },
             response: { surveyId: survey.id, status: ELIGIBLE_RESPONSE_STATUS, dataSource: activeDataSource },
           },
@@ -234,6 +271,18 @@ export async function getPublicSurveyResults(
     })) ?? []
   );
 
+  const mlaSatisfactionCounts = groupedMla.flatMap((group) => {
+    if (!group.optionId) return [];
+    return [{ optionId: group.optionId, count: group._count._all }];
+  });
+  const mlaSatisfactionOptions = mlaQuestion?.options.map((option) => ({
+    id: option.id,
+    key: option.key,
+    label: option.label,
+    order: option.order,
+    isActive: option.isActive,
+  })) ?? [];
+
   const analytics = aggregatePublicAnalytics({
     electionId,
     constituencyId,
@@ -245,6 +294,8 @@ export async function getPublicSurveyResults(
     candidates: candidates as PublicCandidateInput[],
     demographicCounts,
     demographicOptions,
+    mlaSatisfactionCounts,
+    mlaSatisfactionOptions,
   });
 
   // Real week-over-week counts (never a fabricated/placeholder delta) for
@@ -279,6 +330,8 @@ export async function getPublicSurveyResults(
       lastResponseAt: lastResponseAt ? lastResponseAt.toISOString() : null,
     },
     isSynthetic,
+    mla,
+    mlaSatisfaction: analytics.mlaSatisfaction,
     analytics,
   };
 }

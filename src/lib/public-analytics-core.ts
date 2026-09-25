@@ -1,4 +1,4 @@
-import { ELIGIBLE_RESPONSE_STATUS } from "./enums";
+import { ELIGIBLE_RESPONSE_STATUS, MLA_SATISFACTION_OPTIONS } from "./enums";
 import { isCandidateEligibleForSurveyParty, isSpecialPartyPreferenceKey } from "./survey-eligibility";
 
 export type PublicAnalyticsState = "unavailable" | "suppressed" | "available";
@@ -89,6 +89,19 @@ export interface PublicDemographicOptionInput {
   questionKey: PublicDemographicCountInput["questionKey"];
 }
 
+export interface PublicMlaSatisfactionOptionInput {
+  id: string;
+  key: string;
+  label: string;
+  order: number;
+  isActive: boolean;
+}
+
+export interface PublicMlaSatisfactionCountInput {
+  optionId: string;
+  count: number;
+}
+
 export interface PublicAnalyticsInput {
   electionId: string;
   constituencyId: string;
@@ -100,6 +113,8 @@ export interface PublicAnalyticsInput {
   candidates: PublicCandidateInput[];
   demographicCounts: PublicDemographicCountInput[];
   demographicOptions: PublicDemographicOptionInput[];
+  mlaSatisfactionCounts?: PublicMlaSatisfactionCountInput[];
+  mlaSatisfactionOptions?: PublicMlaSatisfactionOptionInput[];
 }
 
 export interface PublicCandidatePartyResult {
@@ -120,6 +135,7 @@ export interface PublicAnalyticsResult {
   partyPreference: PublicDistribution;
   candidatePreferenceByParty: PublicCandidatePartyResult[];
   demographics: Record<PublicDemographicCountInput["questionKey"], PublicDistribution>;
+  mlaSatisfaction: PublicDistribution;
 }
 
 interface CountedBucket extends PublicBucketMetadata {
@@ -360,7 +376,38 @@ export function aggregatePublicAnalytics(input: PublicAnalyticsInput): PublicAna
     return [questionKey, distribution];
   })) as PublicAnalyticsResult["demographics"];
 
-  return { validResponseCount, partyPreference, candidatePreferenceByParty, demographics };
+  let mlaSatisfaction: PublicDistribution = {
+    state: "unavailable",
+    reason: validResponseCount === 0 ? "no_responses" : "no_answers",
+    minRequired: input.minRequired,
+  };
+  if (input.mlaSatisfactionOptions && input.mlaSatisfactionOptions.length > 0) {
+    const activeOptions = input.mlaSatisfactionOptions
+      .filter((option) => option.isActive)
+      .sort((a, b) => a.order - b.order);
+    const countsByOption = new Map(
+      (input.mlaSatisfactionCounts ?? []).map((count) => [count.optionId, count.count])
+    );
+    const denominator = Array.from(countsByOption.values()).reduce((sum, count) => sum + count, 0);
+    const mlaOptMetaByKey = new Map<string, (typeof MLA_SATISFACTION_OPTIONS)[number]>(
+      MLA_SATISFACTION_OPTIONS.map((o) => [o.key, o])
+    );
+    const cells: CountedBucket[] = activeOptions.map((option) => {
+      const meta = mlaOptMetaByKey.get(option.key);
+      return {
+        key: option.key,
+        label: option.label,
+        colorHex: meta?.colorHex ?? null,
+        displayOrder: option.order,
+        count: countsByOption.get(option.id) ?? 0,
+      };
+    });
+    mlaSatisfaction = validResponseCount === 0
+      ? { state: "unavailable" as const, reason: "no_responses" as const, minRequired: input.minRequired }
+      : buildDistribution(cells, denominator, input.minRequired, "no_answers");
+  }
+
+  return { validResponseCount, partyPreference, candidatePreferenceByParty, demographics, mlaSatisfaction };
 }
 
 export interface ResultsVisibilityInput {

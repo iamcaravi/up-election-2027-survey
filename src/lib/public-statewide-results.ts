@@ -2,7 +2,7 @@ import "server-only";
 
 import { prisma } from "./prisma";
 import { getSiteSetting } from "./data";
-import { ELIGIBLE_RESPONSE_STATUS } from "./enums";
+import { ELIGIBLE_RESPONSE_STATUS, MLA_SATISFACTION_OPTIONS } from "./enums";
 import { protectPublicCells, type PublicDistribution } from "./public-analytics-core";
 import { REAL_DATA_SOURCE, SYNTHETIC_DATA_MODE_KEY, SYNTHETIC_DATA_SOURCE } from "./synthetic-data";
 
@@ -42,6 +42,7 @@ export interface PublicStatewideResultsDto {
   isSynthetic: boolean;
   partyPreference: PublicDistribution;
   demographics: Record<StatewideDemographicKey, PublicDistribution>;
+  mlaSatisfaction: PublicDistribution;
 }
 
 export async function getPublicStatewideResults(
@@ -61,7 +62,7 @@ export async function getPublicStatewideResults(
   // the same aggregation logic, just pooled over a smaller constituency set.
   const constituencyScope = district ? { districtId: district.id } : undefined;
 
-  const [responses, partyAnswers, demographicAnswers, totalConstituencies, respondingSurveys] = await Promise.all([
+  const [responses, partyAnswers, demographicAnswers, mlaSatisfactionAnswers, totalConstituencies, respondingSurveys] = await Promise.all([
     prisma.surveyResponse.findMany({
       where: {
         status: ELIGIBLE_RESPONSE_STATUS,
@@ -110,6 +111,21 @@ export async function getPublicStatewideResults(
         option: { select: { key: true, label: true, order: true } },
       },
     }),
+    prisma.surveyAnswer.findMany({
+      where: {
+        response: {
+          status: ELIGIBLE_RESPONSE_STATUS,
+          dataSource: activeDataSource,
+          survey: { electionId },
+          constituency: constituencyScope,
+        },
+        question: { key: "mla_satisfaction" },
+        optionId: { not: null },
+      },
+      select: {
+        option: { select: { key: true, label: true, order: true } },
+      },
+    }),
     prisma.constituency.count({ where: { stateId: election.stateId, ...constituencyScope } }),
     prisma.survey.findMany({
       where: {
@@ -147,6 +163,8 @@ export async function getPublicStatewideResults(
     ])
   ) as Record<StatewideDemographicKey, PublicDistribution>;
 
+  const mlaSatisfaction = buildMlaSatisfactionDistribution(mlaSatisfactionAnswers, minRequired);
+
   return {
     election: { name: election.name, slug: election.slug, year: election.year },
     state: { name: election.state.name, slug: election.state.slug },
@@ -164,6 +182,7 @@ export async function getPublicStatewideResults(
     isSynthetic,
     partyPreference,
     demographics,
+    mlaSatisfaction,
   };
 }
 
@@ -266,3 +285,37 @@ function buildDemographicDistribution(rows: DemographicAnswerRow[], minRequired:
     buckets: protectPublicCells(cells, denominator, minRequired),
   };
 }
+
+interface MlaSatisfactionAnswerRow {
+  option: { key: string; label: string; order: number } | null;
+}
+
+function buildMlaSatisfactionDistribution(rows: MlaSatisfactionAnswerRow[], minRequired: number): PublicDistribution {
+  if (rows.length === 0) return { state: "unavailable", reason: "no_responses", minRequired };
+
+  const counts = new Map<string, number>();
+  for (const row of rows) {
+    if (!row.option) continue;
+    counts.set(row.option.key, (counts.get(row.option.key) ?? 0) + 1);
+  }
+
+  const cells = MLA_SATISFACTION_OPTIONS.map((opt, index) => ({
+    key: opt.key,
+    label: opt.label,
+    colorHex: opt.colorHex,
+    displayOrder: index + 1,
+    count: counts.get(opt.key) ?? 0,
+  }));
+
+  const denominator = cells.reduce((sum, cell) => sum + cell.count, 0);
+  if (denominator === 0) return { state: "unavailable", reason: "no_answers", minRequired };
+  if (denominator < minRequired) return { state: "suppressed", minRequired };
+
+  return {
+    state: "available",
+    denominator,
+    minRequired,
+    buckets: protectPublicCells(cells, denominator, minRequired),
+  };
+}
+
