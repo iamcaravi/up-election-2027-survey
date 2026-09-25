@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getStateAndElection, getConstituencyBySlug, getFullSurveyForConstituency, getSiteSetting } from "@/lib/data";
+import { getCurrentMlaForConstituency } from "@/lib/current-mla";
 import { SurveyHero } from "@/components/survey/SurveyHero";
 import { SurveyExperience, type SurveyOptionItem } from "@/components/survey/SurveyExperience";
 import { SurveyTrustStrip } from "@/components/survey/SurveyTrustStrip";
@@ -51,9 +52,10 @@ export default async function SurveyPage({
   const survey = await getFullSurveyForConstituency(constituency.id, election.id);
   if (!survey) notFound();
 
-  const [globalHeroConfigRaw, heroConfigOverrideRaw] = await Promise.all([
+  const [globalHeroConfigRaw, heroConfigOverrideRaw, currentMla] = await Promise.all([
     getSiteSetting(SURVEY_HERO_ELEMENTS_KEY, DEFAULT_HERO_ELEMENTS_CONFIG),
     getSiteSetting<unknown>(surveyHeroElementsOverrideKey(constituency.id), null),
+    getCurrentMlaForConstituency(constituency, election.id),
   ]);
   const heroConfig = normalizeHeroElementsConfig(heroConfigOverrideRaw ?? globalHeroConfigRaw);
 
@@ -117,17 +119,19 @@ export default async function SurveyPage({
 
   return (
     <div>
-      <SurveyHero
-        stateName={constituency.state.name}
-        stateHref={statePath(state.slug)}
-        districtName={constituency.district.name}
-        districtHref={districtPath(state.slug, election.slug, constituency.district.slug)}
-        constituencyName={constituency.name}
-        constituencyNumber={constituency.number}
-        electionYear={election.year}
-        config={heroConfig}
-      />
-      <Container className="py-4 sm:py-5">
+      <div className="hidden sm:block">
+        <SurveyHero
+          stateName={constituency.state.name}
+          stateHref={statePath(state.slug)}
+          districtName={constituency.district.name}
+          districtHref={districtPath(state.slug, election.slug, constituency.district.slug)}
+          constituencyName={constituency.name}
+          constituencyNumber={constituency.number}
+          electionYear={election.year}
+          config={heroConfig}
+        />
+      </div>
+      <Container className="pt-2 sm:pt-4 pb-4 sm:pb-5">
         <SurveyExperience
           surveyId={survey.id}
           constituencyName={constituency.name}
@@ -141,6 +145,7 @@ export default async function SurveyPage({
           genders={genders}
           socialCategories={socialCategories}
           religions={religions}
+          currentMla={currentMla}
         />
         <SurveyTrustStrip />
       </Container>

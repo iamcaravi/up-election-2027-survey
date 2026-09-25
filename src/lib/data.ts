@@ -1,5 +1,6 @@
 import "server-only";
 import { prisma } from "./prisma";
+import { ensureMlaSatisfactionQuestion } from "./survey-template-data";
 
 export async function getHomeStats() {
   const [states, constituencies, districts, responses, activeSurveys, parties] = await Promise.all([
@@ -250,7 +251,7 @@ export async function searchAll(query: string) {
 }
 
 export async function getFullSurveyForConstituency(constituencyId: string, electionId: string) {
-  const survey = await prisma.survey.findFirst({
+  let survey = await prisma.survey.findFirst({
     where: { constituencyId, electionId, isActive: true },
     include: {
       questions: {
@@ -265,6 +266,26 @@ export async function getFullSurveyForConstituency(constituencyId: string, elect
       },
     },
   });
+
+  if (survey && !survey.questions.some((q) => q.key === "mla_satisfaction")) {
+    await ensureMlaSatisfactionQuestion(prisma, survey.id);
+    survey = await prisma.survey.findFirst({
+      where: { id: survey.id },
+      include: {
+        questions: {
+          orderBy: { order: "asc" },
+          include: {
+            options: {
+              where: { isActive: true },
+              orderBy: { order: "asc" },
+              include: { party: true },
+            },
+          },
+        },
+      },
+    });
+  }
+
   return survey;
 }
 

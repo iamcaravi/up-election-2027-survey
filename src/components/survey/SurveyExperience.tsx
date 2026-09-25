@@ -19,9 +19,12 @@ import {
   Leaf,
   Loader2,
   Lock,
+  Meh,
   ShieldCheck,
   Share2,
   Target,
+  ThumbsDown,
+  ThumbsUp,
   Users,
   UsersRound,
   VenusAndMars,
@@ -34,6 +37,8 @@ import { SurveyStepper, type SurveyStepDef } from "./SurveyStepper";
 import { buildSurveyCompletionShareMessage } from "@/lib/share-message";
 import { BallotBoxVisual } from "./BallotBoxVisual";
 import { StateCivicVisual } from "./StateCivicVisual";
+import { MLA_SATISFACTION_OPTIONS } from "@/lib/enums";
+import type { CurrentMlaInfo } from "@/lib/current-mla";
 import * as Icons from "lucide-react";
 
 export interface SurveyOptionItem {
@@ -59,19 +64,215 @@ export interface SurveyExperienceProps {
   genders: SurveyOptionItem[];
   socialCategories: SurveyOptionItem[];
   religions: SurveyOptionItem[];
+  currentMla?: CurrentMlaInfo | null;
 }
 
-// The 6 actual survey questions this flow can answer.
-const QUESTION_KEYS = ["party_preference", "top_issue", "age_group", "gender", "social_category", "religion"] as const;
+// The 7 actual survey questions this flow can answer.
+const QUESTION_KEYS = ["mla_satisfaction", "party_preference", "top_issue", "age_group", "gender", "social_category", "religion"] as const;
 type QuestionKey = (typeof QUESTION_KEYS)[number];
 // top_issue is "select all that apply" — tracked separately as an array
 // (see selectedIssues) rather than in the single-value `answers` record.
 type SingleAnswerKey = Exclude<QuestionKey, "top_issue">;
 
-// The 3 visible pages: personal_info groups age/gender/social_category/
-// religion onto one page instead of one page per question.
-const PAGE_KEYS = ["party_preference", "top_issue", "personal_info"] as const;
+// The 4 visible pages:
+// Q1: Current MLA satisfaction
+// Q2: Political party preference
+// Q3: Important issues
+// Q4: Personal profile / demographics (groups age/gender/social_category/religion)
+const PAGE_KEYS = ["mla_satisfaction", "party_preference", "top_issue", "personal_info"] as const;
 type PageKey = (typeof PAGE_KEYS)[number];
+
+const PARTY_SYMBOLS: Record<string, { hi: string; en: string }> = {
+  bjp: { hi: "कमल का फूल", en: "Lotus Symbol" },
+  sp: { hi: "साइकिल का निशान", en: "Bicycle Symbol" },
+  bsp: { hi: "हाथी का निशान", en: "Elephant Symbol" },
+  inc: { hi: "हाथ का निशान", en: "Hand Symbol" },
+  aap: { hi: "झाडू का निशान", en: "Broom Symbol" },
+  rld: { hi: "हैंडपंप का निशान", en: "Handpump Symbol" },
+  jdlp: { hi: "कुकर का निशान", en: "Pressure Cooker Symbol" },
+  jansatta: { hi: "कुकर का निशान", en: "Pressure Cooker Symbol" },
+  other: { hi: "अन्य पार्टी", en: "Other Party" },
+  nota: { hi: "इनमें से कोई नहीं", en: "None of the Above" },
+  undecided: { hi: "अभी तय नहीं", en: "Not Decided Yet" },
+};
+
+function getPartySymbol(key: string, locale: string): string | null {
+  const normalized = key.toLowerCase();
+  for (const [k, sym] of Object.entries(PARTY_SYMBOLS)) {
+    if (normalized.includes(k)) {
+      return locale === "hi" ? sym.hi : sym.en;
+    }
+  }
+  return null;
+}
+
+function getMlaOptionIcon(key: string) {
+  if (key === "very_satisfied") {
+    return <ThumbsUp size={30} className="text-[#16a34a] fill-[#16a34a] shrink-0" />;
+  }
+  if (key === "somewhat_satisfied") {
+    return <ThumbsUp size={30} className="text-[#65a30d] fill-[#65a30d] shrink-0" />;
+  }
+  if (key === "neutral") {
+    return (
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="#eab308" className="shrink-0">
+        <circle cx="12" cy="12" r="10" fill="#eab308" />
+        <circle cx="8" cy="9.5" r="1.3" fill="#ffffff" />
+        <circle cx="16" cy="9.5" r="1.3" fill="#ffffff" />
+        <line x1="7.5" y1="15" x2="16.5" y2="15" stroke="#ffffff" strokeWidth="2.2" strokeLinecap="round" />
+      </svg>
+    );
+  }
+  if (key === "somewhat_dissatisfied") {
+    return <ThumbsDown size={30} className="text-[#ea580c] fill-[#ea580c] shrink-0" />;
+  }
+  return <ThumbsDown size={30} className="text-[#dc2626] fill-[#dc2626] shrink-0" />;
+}
+
+const MOBILE_ISSUE_DETAILS: Record<
+  string,
+  {
+    labelHi: string;
+    sublabelHi: string;
+    iconBg: string;
+    iconType: "road" | "briefcase" | "education" | "health" | "water" | "security" | "environment" | "other";
+  }
+> = {
+  sadak: {
+    labelHi: "सड़कें और आधारभूत संरचना",
+    sublabelHi: "सड़क, नाली, पुल, स्ट्रीट लाइट",
+    iconBg: "bg-[#ea580c] text-white",
+    iconType: "road",
+  },
+  rojgar: {
+    labelHi: "रोज़गार और आर्थिक विकास",
+    sublabelHi: "रोज़गार के अवसर, उद्योग, स्थानीय व्यापार",
+    iconBg: "bg-blue-100 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400",
+    iconType: "briefcase",
+  },
+  shiksha: {
+    labelHi: "शिक्षा",
+    sublabelHi: "स्कूल, कॉलेज, शिक्षा की गुणवत्ता",
+    iconBg: "bg-emerald-100 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400",
+    iconType: "education",
+  },
+  swasthya: {
+    labelHi: "स्वास्थ्य सुविधाएं",
+    sublabelHi: "अस्पताल, प्राथमिक स्वास्थ्य केंद्र, दवाएं",
+    iconBg: "bg-rose-100 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400",
+    iconType: "health",
+  },
+  pani: {
+    labelHi: "जल आपूर्ति और स्वच्छता",
+    sublabelHi: "पीने का पानी, सीवर, सफाई व्यवस्था",
+    iconBg: "bg-sky-100 text-sky-600 dark:bg-sky-950/60 dark:text-sky-400",
+    iconType: "water",
+  },
+  kanoon_vyavastha: {
+    labelHi: "कानून और सुरक्षा",
+    sublabelHi: "अपराध नियंत्रण, महिला सुरक्षा, पुलिस व्यवस्था",
+    iconBg: "bg-purple-100 text-purple-600 dark:bg-purple-950/60 dark:text-purple-400",
+    iconType: "security",
+  },
+  jal_nikasi: {
+    labelHi: "पर्यावरण और प्रदूषण",
+    sublabelHi: "हवा, कचरा प्रबंधन, स्वच्छ वातावरण",
+    iconBg: "bg-lime-100 text-lime-700 dark:bg-lime-950/60 dark:text-lime-400",
+    iconType: "environment",
+  },
+  other: {
+    labelHi: "अन्य",
+    sublabelHi: "कोई अन्य महत्वपूर्ण मुद्दा",
+    iconBg: "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300",
+    iconType: "other",
+  },
+  mahangai: {
+    labelHi: "महंगाई नियंत्रण",
+    sublabelHi: "राशन, गैस, आवश्यक वस्तुओं की कीमतें",
+    iconBg: "bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400",
+    iconType: "briefcase",
+  },
+  bijli: {
+    labelHi: "बिजली आपूर्ति",
+    sublabelHi: "निर्बाध बिजली, सही बिलिंग, ट्रांसफार्मर",
+    iconBg: "bg-yellow-100 text-yellow-700 dark:bg-yellow-950/60 dark:text-yellow-400",
+    iconType: "other",
+  },
+  krishi: {
+    labelHi: "कृषि और किसान कल्याण",
+    sublabelHi: "एमएसपी, खाद, सिंचाई, फसल सुरक्षा",
+    iconBg: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400",
+    iconType: "environment",
+  },
+  parivahan: {
+    labelHi: "यातायात और परिवहन",
+    sublabelHi: "बस सेवा, रेलवे कनेक्टिविटी, सड़क मार्ग",
+    iconBg: "bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-400",
+    iconType: "road",
+  },
+};
+
+function renderMobileIssueIcon(type: string) {
+  if (type === "road") {
+    return (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M4 19L8 5" />
+        <path d="M20 19L16 5" />
+        <path d="M12 7V9" strokeWidth="3" />
+        <path d="M12 15V17" strokeWidth="3" />
+      </svg>
+    );
+  }
+  if (type === "briefcase") {
+    return (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M20 6h-4V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-6 0h-4V4h4v2z" />
+      </svg>
+    );
+  }
+  if (type === "education") {
+    return (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3zM5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82z" />
+      </svg>
+    );
+  }
+  if (type === "health") {
+    return (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+      </svg>
+    );
+  }
+  if (type === "water") {
+    return (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
+      </svg>
+    );
+  }
+  if (type === "security") {
+    return (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
+      </svg>
+    );
+  }
+  if (type === "environment") {
+    return (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M17 8C8 10 5.9 16.17 3.82 21.34l1.89.66.95-2.3c.48.17.98.3 1.34.3C19 20 22 3 22 3c-1 2-8 2.25-13 3.25S2 11.5 2 13.5s1.75 3.75 1.75 3.75C7 8 17 8 17 8z" />
+      </svg>
+    );
+  }
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+      <circle cx="5" cy="12" r="2" />
+      <circle cx="12" cy="12" r="2" />
+      <circle cx="19" cy="12" r="2" />
+    </svg>
+  );
+}
 
 export function SurveyExperience({
   surveyId,
@@ -86,11 +287,13 @@ export function SurveyExperience({
   genders,
   socialCategories,
   religions,
+  currentMla,
 }: SurveyExperienceProps) {
   const { t, locale } = useLocale();
   const router = useRouter();
   const [pageIndex, setPageIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<SingleAnswerKey, string | undefined>>({
+    mla_satisfaction: undefined,
     party_preference: undefined,
     age_group: undefined,
     gender: undefined,
@@ -123,6 +326,7 @@ export function SurveyExperience({
   }, [done]);
 
   const steps: SurveyStepDef[] = [
+    { key: "mla_satisfaction", label: t.surveyFlow.stepMla },
     { key: "party_preference", label: t.surveyFlow.stepParty },
     { key: "top_issue", label: t.surveyFlow.stepIssue },
     { key: "personal_info", label: t.surveyFlow.stepPersonalInfo },
@@ -131,7 +335,12 @@ export function SurveyExperience({
   const pageKey: PageKey = PAGE_KEYS[pageIndex];
   const isFirst = pageIndex === 0;
   const isLast = pageIndex === PAGE_KEYS.length - 1;
-  const canAdvance = pageKey === "party_preference" ? Boolean(answers.party_preference) : true;
+  const canAdvance =
+    pageKey === "mla_satisfaction"
+      ? Boolean(answers.mla_satisfaction)
+      : pageKey === "party_preference"
+      ? Boolean(answers.party_preference)
+      : true;
 
   const resultsHref = `${basePath}/constituencies/${constituencySlug}/results`;
 
@@ -265,34 +474,431 @@ export function SurveyExperience({
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.22 }}
         >
-            {pageKey === "party_preference" && (
-              <StepBody heading={t.surveyFlow.partyHeading} subtitle={t.surveyFlow.partySubtitle}>
-                <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 lg:gap-3 xl:gap-4">
-                  {localizedParties.map((party) => (
-                    <PartyOptionCard
-                      key={party.key}
-                      option={party}
-                      selected={answers.party_preference === party.key}
-                      onSelect={() => select("party_preference", party.key)}
-                    />
-                  ))}
+            {pageKey === "mla_satisfaction" && (
+              <div>
+                {/* Mobile Experience (<sm) matching reference Image 2 */}
+                <div className="sm:hidden space-y-4">
+                  {/* Large Editorial Hero */}
+                  <div className="relative pt-2 pb-3 overflow-hidden min-h-[195px]">
+                    <div className="absolute top-0 right-[-10px] w-[58%] h-full pointer-events-none select-none">
+                      <Image
+                        src="/images/survey/mla-hero-mobile.png"
+                        alt=""
+                        fill
+                        className="object-contain object-top-right"
+                        priority
+                      />
+                    </div>
+                    <div className="relative z-10 w-[70%] pr-1">
+                      <h1 className="font-display font-extrabold text-[22px] leading-[1.25] text-slate-900 dark:text-slate-100 tracking-tight">
+                        {locale === "hi" ? (
+                          <>
+                            आप अपने वर्तमान{" "}
+                            <span className="text-[#ea580c]">विधायक (MLA)</span> के कार्यों
+                            से कितने संतुष्ट हैं?
+                          </>
+                        ) : (
+                          <>
+                            How satisfied are you with your current{" "}
+                            <span className="text-[#ea580c]">MLA&apos;s</span> work?
+                          </>
+                        )}
+                      </h1>
+                      <p className="mt-2 text-[12.5px] leading-[1.4] text-slate-600 dark:text-slate-300 font-medium">
+                        {locale === "hi"
+                          ? "अपने क्षेत्र में हुए विकास कार्यों, जनता की समस्याओं के समाधान और समग्र कार्यप्रणाली को ध्यान में रखकर जवाब दें।"
+                          : "Respond considering the development work, resolution of public issues, and overall administration in your area."}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Large Horizontal Satisfaction Cards */}
+                  <div className="flex flex-col gap-3">
+                    {MLA_SATISFACTION_OPTIONS.map((opt) => {
+                      const isSelected = answers.mla_satisfaction === opt.key;
+                      return (
+                        <button
+                          type="button"
+                          key={opt.key}
+                          onClick={() => select("mla_satisfaction", opt.key)}
+                          className={cn(
+                            "group relative flex w-full items-center justify-between gap-3.5 rounded-2xl p-4 text-left transition-all cursor-pointer shadow-xs",
+                            isSelected
+                              ? "border-2 border-emerald-600 bg-emerald-50/25 ring-1 ring-emerald-600/30"
+                              : "border border-slate-200/90 bg-white hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900"
+                          )}
+                        >
+                          <div className="flex min-w-0 items-center gap-3.5">
+                            <span className="flex h-10 w-10 shrink-0 items-center justify-center">
+                              {getMlaOptionIcon(opt.key)}
+                            </span>
+                            <div className="min-w-0">
+                              <p className="font-bold text-[16px] text-slate-900 dark:text-slate-100 leading-snug">
+                                {locale === "hi" ? opt.label : opt.labelEn}
+                              </p>
+                              <p className="mt-0.5 text-[12.5px] text-slate-500 dark:text-slate-400 leading-snug">
+                                {locale === "hi" ? opt.sublabel : opt.sublabelEn}
+                              </p>
+                            </div>
+                          </div>
+                          <div
+                            className={cn(
+                              "flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition-colors",
+                              isSelected
+                                ? "border-emerald-600 bg-white"
+                                : "border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800"
+                            )}
+                          >
+                            {isSelected && <span className="h-3 w-3 rounded-full bg-emerald-600" />}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-              </StepBody>
+
+                {/* Desktop Experience (>=sm) - Untouched existing layout */}
+                <div className="hidden sm:block space-y-4">
+                  <div className="rounded-2xl border border-border bg-surface-2 p-4 sm:p-5 shadow-xs">
+                    <div className="flex items-center gap-3.5 sm:gap-4">
+                      {currentMla?.photoUrl ? (
+                        <div className="relative h-16 w-16 sm:h-20 sm:w-20 shrink-0 overflow-hidden rounded-full border-2 border-border shadow-xs">
+                          <Image
+                            src={currentMla.photoUrl}
+                            alt={currentMla.name ?? "MLA"}
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <div className="flex h-16 w-16 sm:h-20 sm:w-20 shrink-0 items-center justify-center rounded-full bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200 font-bold text-xl sm:text-2xl shadow-inner">
+                          {currentMla?.name ? currentMla.name.trim().slice(0, 1) : <Users size={26} />}
+                        </div>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <span className="inline-block rounded-md bg-blue-100 dark:bg-blue-900/50 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-blue-700 dark:text-blue-300">
+                          {t.surveyFlow.currentMla}
+                        </span>
+                        <h3 className="mt-1 truncate font-display text-base font-extrabold text-ink sm:text-xl">
+                          {currentMla?.name ?? t.surveyFlow.noMlaData}
+                        </h3>
+                        <p className="mt-0.5 text-xs sm:text-sm font-medium text-muted">
+                          {currentMla?.party ? `${currentMla.party} · ` : ""}{constituencyName}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <StepBody heading={t.surveyFlow.mlaHeading} subtitle={t.surveyFlow.mlaSubtitle}>
+                    <div className="flex flex-col gap-2.5 sm:gap-3">
+                      {MLA_SATISFACTION_OPTIONS.map((opt) => {
+                        const isSelected = answers.mla_satisfaction === opt.key;
+                        const icon =
+                          opt.key === "very_satisfied" || opt.key === "somewhat_satisfied" ? (
+                            <ThumbsUp size={20} className={isSelected ? "fill-current" : ""} />
+                          ) : opt.key === "neutral" ? (
+                            <Meh size={20} />
+                          ) : (
+                            <ThumbsDown size={20} className={isSelected ? "fill-current" : ""} />
+                          );
+
+                        return (
+                          <button
+                            type="button"
+                            key={opt.key}
+                            onClick={() => select("mla_satisfaction", opt.key)}
+                            className={cn(
+                              "group relative flex w-full items-center justify-between gap-3.5 rounded-2xl border p-3.5 sm:p-4 text-left transition-all duration-150 cursor-pointer shadow-xs",
+                              isSelected
+                                ? "border-2 bg-surface-2 shadow-sm ring-1 ring-inset"
+                                : "border-border bg-surface hover:border-slate-300 dark:hover:border-slate-700"
+                            )}
+                            style={{
+                              borderColor: isSelected ? opt.colorHex : undefined,
+                              backgroundColor: isSelected ? `${opt.colorHex}0d` : undefined,
+                            }}
+                          >
+                            <div className="flex min-w-0 items-center gap-3 sm:gap-3.5">
+                              <span
+                                className="flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-xl transition-transform group-hover:scale-105"
+                                style={{
+                                  backgroundColor: `${opt.colorHex}18`,
+                                  color: opt.colorHex,
+                                }}
+                              >
+                                {icon}
+                              </span>
+                              <div className="min-w-0">
+                                <p className="font-bold text-sm sm:text-base text-ink leading-snug">
+                                  {locale === "hi" ? opt.label : opt.labelEn}
+                                </p>
+                                <p className="mt-0.5 text-xs sm:text-[13px] text-muted leading-tight">
+                                  {locale === "hi" ? opt.sublabel : opt.sublabelEn}
+                                </p>
+                              </div>
+                            </div>
+                            <div
+                              className={cn(
+                                "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition-colors",
+                                isSelected ? "border-transparent" : "border-slate-300 dark:border-slate-600 bg-transparent"
+                              )}
+                              style={{ backgroundColor: isSelected ? opt.colorHex : undefined }}
+                            >
+                              {isSelected && <span className="h-2 w-2 rounded-full bg-white" />}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </StepBody>
+                </div>
+              </div>
+            )}
+
+            {pageKey === "party_preference" && (
+              <div>
+                {/* Mobile Experience (<sm) matching reference Image 3 */}
+                <div className="sm:hidden space-y-4">
+                  {/* Large Editorial Hero */}
+                  <div className="relative pt-2 pb-3 overflow-hidden min-h-[195px]">
+                    <div className="absolute top-0 right-[-10px] w-[58%] h-full pointer-events-none select-none">
+                      <Image
+                        src="/images/survey/party-hero-mobile.png"
+                        alt=""
+                        fill
+                        className="object-contain object-top-right"
+                        priority
+                      />
+                    </div>
+                    <div className="relative z-10 w-[70%] pr-1">
+                      <h1 className="font-display font-extrabold text-[22px] leading-[1.25] text-slate-900 dark:text-slate-100 tracking-tight">
+                        {locale === "hi" ? (
+                          <>
+                            आपके विधानसभा क्षेत्र में आगामी चुनाव में आप किस{" "}
+                            <span className="text-[#ea580c]">राजनीतिक पार्टी</span> को
+                            समर्थन देंगे?
+                          </>
+                        ) : (
+                          <>
+                            Which{" "}
+                            <span className="text-[#ea580c]">Political Party</span> will
+                            you support in the upcoming election in your constituency?
+                          </>
+                        )}
+                      </h1>
+                      <p className="mt-2 text-[12.5px] leading-[1.4] text-slate-600 dark:text-slate-300 font-medium">
+                        {locale === "hi"
+                          ? "अपने क्षेत्र में विकास, नेतृत्व और मुद्दों के आधार पर अपनी पसंद चुनें।"
+                          : "Choose your preference based on local development, leadership, and key issues."}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Large Horizontal Party Cards */}
+                  <div className="flex flex-col gap-3">
+                    {localizedParties.map((party) => {
+                      const isSelected = answers.party_preference === party.key;
+                      const isJansatta =
+                        party.key.toLowerCase().includes("jansatta") ||
+                        (party.label ?? "").toLowerCase().includes("jansatta") ||
+                        (party.abbreviation ?? "").toLowerCase() === "jdlp";
+                      const displayName = isJansatta
+                        ? (locale === "hi" ? "जनसत्ता दल (JDLP)" : "JDLP")
+                        : (locale === "hi" ? (party.labelHi || party.label) : party.label);
+                      const symbolText = getPartySymbol(party.key, locale);
+
+                      return (
+                        <button
+                          type="button"
+                          key={party.key}
+                          onClick={() => select("party_preference", party.key)}
+                          className={cn(
+                            "group relative flex w-full items-center justify-between gap-3.5 rounded-2xl p-4 text-left transition-all cursor-pointer shadow-xs",
+                            isSelected
+                              ? "border-2 border-orange-500 bg-orange-50/25 ring-1 ring-orange-500/30"
+                              : "border border-slate-200/90 bg-white hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900"
+                          )}
+                        >
+                          <div className="flex min-w-0 items-center gap-3.5">
+                            <div className="flex h-11 w-11 shrink-0 items-center justify-center p-0.5">
+                              {party.logoUrl ? (
+                                <Image
+                                  src={party.logoUrl}
+                                  alt=""
+                                  width={44}
+                                  height={44}
+                                  className="h-full w-full object-contain"
+                                />
+                              ) : (
+                                <span
+                                  className="flex h-10 w-10 items-center justify-center rounded-full text-xs font-bold text-white shadow-xs"
+                                  style={{ backgroundColor: party.colorHex ?? "#64748b" }}
+                                >
+                                  {(party.abbreviation ?? party.label).slice(0, 3).toUpperCase()}
+                                </span>
+                              )}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="font-bold text-[16px] text-slate-900 dark:text-slate-100 leading-snug">
+                                {displayName}
+                              </p>
+                              {symbolText && (
+                                <p className="mt-0.5 text-[12.5px] text-slate-500 dark:text-slate-400 leading-snug">
+                                  {symbolText}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          <div
+                            className={cn(
+                              "flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition-colors",
+                              isSelected
+                                ? "border-red-600 bg-white"
+                                : "border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800"
+                            )}
+                          >
+                            {isSelected && <span className="h-3 w-3 rounded-full bg-red-600" />}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Desktop Experience (>=sm) - Untouched existing layout */}
+                <div className="hidden sm:block">
+                  <StepBody heading={t.surveyFlow.partyHeading} subtitle={t.surveyFlow.partySubtitle}>
+                    <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 lg:gap-3 xl:gap-4">
+                      {localizedParties.map((party) => (
+                        <PartyOptionCard
+                          key={party.key}
+                          option={party}
+                          selected={answers.party_preference === party.key}
+                          onSelect={() => select("party_preference", party.key)}
+                        />
+                      ))}
+                    </div>
+                  </StepBody>
+                </div>
+              </div>
             )}
 
             {pageKey === "top_issue" && (
-              <StepBody heading={t.surveyFlow.issueHeading} subtitle={t.surveyFlow.issueSubtitle}>
-                <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 lg:gap-3 xl:gap-3.5">
-                  {localizedIssues.map((issue) => (
-                    <IconOptionCard
-                      key={issue.key}
-                      option={issue}
-                      selected={selectedIssues.includes(issue.key)}
-                      onSelect={() => toggleIssue(issue.key)}
-                    />
-                  ))}
+              <div>
+                {/* Mobile Experience (<sm) matching reference Image 4 */}
+                <div className="sm:hidden space-y-4">
+                  {/* Large Editorial Hero */}
+                  <div className="relative pt-2 pb-3 overflow-hidden min-h-[190px]">
+                    <div className="absolute top-0 right-[-10px] w-[58%] h-full pointer-events-none select-none">
+                      <Image
+                        src="/images/survey/issue-hero-mobile.png"
+                        alt=""
+                        fill
+                        className="object-contain object-top-right"
+                        priority
+                      />
+                    </div>
+                    <div className="relative z-10 w-[70%] pr-1">
+                      <h1 className="font-display font-extrabold text-[22px] leading-[1.25] text-slate-900 dark:text-slate-100 tracking-tight">
+                        {locale === "hi" ? (
+                          <>
+                            आपके क्षेत्र में सबसे{" "}
+                            <span className="text-[#ea580c]">महत्वपूर्ण मुद्दा</span> क्या है?
+                          </>
+                        ) : (
+                          <>
+                            What is the most{" "}
+                            <span className="text-[#ea580c]">important issue</span> in your area?
+                          </>
+                        )}
+                      </h1>
+                      <p className="mt-2 text-[12.5px] leading-[1.4] text-slate-600 dark:text-slate-300 font-medium">
+                        {locale === "hi"
+                          ? "आपके क्षेत्र में विकास के लिए किन समस्याओं पर सबसे पहले ध्यान दिया जाना चाहिए? कृपया एक विकल्प चुनें।"
+                          : "Which problems in your area should be addressed with the highest priority? Please select an option."}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Large Horizontal Issue Cards */}
+                  <div className="flex flex-col gap-3">
+                    {localizedIssues.map((issue) => {
+                      const isSelected = selectedIssues.includes(issue.key);
+                      const details = MOBILE_ISSUE_DETAILS[issue.key] ?? {
+                        labelHi: issue.labelHi || issue.label,
+                        sublabelHi: "महत्वपूर्ण जनसमस्या",
+                        iconBg: "bg-slate-100 text-slate-600",
+                        iconType: "other" as const,
+                      };
+                      const title = locale === "hi" ? details.labelHi : issue.label;
+                      const subtitle = locale === "hi" ? details.sublabelHi : "";
+
+                      return (
+                        <button
+                          type="button"
+                          key={issue.key}
+                          onClick={() => {
+                            setSelectedIssues((current) => current.includes(issue.key) ? [] : [issue.key]);
+                          }}
+                          className={cn(
+                            "group relative flex w-full items-center justify-between gap-3.5 rounded-2xl p-4 text-left transition-all cursor-pointer shadow-xs",
+                            isSelected
+                              ? "border-2 border-orange-500 bg-orange-50/25 ring-1 ring-orange-500/30"
+                              : "border border-slate-200/90 bg-white hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900"
+                          )}
+                        >
+                          <div className="flex min-w-0 items-center gap-3.5">
+                            <span
+                              className={cn(
+                                "flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl shadow-xs",
+                                details.iconBg
+                              )}
+                            >
+                              {renderMobileIssueIcon(details.iconType)}
+                            </span>
+                            <div className="min-w-0">
+                              <p className="font-bold text-[16px] text-slate-900 dark:text-slate-100 leading-snug">
+                                {title}
+                              </p>
+                              {subtitle && (
+                                <p className="mt-0.5 text-[12.5px] text-slate-500 dark:text-slate-400 leading-snug">
+                                  {subtitle}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          <div
+                            className={cn(
+                              "flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition-colors",
+                              isSelected
+                                ? "border-red-600 bg-white"
+                                : "border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800"
+                            )}
+                          >
+                            {isSelected && <span className="h-3 w-3 rounded-full bg-red-600" />}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-              </StepBody>
+
+                {/* Desktop Experience (>=sm) - Untouched existing layout */}
+                <div className="hidden sm:block">
+                  <StepBody heading={t.surveyFlow.issueHeading} subtitle={t.surveyFlow.issueSubtitle}>
+                    <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 lg:gap-3 xl:gap-3.5">
+                      {localizedIssues.map((issue) => (
+                        <IconOptionCard
+                          key={issue.key}
+                          option={issue}
+                          selected={selectedIssues.includes(issue.key)}
+                          onSelect={() => toggleIssue(issue.key)}
+                        />
+                      ))}
+                    </div>
+                  </StepBody>
+                </div>
+              </div>
             )}
 
             {pageKey === "personal_info" && (
@@ -381,32 +987,20 @@ export function SurveyExperience({
         <div className="pb-28 sm:pb-8 lg:pb-20 xl:pb-24" aria-hidden="true" />
       </div>
 
-      {/* Mobile/Tablet bottom navigation bar - untouched behavior for <lg */}
-      <div className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 dark:bg-slate-900/95 dark:border-slate-800 shadow-sm py-3 sm:py-3.5">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between sm:justify-end gap-3">
-          {!isFirst ? (
+      {/* Mobile/Tablet bottom navigation bar matching target design */}
+      <div className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 dark:bg-slate-900/95 dark:border-slate-800 shadow-sm py-3 px-4">
+        <div className="max-w-md mx-auto flex items-center gap-3">
+          {!isFirst && (
             <Button
               variant="outline"
               size="lg"
-              className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-6 sm:px-8 py-2.5 sm:py-3 rounded-xl font-bold text-sm sm:text-base bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-200 dark:bg-slate-800 dark:text-slate-100 dark:border-slate-700 transition-colors shadow-xs"
+              className="flex-1 flex items-center justify-center gap-1.5 py-3 rounded-xl font-bold text-[15px] bg-white hover:bg-blue-50 text-blue-600 border-2 border-blue-200 dark:bg-slate-800 dark:text-blue-400 dark:border-blue-900/60 transition-colors shadow-xs"
               onClick={() => setPageIndex((i) => i - 1)}
               disabled={submitting}
-              aria-label={t.surveyFlow.previous}
+              aria-label={locale === "hi" ? "पिछला सवाल" : t.surveyFlow.previous}
             >
-              <ChevronLeft size={18} className="sm:h-5 sm:w-5" />
-              <span>{t.surveyFlow.previous}</span>
-            </Button>
-          ) : (
-            <Button
-              variant="outline"
-              size="lg"
-              className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-6 sm:px-8 py-2.5 sm:py-3 rounded-xl font-bold text-sm sm:text-base bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-200 dark:bg-slate-800 dark:text-slate-100 dark:border-slate-700 transition-colors shadow-xs"
-              onClick={() => router.push(basePath)}
-              disabled={submitting}
-              aria-label={t.surveyFlow.previous}
-            >
-              <ChevronLeft size={18} className="sm:h-5 sm:w-5" />
-              <span>{t.surveyFlow.previous}</span>
+              <ChevronLeft size={19} />
+              <span>{locale === "hi" ? "पिछला सवाल" : t.surveyFlow.previous}</span>
             </Button>
           )}
 
@@ -415,14 +1009,17 @@ export function SurveyExperience({
             size="lg"
             onClick={handlePrimary}
             disabled={!canAdvance || submitting}
-            className="flex-1 sm:flex-initial flex items-center justify-center gap-2 min-w-[10.5rem] sm:min-w-[12rem] px-8 sm:px-10 py-2.5 sm:py-3 rounded-xl font-bold text-sm sm:text-base shadow-[0_8px_24px_-6px_rgba(255,87,34,0.4)] bg-[#ff5722] hover:bg-[#f4511e] text-white transition-colors"
+            className={cn(
+              "flex items-center justify-center gap-1.5 py-3 rounded-xl font-bold text-[15px] text-white shadow-md transition-colors bg-[#ef4444] hover:bg-[#dc2626]",
+              isFirst ? "w-full" : "flex-1"
+            )}
           >
             {submitting ? (
               <Loader2 size={18} className="animate-spin" />
             ) : (
               <>
-                <span>{isLast ? t.surveyFlow.submitSurvey : t.surveyFlow.next}</span>
-                {!isLast && <ChevronRight size={18} className="sm:h-5 sm:w-5" />}
+                <span>{isLast ? t.surveyFlow.submitSurvey : (locale === "hi" ? "अगला सवाल" : t.surveyFlow.next)}</span>
+                <ChevronRight size={19} />
               </>
             )}
           </Button>

@@ -13,31 +13,24 @@ export function SurveyStepper({ steps, currentIndex }: { steps: SurveyStepDef[];
   const { t } = useLocale();
 
   const isDone = currentIndex >= steps.length;
-  const currentStep = steps[currentIndex];
-  const mobileEyebrow = isDone
-    ? t.surveyFlow.stepPersonalInfo
-    : currentStep?.key === "personal_info"
-    ? t.surveyFlow.personalInfoQuestionLabel
-    : t.surveyFlow.questionOf.replace("{current}", String(currentIndex + 1)).replace("{total}", String(steps.length));
-
-  const progressPercent = isDone
-    ? 100
-    : currentIndex === 0
-    ? 33
-    : currentIndex === 1
-    ? 66
-    : 85;
+  const currentStepNum = Math.min(currentIndex + 1, 4);
+  const progressPercent = isDone ? 100 : currentStepNum * 25;
 
   return (
     <div className="w-full">
       {/* Mobile progress header (< sm:), matching reference designs */}
-      <div className="flex sm:hidden items-center justify-between gap-3 pt-1 pb-1">
-        <span className="text-xs font-bold uppercase tracking-wide text-orange-600 dark:text-orange-500">
-          {mobileEyebrow}
-        </span>
-        <div className="h-2 w-36 shrink-0 rounded-full bg-slate-200 overflow-hidden dark:bg-slate-700">
+      <div className="flex sm:hidden flex-col gap-1.5 pt-0.5 pb-2">
+        <div className="flex items-center justify-between text-xs">
+          <span className="font-semibold text-slate-500 dark:text-slate-400">
+            {`Question ${currentStepNum} of 4`}
+          </span>
+          <span className="font-bold text-emerald-600 dark:text-emerald-400">
+            {progressPercent}%
+          </span>
+        </div>
+        <div className="h-1.5 w-full rounded-full bg-slate-100 overflow-hidden dark:bg-slate-800">
           <div
-            className="h-full rounded-full bg-orange-500 transition-all duration-300 ease-out"
+            className="h-full rounded-full bg-emerald-500 transition-all duration-300 ease-out"
             style={{ width: `${progressPercent}%` }}
           />
         </div>

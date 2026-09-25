@@ -48,9 +48,23 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ sur
     return NextResponse.json({ error: "Too many requests. Please slow down." }, { status: 429 });
   }
 
+  let activeSurvey = survey;
+  if (
+    answers.some((a) => a.questionKey === "mla_satisfaction") &&
+    !activeSurvey.questions.some((q) => q.key === "mla_satisfaction")
+  ) {
+    const { ensureMlaSatisfactionQuestion } = await import("@/lib/survey-template-data");
+    await ensureMlaSatisfactionQuestion(prisma, activeSurvey.id);
+    const refreshed = await prisma.survey.findUnique({
+      where: { id: surveyId },
+      include: { questions: { include: { options: { include: { party: { select: { id: true, isActive: true } } } } } } },
+    });
+    if (refreshed) activeSurvey = refreshed;
+  }
+
   let resolvedAnswers;
   try {
-    resolvedAnswers = await validateSurveySubmission(prisma, survey, answers);
+    resolvedAnswers = await validateSurveySubmission(prisma, activeSurvey, answers);
   } catch (error) {
     if (error instanceof SurveySubmissionValidationError) {
       return NextResponse.json({ error: error.message }, { status: error.statusCode });

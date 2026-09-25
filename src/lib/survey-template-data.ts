@@ -1,5 +1,5 @@
 import type { PrismaClient } from "@prisma/client";
-import { DEFAULT_ISSUES, AGE_GROUPS, GENDERS, SOCIAL_CATEGORIES, RELIGIONS } from "./enums";
+import { DEFAULT_ISSUES, AGE_GROUPS, GENDERS, SOCIAL_CATEGORIES, RELIGIONS, MLA_SATISFACTION_OPTIONS } from "./enums";
 
 // "Other", "NOTA" and "Undecided" are canonical global Party rows (slugs
 // other/nota/undecided) always appended last to every state's survey,
@@ -92,31 +92,38 @@ type DefaultQuestionDef = {
 };
 
 const DEMO_QUESTION_DEFS: Array<{ key: string; label: string; order: number; options: readonly { key: string; label: string }[] }> = [
-  { key: "age_group", label: "आयु वर्ग", order: 4, options: AGE_GROUPS },
-  { key: "gender", label: "लिंग", order: 5, options: GENDERS },
-  { key: "social_category", label: "सामाजिक श्रेणी", order: 6, options: SOCIAL_CATEGORIES },
-  { key: "religion", label: "धर्म", order: 7, options: RELIGIONS },
+  { key: "age_group", label: "आयु वर्ग", order: 5, options: AGE_GROUPS },
+  { key: "gender", label: "लिंग", order: 6, options: GENDERS },
+  { key: "social_category", label: "सामाजिक श्रेणी", order: 7, options: SOCIAL_CATEGORIES },
+  { key: "religion", label: "धर्म", order: 8, options: RELIGIONS },
 ];
 
-// The platform's standard 7-question set, as flat question definitions —
+// The platform's standard question set, as flat question definitions —
 // shared by both the fast bulk-insert path (createDefaultSurveyQuestions)
 // and the upsert-based repair path (ensureDefaultSurveyQuestions) so the
 // two can never drift out of sync.
 function buildDefaultQuestionDefs(opts?: DefaultQuestionOpts): DefaultQuestionDef[] {
   return [
     {
+      key: "mla_satisfaction",
+      label: "क्या आप अपने वर्तमान विधायक (MLA) के कार्यों से कितने संतुष्ट हैं?",
+      required: false,
+      allowSkip: true,
+      order: 1,
+    },
+    {
       key: "party_preference",
       label: opts?.partyQuestionLabel ?? "अगर आज विधानसभा चुनाव हों, तो आप किस पार्टी को वोट देना पसंद करेंगे?",
       required: true,
       allowSkip: false,
-      order: 1,
+      order: 2,
     },
     {
       key: "candidate_choice",
       label: opts?.candidateQuestionLabel ?? "आपकी चुनी हुई पार्टी की ओर से उम्मीदवार के रूप में आप किसे पसंद करेंगे?",
       required: false,
       allowSkip: true,
-      order: 2,
+      order: 3,
     },
     {
       key: "top_issue",
@@ -124,7 +131,7 @@ function buildDefaultQuestionDefs(opts?: DefaultQuestionOpts): DefaultQuestionDe
       type: "MULTIPLE_CHOICE",
       required: false,
       allowSkip: true,
-      order: 3,
+      order: 4,
     },
     ...DEMO_QUESTION_DEFS.map((dq) => ({ key: dq.key, label: dq.label, required: false, allowSkip: true, order: dq.order })),
   ];
@@ -137,11 +144,18 @@ function buildDefaultOptionRows(
   questionIdByKey: Map<string, string>,
   parties: SurveyParty[]
 ): Array<{ questionId: string; key: string; label: string; order: number; partyId?: string }> {
+  const mlaQId = questionIdByKey.get("mla_satisfaction");
   const partyQId = questionIdByKey.get("party_preference")!;
   const candidateQId = questionIdByKey.get("candidate_choice")!;
   const issueQId = questionIdByKey.get("top_issue")!;
 
   const optionRows: Array<{ questionId: string; key: string; label: string; order: number; partyId?: string }> = [];
+
+  if (mlaQId) {
+    MLA_SATISFACTION_OPTIONS.forEach((opt, i) => {
+      optionRows.push({ questionId: mlaQId, key: opt.key, label: opt.label, order: i });
+    });
+  }
 
   parties.forEach((party, order) => {
     optionRows.push({ questionId: partyQId, key: party.slug, label: party.shortName, partyId: party.id, order });
@@ -162,6 +176,54 @@ function buildDefaultOptionRows(
   }
 
   return optionRows;
+}
+
+export async function ensureMlaSatisfactionQuestion(
+  prisma: PrismaClient,
+  surveyId: string
+) {
+  const existing = await prisma.surveyQuestion.findUnique({
+    where: { surveyId_key: { surveyId, key: "mla_satisfaction" } },
+    include: { options: true },
+  });
+
+  if (existing) {
+    if (existing.options.length < MLA_SATISFACTION_OPTIONS.length) {
+      for (let i = 0; i < MLA_SATISFACTION_OPTIONS.length; i++) {
+        const opt = MLA_SATISFACTION_OPTIONS[i];
+        await prisma.surveyOption.upsert({
+          where: { questionId_key: { questionId: existing.id, key: opt.key } },
+          update: { label: opt.label, order: i, isActive: true },
+          create: { questionId: existing.id, key: opt.key, label: opt.label, order: i, isActive: true },
+        });
+      }
+    }
+    return existing;
+  }
+
+  const question = await prisma.surveyQuestion.create({
+    data: {
+      surveyId,
+      key: "mla_satisfaction",
+      label: "क्या आप अपने वर्तमान विधायक (MLA) के कार्यों से कितने संतुष्ट हैं?",
+      type: "SINGLE_CHOICE",
+      required: false,
+      allowSkip: true,
+      order: 1,
+    },
+  });
+
+  await prisma.surveyOption.createMany({
+    data: MLA_SATISFACTION_OPTIONS.map((opt, i) => ({
+      questionId: question.id,
+      key: opt.key,
+      label: opt.label,
+      order: i,
+      isActive: true,
+    })),
+  });
+
+  return question;
 }
 
 // Creates the platform's standard survey question set on an already-created

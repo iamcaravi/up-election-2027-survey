@@ -119,3 +119,49 @@ export const CANONICAL_SPECIAL_PARTIES: Array<{
 
 export const MINIMUM_ANALYTICS_CELL_SIZE = 1;
 export const MIN_ANALYTICS_GROUP_SIZE_DEFAULT = MINIMUM_ANALYTICS_CELL_SIZE;
+
+export const MLA_SATISFACTION_OPTIONS = [
+  {
+    key: "very_satisfied",
+    label: "बहुत संतुष्ट",
+    labelEn: "Very Satisfied",
+    sublabel: "कार्य अत्यंत संतोषजनक हैं",
+    sublabelEn: "Work is highly satisfactory",
+    colorHex: "#16a34a",
+  },
+  {
+    key: "somewhat_satisfied",
+    label: "कुछ हद तक संतुष्ट",
+    labelEn: "Somewhat Satisfied",
+    sublabel: "कुछ अच्छे कार्य हुए हैं, लेकिन और बेहतर हो सकते हैं",
+    sublabelEn: "Some good work done, but could be better",
+    colorHex: "#65a30d",
+  },
+  {
+    key: "neutral",
+    label: "न तो संतुष्ट, न असंतुष्ट",
+    labelEn: "Neither Satisfied nor Dissatisfied",
+    sublabel: "कार्य सामान्य हैं, कोई विशेष बदलाव नहीं दिखता",
+    sublabelEn: "Work is average, no noticeable change",
+    colorHex: "#eab308",
+  },
+  {
+    key: "somewhat_dissatisfied",
+    label: "कुछ हद तक असंतुष्ट",
+    labelEn: "Somewhat Dissatisfied",
+    sublabel: "उम्मीद के अनुसार कार्य नहीं हुए",
+    sublabelEn: "Work has not met expectations",
+    colorHex: "#ea580c",
+  },
+  {
+    key: "very_dissatisfied",
+    label: "पूरी तरह असंतुष्ट",
+    labelEn: "Completely Dissatisfied",
+    sublabel: "कार्य बिल्कुल संतोषजनक नहीं हैं",
+    sublabelEn: "Work is not satisfactory",
+    colorHex: "#dc2626",
+  },
+] as const;
+
+export type MlaSatisfactionKey = (typeof MLA_SATISFACTION_OPTIONS)[number]["key"];
+
