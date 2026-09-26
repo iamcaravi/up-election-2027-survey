@@ -222,7 +222,7 @@ export function Hero({
   mobileImageUrl = "/images/homepage/hero-mobile.png",
   tabletImageUrl = null,
   desktopImageUrl = "/images/homepage/hero-desktop.png",
-  initialDistricts = [],
+  initialDistricts,
 }: {
   surveyStates: SurveyEntryState[];
   initialDistricts?: Parameters<typeof SurveyEntryCard>[0]["initialDistricts"];
