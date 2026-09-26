@@ -1,7 +1,8 @@
 import { createHash } from "crypto";
 
 function getSessionSecret(): string {
-  const secret = process.env.SESSION_SECRET;
+  const runtimeSecret = (globalThis as typeof globalThis & { __SESSION_SECRET?: string }).__SESSION_SECRET;
+  const secret = runtimeSecret || process.env.SESSION_SECRET;
   if (!secret) {
     throw new Error("SESSION_SECRET must be configured.");
   }
