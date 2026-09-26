@@ -145,14 +145,9 @@ export function SiteFooter({ resultsHref, analysisHref, socialLinks }: SiteFoote
             <span className="text-border" aria-hidden="true">
               |
             </span>
-            <a
-              href="https://www.netlify.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="whitespace-nowrap hover:text-foreground transition-colors inline-flex items-center gap-1"
-            >
-              Powered by <span className="font-semibold text-ink dark:text-white">Netlify</span>
-            </a>
+            <span className="whitespace-nowrap inline-flex items-center gap-1">
+              Powered by <span className="font-semibold text-ink dark:text-white">Cloudflare</span>
+            </span>
           </div>
           <p className="text-center sm:whitespace-nowrap">
             {t.siteFooter.madeWithLove}&nbsp;&nbsp;|&nbsp;&nbsp;{t.siteFooter.madeInIndia}
