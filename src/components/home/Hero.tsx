@@ -222,8 +222,10 @@ export function Hero({
   mobileImageUrl = "/images/homepage/hero-mobile.png",
   tabletImageUrl = null,
   desktopImageUrl = "/images/homepage/hero-desktop.png",
+  initialDistricts = [],
 }: {
   surveyStates: SurveyEntryState[];
+  initialDistricts?: Parameters<typeof SurveyEntryCard>[0]["initialDistricts"];
   config?: HeroConfig;
   mobileImageUrl?: string;
   tabletImageUrl?: string | null;
@@ -557,7 +559,11 @@ export function Hero({
       )}
 
       <div data-section="surveyCta" className="relative z-20 pb-6 sm:pb-0">
-        <SurveyEntryCard states={surveyStates} heading={config.surveyHeading} />
+        <SurveyEntryCard
+          states={surveyStates}
+          initialDistricts={initialDistricts}
+          heading={config.surveyHeading}
+        />
       </div>
     </section>
   );
