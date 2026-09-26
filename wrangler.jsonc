@@ -9,6 +9,12 @@
   "cache": {
     "enabled": true
   },
+  "kv_namespaces": [
+    {
+      "binding": "VINEXT_KV_CACHE",
+      "id": "091220f9e8be4673b8dfdb3539510c32"
+    }
+  ],
   "assets": {
     "directory": "dist/client",
     "not_found_handling": "none",
