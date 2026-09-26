@@ -838,7 +838,7 @@ export function SurveyExperience({
                           type="button"
                           key={issue.key}
                           onClick={() => {
-                            setSelectedIssues((current) => current.includes(issue.key) ? [] : [issue.key]);
+                            toggleIssue(issue.key);
                           }}
                           className={cn(
                             "group relative flex w-full items-center justify-between gap-3.5 rounded-2xl p-4 text-left transition-all cursor-pointer shadow-xs",

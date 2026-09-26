@@ -4,10 +4,18 @@ import { PrismaNeon } from "@prisma/adapter-neon";
 
 const globalForPrisma = globalThis as unknown as {
   prismaClient?: PrismaClient;
+  __DATABASE_URL?: string;
 };
 
+function getDatabaseUrl(): string | undefined {
+  return process.env.DATABASE_URL || globalForPrisma.__DATABASE_URL;
+}
+
 function createPrismaClient(): PrismaClient {
-  const connectionString = process.env.DATABASE_URL;
+  const connectionString = getDatabaseUrl();
+  if (!connectionString) {
+    throw new Error("DATABASE_URL is not configured for the server runtime.");
+  }
   const log = process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"];
 
   return connectionString
