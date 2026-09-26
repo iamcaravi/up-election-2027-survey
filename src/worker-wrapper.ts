@@ -97,9 +97,15 @@ function putInMemoryCache(key: string, entry: Omit<MemoryCacheEntry, "expiresAt"
 
 export default {
   async fetch(request: Request, env: any, ctx: any) {
-    const globalState = globalThis as typeof globalThis & { __DATABASE_URL?: string };
-    if (env?.DATABASE_URL && !globalState.__DATABASE_URL) {
+    const globalState = globalThis as typeof globalThis & {
+      __DATABASE_URL?: string;
+      __SESSION_SECRET?: string;
+    };
+    if (env?.DATABASE_URL) {
       globalState.__DATABASE_URL = env.DATABASE_URL;
+    }
+    if (env?.SESSION_SECRET) {
+      globalState.__SESSION_SECRET = env.SESSION_SECRET;
     }
 
     const url = new URL(request.url);
