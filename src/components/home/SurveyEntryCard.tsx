@@ -291,6 +291,7 @@ export function SurveyEntryCard({ states, heading, initialDistricts }: SurveyEnt
   const [selectedConstituency, setSelectedConstituency] = useState<ConstituencyItem | null>(null);
   const [loadingDistricts, setLoadingDistricts] = useState(false);
   const [loadingConstituencies, setLoadingConstituencies] = useState(false);
+  const [startingSurvey, setStartingSurvey] = useState(false);
 
   useEffect(() => {
     setSelectedDistrict(null);
@@ -361,7 +362,13 @@ export function SurveyEntryCard({ states, heading, initialDistricts }: SurveyEnt
 
   const handleSurveyStart = () => {
     const href = getSurveyHref();
-    if (href) router.push(href);
+    if (!href || startingSurvey) return;
+    setStartingSurvey(true);
+    // A full navigation is intentionally used for this final transition:
+    // the destination is server-rendered and may need several DB reads.
+    // This avoids a slow/uncertain client-router transition after the visitor
+    // has already made the three selections.
+    window.location.assign(href);
   };
 
   return (
@@ -443,10 +450,10 @@ export function SurveyEntryCard({ states, heading, initialDistricts }: SurveyEnt
           whileHover={canSubmit ? { scale: 1.02 } : undefined}
           whileTap={canSubmit ? { scale: 0.98 } : undefined}
           onClick={handleSurveyStart}
-          disabled={!canSubmit}
-          className="flex h-11 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full bg-orange-600 px-5 text-xs font-bold text-white shadow-[0_8px_20px_-6px_rgba(234,88,12,0.5)] transition-colors hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-60 disabled:shadow-none sm:text-sm lg:h-12 lg:gap-2 lg:px-7"
+          disabled={!canSubmit || startingSurvey}
+          className="flex h-11 min-w-[9rem] shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full bg-orange-600 px-5 text-xs font-bold text-white shadow-[0_8px_20px_-6px_rgba(234,88,12,0.5)] transition-colors hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-60 disabled:shadow-none sm:text-sm lg:h-12 lg:gap-2 lg:px-7"
         >
-          {t.heroSurvey.participate} <ArrowRight size={14} className="sm:h-4 sm:w-4 lg:h-[17px] lg:w-[17px]" />
+          {startingSurvey ? t.common.loading : t.heroSurvey.participate} <ArrowRight size={14} className="sm:h-4 sm:w-4 lg:h-[17px] lg:w-[17px]" />
         </motion.button>
       </div>
     </motion.div>
