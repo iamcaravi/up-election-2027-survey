@@ -107,30 +107,32 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ sur
     flagReason = "Unusually high submission volume from this network in a short window.";
   }
 
-  await prisma.$transaction(async (tx) => {
-    const created = await tx.surveyResponse.create({
+  // Keep the public submission path to ordinary edge-compatible writes.
+  // The Worker uses Prisma's Neon adapter, and there is no need for an
+  // interactive transaction here because the response + its answers can be
+  // created in one nested INSERT. This also avoids transaction-session
+  // overhead on every mobile/desktop submission.
+  const created = await prisma.surveyResponse.create({
+    data: {
+      surveyId,
+      constituencyId: survey.constituencyId!,
+      status,
+      ipHash,
+      fingerprint: fingerprintHash,
+      flagReason: flagReason ?? undefined,
+      answers: { create: resolvedAnswers },
+    },
+  });
+
+  if (status !== "VALID") {
+    await prisma.moderationFlag.create({
       data: {
-        surveyId,
-        constituencyId: survey.constituencyId!,
-        status,
-        ipHash,
-        fingerprint: fingerprintHash,
-        flagReason: flagReason ?? undefined,
-        answers: { create: resolvedAnswers },
+        responseId: created.id,
+        reason: flagReason ?? "Flagged by automated checks.",
+        severity: status === "REJECTED" ? "HIGH" : "MEDIUM",
       },
     });
-
-    if (status !== "VALID") {
-      await tx.moderationFlag.create({
-        data: {
-          responseId: created.id,
-          reason: flagReason ?? "Flagged by automated checks.",
-          severity: status === "REJECTED" ? "HIGH" : "MEDIUM",
-        },
-      });
-    }
-    return created;
-  });
+  }
 
   return NextResponse.json({
     ok: status === "VALID",
