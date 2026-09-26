@@ -44,6 +44,7 @@ export interface SurveyEntryHeading {
 interface SurveyEntryCardProps {
   states: SurveyEntryState[];
   heading?: SurveyEntryHeading;
+  initialDistricts?: DistrictItem[];
 }
 
 function FieldSelect<T extends { id: string }>({
@@ -261,7 +262,7 @@ function FieldSelect<T extends { id: string }>({
   );
 }
 
-export function SurveyEntryCard({ states, heading }: SurveyEntryCardProps) {
+export function SurveyEntryCard({ states, heading, initialDistricts = [] }: SurveyEntryCardProps) {
   const router = useRouter();
   const { locale, t } = useLocale();
 
@@ -274,10 +275,14 @@ export function SurveyEntryCard({ states, heading }: SurveyEntryCardProps) {
   // passes. The visitor can still change it via the selector below like
   // any other field, and district/constituency stay unselected until they
   // choose one — only the state itself is preselected.
-  const [selectedState, setSelectedState] = useState<SurveyEntryState | null>(
-    () => states.find((s) => s.slug === "uttar-pradesh") ?? null
+  const initialState = states.find((s) => s.slug === "uttar-pradesh") ?? null;
+  const [selectedState, setSelectedState] = useState<SurveyEntryState | null>(() => initialState);
+  // UP is the default launch state. Hydrate its district list with the same
+  // server-rendered data used to build the homepage so the first interaction
+  // does not wait for a client-side DB round trip.
+  const [districts, setDistricts] = useState<DistrictItem[]>(() =>
+    initialState?.slug === "uttar-pradesh" ? initialDistricts : []
   );
-  const [districts, setDistricts] = useState<DistrictItem[]>([]);
   const [selectedDistrict, setSelectedDistrict] = useState<DistrictItem | null>(null);
   const [constituencies, setConstituencies] = useState<ConstituencyItem[]>([]);
   const [selectedConstituency, setSelectedConstituency] = useState<ConstituencyItem | null>(null);
@@ -288,23 +293,49 @@ export function SurveyEntryCard({ states, heading }: SurveyEntryCardProps) {
     setSelectedDistrict(null);
     setConstituencies([]);
     setSelectedConstituency(null);
+    if (!selectedState) {
+      setDistricts([]);
+      setLoadingDistricts(false);
+      return;
+    }
+
+    // Avoid a duplicate request for the default UP state: its districts were
+    // already rendered into the homepage payload.
+    if (selectedState.slug === "uttar-pradesh" && initialDistricts.length > 0) {
+      setDistricts(initialDistricts);
+      setLoadingDistricts(false);
+      return;
+    }
+
     setDistricts([]);
-    if (!selectedState) return;
     setLoadingDistricts(true);
     fetch(`/api/districts?state=${selectedState.slug}`)
-      .then((r) => r.json())
+      .then(async (res) => {
+        const data = await res.json().catch(() => null);
+        if (!res.ok) throw new Error(data?.error || "Failed to load districts.");
+        return data;
+      })
       .then((data) => setDistricts(Array.isArray(data) ? data : []))
+      .catch(() => setDistricts([]))
       .finally(() => setLoadingDistricts(false));
-  }, [selectedState]);
+  }, [selectedState, initialDistricts]);
 
   useEffect(() => {
     setSelectedConstituency(null);
     setConstituencies([]);
-    if (!selectedState || !selectedDistrict) return;
+    if (!selectedState || !selectedDistrict) {
+      setLoadingConstituencies(false);
+      return;
+    }
     setLoadingConstituencies(true);
     fetch(`/api/districts/${selectedDistrict.slug}?state=${selectedState.slug}`)
-      .then((r) => r.json())
+      .then(async (res) => {
+        const data = await res.json().catch(() => null);
+        if (!res.ok) throw new Error(data?.error || "Failed to load constituencies.");
+        return data;
+      })
       .then((data) => setConstituencies(Array.isArray(data?.constituencies) ? data.constituencies : []))
+      .catch(() => setConstituencies([]))
       .finally(() => setLoadingConstituencies(false));
   }, [selectedState, selectedDistrict]);
 
