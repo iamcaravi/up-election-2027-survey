@@ -150,6 +150,10 @@ export async function validateSurveySubmission(
   }
 
   for (const question of survey.questions) {
+    // The public survey no longer asks candidate_choice. Older production
+    // survey rows may still have that question marked required, so it must
+    // not block otherwise valid public submissions.
+    if (question.key === "candidate_choice") continue;
     if (question.required && !seenKeys.has(question.key)) {
       throw new SurveySubmissionValidationError(`Missing required answer: ${question.key}`);
     }
