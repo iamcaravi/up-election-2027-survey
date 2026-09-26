@@ -4,6 +4,8 @@ import { saltedHash } from "@/lib/hash";
 import { isRateLimited } from "@/lib/rate-limit";
 import { recordHeartbeat, getPresenceStats } from "@/lib/presence";
 
+export const dynamic = "force-dynamic";
+
 const bodySchema = z.object({
   fingerprint: z.string().min(8).max(200),
 });
