@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 
-const sessionSecret = process.env.SESSION_SECRET;
-if (!sessionSecret) throw new Error("SESSION_SECRET must be configured.");
-const SECRET = new TextEncoder().encode(sessionSecret);
+function getSecret(): Uint8Array {
+  const runtimeSecret = (globalThis as typeof globalThis & { __SESSION_SECRET?: string }).__SESSION_SECRET;
+  const sessionSecret = runtimeSecret || process.env.SESSION_SECRET;
+  if (!sessionSecret) throw new Error("SESSION_SECRET must be configured.");
+  return new TextEncoder().encode(sessionSecret);
+}
 const COOKIE_NAME = "up2027_admin_session";
 
 export async function proxy(req: NextRequest) {
@@ -34,7 +37,7 @@ export async function proxy(req: NextRequest) {
     return NextResponse.redirect(new URL("/admin/login", req.url));
   }
   try {
-    await jwtVerify(token, SECRET);
+    await jwtVerify(token, getSecret());
     return NextResponse.next();
   } catch {
     if (isAdminApi) {
