@@ -652,7 +652,7 @@ export function SurveyExperience({
                 {/* Mobile Experience (<sm) matching reference Image 3 */}
                 <div className="sm:hidden space-y-4">
                   {/* Large Editorial Hero */}
-                  <div className="relative pt-2 pb-3 overflow-hidden min-h-[195px]">
+                  <div className="relative pt-0 pb-1 overflow-hidden">
                     
                     <div className="relative z-10 w-full pr-1">
                       <h1 className="font-display font-extrabold text-[22px] leading-[1.25] text-slate-900 dark:text-slate-100 tracking-tight">
