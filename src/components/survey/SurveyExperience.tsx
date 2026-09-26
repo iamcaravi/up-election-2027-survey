@@ -303,6 +303,20 @@ export function SurveyExperience({
   const [selectedIssues, setSelectedIssues] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [footerVisible, setFooterVisible] = useState(false);
+
+  // Keep the survey navigation fixed while answering, but hide it once the
+  // site footer enters the viewport so it never covers the footer.
+  useEffect(() => {
+    const footer = document.querySelector("footer");
+    if (!footer || typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setFooterVisible(entry.isIntersecting),
+      { threshold: 0.01 }
+    );
+    observer.observe(footer);
+    return () => observer.disconnect();
+  }, []);
   const [done, setDone] = useState(false);
 
   useEffect(() => {
@@ -964,7 +978,7 @@ export function SurveyExperience({
       </div>
 
       {/* Mobile/Tablet bottom navigation bar matching target design */}
-      <div className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 dark:bg-slate-900/95 dark:border-slate-800 shadow-sm py-3 px-4">
+      <div className={cn("lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 dark:bg-slate-900/95 dark:border-slate-800 shadow-sm py-3 px-4", footerVisible && "hidden")}>
         <div className="max-w-md mx-auto flex items-center gap-3">
           {!isFirst && (
             <Button
@@ -986,7 +1000,7 @@ export function SurveyExperience({
             onClick={handlePrimary}
             disabled={!canAdvance || submitting}
             className={cn(
-              "flex items-center justify-center gap-1.5 py-3 rounded-xl font-bold text-[15px] text-white shadow-md transition-colors bg-[#ef4444] hover:bg-[#dc2626]",
+              "flex items-center justify-center gap-1.5 py-3 rounded-xl font-bold text-[15px] text-white shadow-md transition-colors",
               isFirst ? "w-full" : "flex-1"
             )}
           >
@@ -1003,7 +1017,7 @@ export function SurveyExperience({
       </div>
 
       {/* Desktop floating navigation buttons - bottom-right of viewport, side-by-side, no full-width strip */}
-      <div className="hidden lg:flex fixed bottom-5 right-6 xl:bottom-6 xl:right-8 z-50 items-center gap-3 xl:gap-3.5">
+      <div className={cn("hidden lg:flex fixed bottom-5 right-6 xl:bottom-6 xl:right-8 z-50 items-center gap-3 xl:gap-3.5", footerVisible && "hidden")}>
         {!isFirst ? (
           <Button
             variant="outline"
@@ -1035,7 +1049,7 @@ export function SurveyExperience({
           size="lg"
           onClick={handlePrimary}
           disabled={!canAdvance || submitting}
-          className="flex items-center justify-center gap-2 px-6 xl:px-7 py-2.5 rounded-xl font-bold text-sm xl:text-base shadow-[0_4px_16px_-2px_rgba(255,87,34,0.45)] hover:shadow-[0_6px_20px_-2px_rgba(255,87,34,0.55)] bg-[#ff5722] hover:bg-[#f4511e] text-white transition-all"
+          className="flex items-center justify-center gap-2 px-6 xl:px-7 py-2.5 rounded-xl font-bold text-sm xl:text-base shadow-[0_4px_16px_-2px_rgba(234,88,12,0.45)] hover:shadow-[0_6px_20px_-2px_rgba(234,88,12,0.55)] text-white transition-all"
         >
           {submitting ? (
             <Loader2 size={18} className="animate-spin" />
