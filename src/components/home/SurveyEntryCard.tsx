@@ -310,13 +310,24 @@ export function SurveyEntryCard({ states, heading }: SurveyEntryCardProps) {
 
   const canSubmit = Boolean(selectedState && selectedConstituency);
 
-  const handleSurveyStart = () => {
-    if (!selectedState || !selectedConstituency) return;
+  const getSurveyHref = () => {
+    if (!selectedState || !selectedConstituency) return null;
     const election = selectedState.elections[0];
-    if (!election) return;
-    router.push(
-      `/${selectedState.slug}/elections/${election.slug}/constituencies/${selectedConstituency.slug}/survey`
-    );
+    if (!election) return null;
+    return `/${selectedState.slug}/elections/${election.slug}/constituencies/${selectedConstituency.slug}/survey`;
+  };
+
+  // Prefetch the survey route as soon as a constituency is selected. The
+  // survey page performs several server-side database reads, so prefetching
+  // removes that wait from the user's click on "Participate in Survey".
+  useEffect(() => {
+    const href = getSurveyHref();
+    if (href) router.prefetch(href);
+  }, [selectedState, selectedConstituency, router]);
+
+  const handleSurveyStart = () => {
+    const href = getSurveyHref();
+    if (href) router.push(href);
   };
 
   return (
