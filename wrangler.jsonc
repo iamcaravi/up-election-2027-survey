@@ -3,7 +3,8 @@
   "name": "up-election-2027",
   "compatibility_date": "2026-09-25",
   "compatibility_flags": [
-    "nodejs_compat"
+    "nodejs_compat",
+    "nodejs_compat_populate_process_env"
   ],
   "main": "src/worker-wrapper.ts",
   "cache": {
