@@ -9,7 +9,8 @@ const COOKIE_NAME = "up2027_admin_session";
 const SESSION_DURATION = 60 * 60 * 8; // 8 hours
 
 function getSessionSecret(): Uint8Array {
-  const sessionSecret = process.env.SESSION_SECRET;
+  const runtimeSecret = (globalThis as typeof globalThis & { __SESSION_SECRET?: string }).__SESSION_SECRET;
+  const sessionSecret = runtimeSecret || process.env.SESSION_SECRET;
   if (!sessionSecret) {
     throw new Error("SESSION_SECRET must be configured.");
   }
