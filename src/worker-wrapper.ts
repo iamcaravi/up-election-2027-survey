@@ -97,6 +97,11 @@ function putInMemoryCache(key: string, entry: Omit<MemoryCacheEntry, "expiresAt"
 
 export default {
   async fetch(request: Request, env: any, ctx: any) {
+    const globalState = globalThis as typeof globalThis & { __DATABASE_URL?: string };
+    if (env?.DATABASE_URL && !globalState.__DATABASE_URL) {
+      globalState.__DATABASE_URL = env.DATABASE_URL;
+    }
+
     const url = new URL(request.url);
 
     if (isCacheablePublicGet(request, url)) {
