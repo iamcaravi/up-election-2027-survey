@@ -153,46 +153,25 @@ export default {
 
       // Only cache successful 200 responses
       if (response && response.status === 200) {
-        const bodyText = await response.text();
-
-        // Populate in-memory cache
-        putInMemoryCache(cacheKeyUrl, {
-          status: response.status,
-          statusText: response.statusText,
-          headers: Array.from(response.headers.entries()),
-          body: bodyText,
-        });
-
-        // Populate Cloudflare Cache API asynchronously
+        // Cache a clone asynchronously; never buffer the live response before
+        // returning it to the visitor.
         try {
           const cache = (caches as any).default;
           if (cache) {
             const cacheHeaders = new Headers(response.headers);
             cacheHeaders.set("Cache-Control", "public, max-age=60, s-maxage=60");
-            const responseForCache = new Response(bodyText, {
+            ctx.waitUntil(cache.put(cacheKey, new Response(response.clone().body, {
               status: response.status,
               statusText: response.statusText,
               headers: cacheHeaders,
-            });
-            ctx.waitUntil(cache.put(cacheKey, responseForCache));
+            })));
           }
         } catch (err) {
           console.warn("Cloudflare Cache API put error:", err);
         }
-
-        // Return to client with Cache-Control: private to prevent outer CDN cookie collisions
-        const clientHeaders = new Headers(response.headers);
-        clientHeaders.set("Cache-Control", "private, no-cache, no-store, must-revalidate");
-        clientHeaders.set("Vary", "Cookie, Accept-Encoding");
-        clientHeaders.set("X-Edge-Cache", "MISS");
-        clientHeaders.set("X-Response-Locale", locale);
-
-        return new Response(bodyText, {
-          status: response.status,
-          statusText: response.statusText,
-          headers: clientHeaders,
-        });
       }
+
+      return response;
 
       return response;
     }
