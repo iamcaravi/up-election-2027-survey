@@ -9,12 +9,7 @@ export interface PresenceStats {
   total: number;
 }
 
-// Records/refreshes one heartbeat and returns the current stats in a single
-// round trip (so the client doesn't need a second request to read them back).
-// `upsert` is a single atomic statement — concurrent heartbeats for the same
-// or different visitors cannot corrupt or double-count the total, and a
-// returning visitor's existing row is updated in place rather than creating
-// a second "unique visitor".
+// Records/refreshes one heartbeat and returns the current stats.
 export async function recordHeartbeat(visitorHash: string): Promise<PresenceStats> {
   const now = new Date();
   await prisma.visitorPresence.upsert({
@@ -27,9 +22,13 @@ export async function recordHeartbeat(visitorHash: string): Promise<PresenceStat
 
 export async function getPresenceStats(): Promise<PresenceStats> {
   const cutoff = new Date(Date.now() - LIVE_WINDOW_MS);
-  const [live, total] = await Promise.all([
-    prisma.visitorPresence.count({ where: { lastSeenAt: { gte: cutoff } } }),
-    prisma.visitorPresence.count(),
-  ]);
+
+  // Keep these sequential in the Worker. Prisma's adapter/pool can fail when
+  // multiple queries are issued concurrently from the same client instance.
+  const live = await prisma.visitorPresence.count({
+    where: { lastSeenAt: { gte: cutoff } },
+  });
+  const total = await prisma.visitorPresence.count();
+
   return { live, total };
 }
