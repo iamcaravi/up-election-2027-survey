@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getHomeStats, getSiteSetting, getStates } from "@/lib/data";
+import { getDistricts, getHomeStats, getSiteSetting, getStates } from "@/lib/data";
 import { getHomepageIssueStats } from "@/lib/analytics";
 import { DEFAULT_HERO_CONFIG, normalizeHeroConfig } from "@/lib/hero-config";
 import {
@@ -35,9 +35,13 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function Home() {
-  const [stats, states, heroConfig, sectionsConfigRaw, issueStats] = await Promise.all([
+  const [stats, states, upDistrictsData, heroConfig, sectionsConfigRaw, issueStats] = await Promise.all([
     getHomeStats(),
     getStates(),
+    // The homepage defaults the survey selector to Uttar Pradesh. Render its
+    // districts in the initial payload so the first selector interaction is
+    // instant instead of waiting for a client-side /api/districts request.
+    getDistricts("uttar-pradesh").catch(() => ({ state: null, districts: [] })),
     getSiteSetting("HERO_CONFIG", DEFAULT_HERO_CONFIG),
     getSiteSetting("HOMEPAGE_SECTIONS_CONFIG", DEFAULT_HOMEPAGE_SECTIONS_CONFIG),
     // A failure here must not take down the rest of the homepage — fall back
@@ -75,6 +79,7 @@ export default async function Home() {
       <div data-section="hero">
         <Hero
           surveyStates={states}
+          initialDistricts={upDistrictsData.districts}
           config={normalizeHeroConfig(heroConfig)}
           mobileImageUrl={sections.hero.mobileImageUrl}
           tabletImageUrl={sections.hero.tabletImageUrl}
