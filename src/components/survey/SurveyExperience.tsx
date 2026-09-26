@@ -480,16 +480,8 @@ export function SurveyExperience({
                 <div className="sm:hidden space-y-4">
                   {/* Large Editorial Hero */}
                   <div className="relative pt-2 pb-3 overflow-hidden min-h-[195px]">
-                    <div className="absolute top-0 right-[-10px] w-[58%] h-full pointer-events-none select-none">
-                      <Image
-                        src="/images/survey/mla-hero-mobile.png"
-                        alt=""
-                        fill
-                        className="object-contain object-top-right"
-                        priority
-                      />
-                    </div>
-                    <div className="relative z-10 w-[70%] pr-1">
+                    
+                    <div className="relative z-10 w-full pr-1">
                       <h1 className="font-display font-extrabold text-[22px] leading-[1.25] text-slate-900 dark:text-slate-100 tracking-tight">
                         {locale === "hi" ? (
                           <>
@@ -661,16 +653,8 @@ export function SurveyExperience({
                 <div className="sm:hidden space-y-4">
                   {/* Large Editorial Hero */}
                   <div className="relative pt-2 pb-3 overflow-hidden min-h-[195px]">
-                    <div className="absolute top-0 right-[-10px] w-[58%] h-full pointer-events-none select-none">
-                      <Image
-                        src="/images/survey/party-hero-mobile.png"
-                        alt=""
-                        fill
-                        className="object-contain object-top-right"
-                        priority
-                      />
-                    </div>
-                    <div className="relative z-10 w-[70%] pr-1">
+                    
+                    <div className="relative z-10 w-full pr-1">
                       <h1 className="font-display font-extrabold text-[22px] leading-[1.25] text-slate-900 dark:text-slate-100 tracking-tight">
                         {locale === "hi" ? (
                           <>
@@ -789,16 +773,8 @@ export function SurveyExperience({
                 <div className="sm:hidden space-y-4">
                   {/* Large Editorial Hero */}
                   <div className="relative pt-2 pb-3 overflow-hidden min-h-[190px]">
-                    <div className="absolute top-0 right-[-10px] w-[58%] h-full pointer-events-none select-none">
-                      <Image
-                        src="/images/survey/issue-hero-mobile.png"
-                        alt=""
-                        fill
-                        className="object-contain object-top-right"
-                        priority
-                      />
-                    </div>
-                    <div className="relative z-10 w-[70%] pr-1">
+                    
+                    <div className="relative z-10 w-full pr-1">
                       <h1 className="font-display font-extrabold text-[22px] leading-[1.25] text-slate-900 dark:text-slate-100 tracking-tight">
                         {locale === "hi" ? (
                           <>
