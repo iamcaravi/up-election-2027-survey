@@ -262,7 +262,10 @@ function FieldSelect<T extends { id: string }>({
   );
 }
 
-export function SurveyEntryCard({ states, heading, initialDistricts = [] }: SurveyEntryCardProps) {
+const EMPTY_DISTRICTS: DistrictItem[] = [];
+
+export function SurveyEntryCard({ states, heading, initialDistricts }: SurveyEntryCardProps) {
+  const preloadedDistricts = initialDistricts ?? EMPTY_DISTRICTS;
   const router = useRouter();
   const { locale, t } = useLocale();
 
@@ -281,7 +284,7 @@ export function SurveyEntryCard({ states, heading, initialDistricts = [] }: Surv
   // server-rendered data used to build the homepage so the first interaction
   // does not wait for a client-side DB round trip.
   const [districts, setDistricts] = useState<DistrictItem[]>(() =>
-    initialState?.slug === "uttar-pradesh" ? initialDistricts : []
+    initialState?.slug === "uttar-pradesh" ? preloadedDistricts : []
   );
   const [selectedDistrict, setSelectedDistrict] = useState<DistrictItem | null>(null);
   const [constituencies, setConstituencies] = useState<ConstituencyItem[]>([]);
@@ -301,8 +304,8 @@ export function SurveyEntryCard({ states, heading, initialDistricts = [] }: Surv
 
     // Avoid a duplicate request for the default UP state: its districts were
     // already rendered into the homepage payload.
-    if (selectedState.slug === "uttar-pradesh" && initialDistricts.length > 0) {
-      setDistricts(initialDistricts);
+    if (selectedState.slug === "uttar-pradesh" && preloadedDistricts.length > 0) {
+      setDistricts(preloadedDistricts);
       setLoadingDistricts(false);
       return;
     }
@@ -318,7 +321,7 @@ export function SurveyEntryCard({ states, heading, initialDistricts = [] }: Surv
       .then((data) => setDistricts(Array.isArray(data) ? data : []))
       .catch(() => setDistricts([]))
       .finally(() => setLoadingDistricts(false));
-  }, [selectedState, initialDistricts]);
+  }, [selectedState, preloadedDistricts]);
 
   useEffect(() => {
     setSelectedConstituency(null);
