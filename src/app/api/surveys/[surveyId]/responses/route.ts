@@ -19,7 +19,7 @@ const bodySchema = z.object({
   fingerprint: z.string().min(8).max(200),
 });
 
-export async function POST(req: NextRequest, { params }: { params: Promise<{ surveyId: string }> }) {
+async function postSurveyResponse(req: NextRequest, { params }: { params: Promise<{ surveyId: string }> }) {
   const { surveyId } = await params;
 
   const survey = await prisma.survey.findUnique({
@@ -144,4 +144,20 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ sur
           ? "This response could not be counted (duplicate detected)."
           : "Response recorded but flagged for review.",
   });
+}
+
+
+export async function POST(
+  req: NextRequest,
+  context: { params: Promise<{ surveyId: string }> }
+) {
+  try {
+    return await postSurveyResponse(req, context);
+  } catch (error) {
+    console.error("Survey response submission failed:", error);
+    return NextResponse.json(
+      { error: "सर्वे जमा नहीं हो सका। कृपया थोड़ी देर बाद फिर कोशिश करें।" },
+      { status: 500, headers: { "Cache-Control": "no-store" } }
+    );
+  }
 }
