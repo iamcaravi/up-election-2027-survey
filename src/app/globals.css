@@ -124,3 +124,11 @@ body {
 .netlify-badge {
   display: none !important;
 }
+
+/* Keep the site footer above the survey's fixed previous/next controls.
+   This guarantees the footer remains readable when the user reaches the
+   bottom of a survey page, even before the navigation observer reacts. */
+footer {
+  position: relative;
+  z-index: 60;
+}
