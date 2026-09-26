@@ -45,10 +45,19 @@ export interface PublicStatewideResultsDto {
   mlaSatisfaction: PublicDistribution;
 }
 
+const statewideCache = new Map<string, { data: PublicStatewideResultsDto; expiresAt: number }>();
+
 export async function getPublicStatewideResults(
   electionId: string,
   district?: { id: string; name: string; slug: string }
 ): Promise<PublicStatewideResultsDto | null> {
+  const cacheKey = `${electionId}:${district?.id ?? "all"}`;
+  const nowMs = Date.now();
+  const cached = statewideCache.get(cacheKey);
+  if (cached && nowMs < cached.expiresAt) {
+    return cached.data;
+  }
+
   const election = await prisma.election.findUnique({ where: { id: electionId }, include: { state: true } });
   if (!election) return null;
 
@@ -62,15 +71,37 @@ export async function getPublicStatewideResults(
   // the same aggregation logic, just pooled over a smaller constituency set.
   const constituencyScope = district ? { districtId: district.id } : undefined;
 
-  const [responses, partyAnswers, demographicAnswers, mlaSatisfactionAnswers, totalConstituencies, respondingSurveys] = await Promise.all([
-    prisma.surveyResponse.findMany({
-      where: {
-        status: ELIGIBLE_RESPONSE_STATUS,
-        dataSource: activeDataSource,
-        survey: { electionId },
-        constituency: constituencyScope,
-      },
-      select: { createdAt: true },
+  const oneWeekMs = 7 * 24 * 60 * 60 * 1000;
+  const oneWeekAgo = new Date(nowMs - oneWeekMs);
+  const twoWeeksAgo = new Date(nowMs - 2 * oneWeekMs);
+
+  const responseWhere = {
+    status: ELIGIBLE_RESPONSE_STATUS,
+    dataSource: activeDataSource,
+    survey: { electionId },
+    constituency: constituencyScope,
+  };
+
+  const [
+    responseAgg,
+    countLast7Days,
+    countPrior7Days,
+    partyAnswers,
+    demographicAnswers,
+    mlaSatisfactionAnswers,
+    totalConstituencies,
+    respondingSurveys,
+  ] = await Promise.all([
+    prisma.surveyResponse.aggregate({
+      where: responseWhere,
+      _count: { _all: true },
+      _max: { createdAt: true },
+    }),
+    prisma.surveyResponse.count({
+      where: { ...responseWhere, createdAt: { gte: oneWeekAgo } },
+    }),
+    prisma.surveyResponse.count({
+      where: { ...responseWhere, createdAt: { gte: twoWeeksAgo, lt: oneWeekAgo } },
     }),
     prisma.surveyAnswer.findMany({
       where: {
@@ -138,18 +169,10 @@ export async function getPublicStatewideResults(
     }),
   ]);
 
-  const validResponseCount = responses.length;
-  const now = Date.now();
-  const oneWeekMs = 7 * 24 * 60 * 60 * 1000;
-  let newResponsesLast7Days = 0;
-  let newResponsesPrior7Days = 0;
-  let lastResponseAt: Date | null = null;
-  for (const response of responses) {
-    const ageMs = now - response.createdAt.getTime();
-    if (ageMs <= oneWeekMs) newResponsesLast7Days += 1;
-    else if (ageMs <= oneWeekMs * 2) newResponsesPrior7Days += 1;
-    if (!lastResponseAt || response.createdAt > lastResponseAt) lastResponseAt = response.createdAt;
-  }
+  const validResponseCount = responseAgg._count._all;
+  const lastResponseAt = responseAgg._max.createdAt;
+  const newResponsesLast7Days = countLast7Days;
+  const newResponsesPrior7Days = countPrior7Days;
 
   const partyPreference = buildPartyDistribution(partyAnswers, minRequired);
 
@@ -165,7 +188,7 @@ export async function getPublicStatewideResults(
 
   const mlaSatisfaction = buildMlaSatisfactionDistribution(mlaSatisfactionAnswers, minRequired);
 
-  return {
+  const result: PublicStatewideResultsDto = {
     election: { name: election.name, slug: election.slug, year: election.year },
     state: { name: election.state.name, slug: election.state.slug },
     district: district ?? null,
@@ -184,6 +207,9 @@ export async function getPublicStatewideResults(
     demographics,
     mlaSatisfaction,
   };
+
+  statewideCache.set(cacheKey, { data: result, expiresAt: nowMs + 60_000 });
+  return result;
 }
 
 interface PartyAnswerRow {

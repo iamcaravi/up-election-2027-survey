@@ -1,0 +1,17 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "up-election-2027",
+  "compatibility_date": "2026-09-25",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "main": "src/worker-wrapper.ts",
+  "cache": {
+    "enabled": true
+  },
+  "assets": {
+    "directory": "dist/client",
+    "not_found_handling": "none",
+    "binding": "ASSETS"
+  }
+}

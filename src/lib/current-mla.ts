@@ -1,7 +1,6 @@
 import "server-only";
 
-import fs from "node:fs";
-import path from "node:path";
+import upCurrentMlasData from "../../data/up/current-mlas.json";
 import { prisma } from "./prisma";
 
 export interface CurrentMlaInfo {
@@ -33,23 +32,20 @@ interface RawRepoMlaRecord {
 }
 
 let cachedUpMlas: Map<number, RawRepoMlaRecord> | null = null;
+const cachedPartyByShortName = new Map<string, any>();
 
 function getUpRepoMlas(): Map<number, RawRepoMlaRecord> {
   if (cachedUpMlas) return cachedUpMlas;
   const map = new Map<number, RawRepoMlaRecord>();
   try {
-    const filePath = path.join(process.cwd(), "data", "up", "current-mlas.json");
-    if (fs.existsSync(filePath)) {
-      const content = fs.readFileSync(filePath, "utf8");
-      const records: RawRepoMlaRecord[] = JSON.parse(content);
-      for (const record of records) {
-        if (record.verified && record.constituencyNumber) {
-          map.set(record.constituencyNumber, record);
-        }
+    const records = upCurrentMlasData as unknown as RawRepoMlaRecord[];
+    for (const record of records) {
+      if (record.verified && record.constituencyNumber) {
+        map.set(record.constituencyNumber, record);
       }
     }
   } catch (error) {
-    console.error("Failed to load data/up/current-mlas.json:", error);
+    console.error("Failed to load bundled data/up/current-mlas.json:", error);
   }
   cachedUpMlas = map;
   return map;
@@ -143,10 +139,14 @@ export async function getCurrentMlaForConstituency(
     const upMlas = getUpRepoMlas();
     const repoMla = upMlas.get(constituency.number);
     if (repoMla && repoMla.verified) {
-      // Resolve party details if possible from database
-      const party = await prisma.party.findFirst({
-        where: { shortName: repoMla.partyShortName },
-      });
+      // Resolve party details if possible from database (cached in memory)
+      let party = cachedPartyByShortName.get(repoMla.partyShortName);
+      if (party === undefined) {
+        party = await prisma.party.findFirst({
+          where: { shortName: repoMla.partyShortName },
+        });
+        cachedPartyByShortName.set(repoMla.partyShortName, party);
+      }
 
       return {
         name: repoMla.name,

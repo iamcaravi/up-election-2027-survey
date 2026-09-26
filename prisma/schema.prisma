@@ -11,16 +11,13 @@
 // elections or states. Candidate and Survey are scoped to (Election, Constituency).
 
 generator client {
-  provider      = "prisma-client-js"
-  // Netlify builds the site on one Linux image but runs the deployed Next.js
-  // functions on a different one (its own Lambda-like runtime), so the
-  // "native" engine detected at build time doesn't reliably match what the
-  // function runtime needs. Netlify's documented Prisma setup requires
-  // explicitly including debian-openssl-3.0.x so the correct Linux query
-  // engine is always generated and bundled, regardless of what "native"
-  // resolves to on the machine running `prisma generate`.
-  binaryTargets = ["native", "debian-openssl-3.0.x"]
+  provider        = "prisma-client-js"
+  engineType      = "client"
+  previewFeatures = ["driverAdapters"]
+  binaryTargets   = ["native", "debian-openssl-3.0.x"]
 }
+
+
 
 datasource db {
   provider = "postgresql"

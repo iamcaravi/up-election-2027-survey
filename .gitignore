@@ -81,3 +81,7 @@ scripts/.out-*.json
 
 # Local Netlify folder
 .netlify
+/dist/
+.vinext/
+.wrangler/
+.dev.vars*
