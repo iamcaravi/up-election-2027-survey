@@ -22,6 +22,20 @@ export function VisitorPresence() {
   useEffect(() => {
     let cancelled = false;
 
+    async function loadStats() {
+      try {
+        const res = await fetch("/api/presence", { cache: "no-store" });
+        if (!res.ok) throw new Error("presence stats request failed");
+        const data: PresenceStats = await res.json();
+        if (!cancelled) {
+          setStats(data);
+          setFailed(false);
+        }
+      } catch {
+        if (!cancelled) setFailed(true);
+      }
+    }
+
     async function heartbeat() {
       try {
         const fingerprint = getDeviceFingerprint();
@@ -37,10 +51,13 @@ export function VisitorPresence() {
           setFailed(false);
         }
       } catch {
-        if (!cancelled) setFailed(true);
+        // The read-only GET above can still keep the displayed counts useful
+        // when an individual heartbeat/write fails.
+        if (!cancelled) setFailed((current) => current && !stats);
       }
     }
 
+    loadStats();
     heartbeat();
     const interval = setInterval(() => {
       if (document.visibilityState === "visible") heartbeat();
