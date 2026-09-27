@@ -122,7 +122,8 @@ export function PublicResultsView({
 
       {data.visibility.state === "visible" && !isZeroState && (
         <>
-          <section id="mla-satisfaction" className="card-surface scroll-mt-24 mt-6 rounded-2xl p-5 sm:p-6" aria-labelledby="mla-satisfaction-heading">
+          <div id="results-polling-cards" className="mt-6 grid gap-6 lg:grid-cols-2">
+          <section id="mla-satisfaction" className="card-surface scroll-mt-24 rounded-2xl p-5 sm:p-6" aria-labelledby="mla-satisfaction-heading">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <h2 id="mla-satisfaction-heading" className="font-display text-xl font-bold">{t.results.mlaSatisfaction}</h2>
@@ -143,7 +144,7 @@ export function PublicResultsView({
             </div>
           </section>
 
-          <section id="party" className="card-surface scroll-mt-24 mt-6 rounded-2xl p-5 sm:p-6" aria-labelledby="party-results-heading">
+          <section id="party" className="card-surface scroll-mt-24 rounded-2xl p-5 sm:p-6" aria-labelledby="party-results-heading">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <h2 id="party-results-heading" className="font-display text-xl font-bold">{t.results.partySupport}</h2>
@@ -159,6 +160,8 @@ export function PublicResultsView({
               )}
             </div>
           </section>
+
+          </div>
 
           <section id="issues" className="card-surface scroll-mt-24 mt-6 rounded-2xl p-5 sm:p-6" aria-labelledby="issues-heading">
             <div className="flex flex-wrap items-start justify-between gap-3">
