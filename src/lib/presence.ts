@@ -9,7 +9,12 @@ export interface PresenceStats {
   total: number;
 }
 
-// Records/refreshes one heartbeat and returns the current stats.
+type CountRow = { count: number };
+
+function readCount(row: CountRow | undefined): number {
+  return Number(row?.count ?? 0);
+}
+
 export async function recordHeartbeat(visitorHash: string): Promise<PresenceStats> {
   const now = new Date();
   await prisma.visitorPresence.upsert({
@@ -23,12 +28,10 @@ export async function recordHeartbeat(visitorHash: string): Promise<PresenceStat
 export async function getPresenceStats(): Promise<PresenceStats> {
   const cutoff = new Date(Date.now() - LIVE_WINDOW_MS);
 
-  // Keep these sequential in the Worker. Prisma's adapter/pool can fail when
-  // multiple queries are issued concurrently from the same client instance.
-  const live = await prisma.visitorPresence.count({
-    where: { lastSeenAt: { gte: cutoff } },
-  });
-  const total = await prisma.visitorPresence.count();
+  // Health already proves that $queryRaw works in the Worker. Use raw SQL here
+  // to avoid the adapter/runtime issue observed with the filtered Prisma count.
+  const liveRows = await prisma.$queryRaw<CountRow[]>`SELECT COUNT(*)::int AS count FROM "visitor_presence" WHERE "lastSeenAt" >= ${cutoff}`;
+  const totalRows = await prisma.$queryRaw<CountRow[]>`SELECT COUNT(*)::int AS count FROM "visitor_presence"`;
 
-  return { live, total };
+  return { live: readCount(liveRows[0]), total: readCount(totalRows[0]) };
 }
