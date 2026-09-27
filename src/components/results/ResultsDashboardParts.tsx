@@ -765,25 +765,20 @@ export function MlaSatisfactionChart({
 
   const total = distribution.denominator;
   const bucketsByKey = new Map(distribution.buckets.map((b) => [b.key, b]));
-
   const rows = MLA_SATISFACTION_OPTIONS.map((opt) => {
     const bucket = bucketsByKey.get(opt.key);
-    const label = locale === "hi" ? opt.label : opt.labelEn;
-    const sublabel = locale === "hi" ? opt.sublabel : opt.sublabelEn;
-    const isSuppressed = bucket?.state === "suppressed";
-    const count = bucket && bucket.state === "available" ? bucket.count : 0;
-    const percentage = bucket && bucket.state === "available" ? bucket.percentage : 0;
-
     return {
       key: opt.key,
-      label,
-      sublabel,
+      label: locale === "hi" ? opt.label : opt.labelEn,
+      sublabel: locale === "hi" ? opt.sublabel : opt.sublabelEn,
       color: opt.colorHex,
-      count,
-      percentage,
-      isSuppressed,
+      count: bucket && bucket.state === "available" ? bucket.count : 0,
+      percentage: bucket && bucket.state === "available" ? bucket.percentage : 0,
+      isSuppressed: bucket?.state === "suppressed",
     };
-  });
+  }).filter((row) => row.count > 0 || row.isSuppressed);
+
+  const chartRows = rows.filter((row) => !row.isSuppressed && row.percentage > 0);
 
   return (
     <div className="space-y-4">
@@ -794,56 +789,58 @@ export function MlaSatisfactionChart({
         <span className="text-[11px] text-muted">{t.results.mlaSatisfactionDenominator}</span>
       </div>
 
-      <div className="flex h-3.5 w-full overflow-hidden rounded-full bg-surface-2">
-        {rows.map((row) => {
-          if (row.isSuppressed || row.percentage <= 0) return null;
-          return (
-            <div
-              key={row.key}
-              style={{ width: `${row.percentage}%`, backgroundColor: row.color }}
-              title={`${row.label}: ${row.percentage}%`}
-              className="h-full transition-all duration-500 first:rounded-l-full last:rounded-r-full"
-            />
-          );
-        })}
-      </div>
+      <div className="grid items-center gap-5 sm:grid-cols-[minmax(180px,220px)_1fr]">
+        <div className="h-[220px] min-w-0">
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={chartRows}
+                dataKey="percentage"
+                nameKey="label"
+                cx="50%"
+                cy="50%"
+                outerRadius="72%"
+                innerRadius="42%"
+                paddingAngle={2}
+                stroke="none"
+                label={({ percent }) => `${Math.round((percent ?? 0) * 100)}%`}
+              >
+                {chartRows.map((row) => (
+                  <Cell key={row.key} fill={row.color} />
+                ))}
+              </Pie>
+              <Tooltip
+                formatter={(value: number | string | undefined, _name, item) => {
+                  const row = item?.payload as (typeof chartRows)[number] | undefined;
+                  return [
+                    `${typeof value === "number" ? value : Number(value ?? 0)}%${row ? ` · ${numberFormatter.format(row.count)}` : ""}`,
+                    row?.label ?? "",
+                  ];
+                }}
+              />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
 
-      <div className="space-y-2.5 pt-2">
-        {rows.map((row) => (
-          <div key={row.key} className="rounded-xl border border-border/70 bg-surface p-3 transition-colors">
-            <div className="flex items-center justify-between gap-3 text-sm">
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: row.color }} />
-                <span className="truncate font-semibold text-ink">{row.label}</span>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                {row.isSuppressed ? (
-                  <span className="text-xs font-semibold text-muted">{t.results.suppressed}</span>
-                ) : (
-                  <>
-                    <span className="font-display text-sm font-bold tabular-nums text-ink">{row.percentage}%</span>
-                    <span className="hidden text-xs tabular-nums text-muted sm:inline">({numberFormatter.format(row.count)})</span>
-                  </>
-                )}
+        <div className="space-y-2">
+          {rows.map((row) => (
+            <div key={row.key} className="rounded-xl border border-border/70 bg-surface p-3">
+              <div className="flex items-center justify-between gap-3 text-sm">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: row.color }} />
+                    <span className="truncate font-semibold text-ink">{row.label}</span>
+                  </div>
+                  {row.sublabel && <p className="mt-1 text-[11px] text-muted truncate">{row.sublabel}</p>}
+                </div>
+                <span className="shrink-0 font-display text-sm font-bold tabular-nums text-ink">
+                  {row.isSuppressed ? t.results.suppressed : `${row.percentage}%`}
+                </span>
               </div>
             </div>
-
-            <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-surface-2">
-              {!row.isSuppressed && (
-                <div
-                  className="h-full rounded-full transition-all duration-500"
-                  style={{ width: `${Math.min(100, Math.max(0, row.percentage))}%`, backgroundColor: row.color }}
-                />
-              )}
-            </div>
-
-            {row.sublabel && (
-              <p className="mt-1 text-[11px] text-muted truncate">{row.sublabel}</p>
-            )}
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   );
 }
-
