@@ -7,9 +7,6 @@
     "nodejs_compat_populate_process_env"
   ],
   "main": "src/worker-wrapper.ts",
-  "cache": {
-    "enabled": true
-  },
   "kv_namespaces": [
     {
       "binding": "VINEXT_KV_CACHE",
