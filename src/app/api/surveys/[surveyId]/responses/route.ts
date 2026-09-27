@@ -85,14 +85,16 @@ async function postSurveyResponse(req: NextRequest, { params }: { params: Promis
   // 1. Same IP + same device fingerprint submitting repeatedly (>5 in 10m) -> FLAGGED
   // 2. Heavy automated network flood (>60 responses from single IP in 10m) -> FLAGGED
   const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
-  const [recentFromIp, recentFromIpAndDevice] = await Promise.all([
-    prisma.surveyResponse.count({
-      where: { ipHash, createdAt: { gte: tenMinutesAgo } },
-    }),
-    prisma.surveyResponse.count({
-      where: { ipHash, fingerprint: fingerprintHash, createdAt: { gte: tenMinutesAgo } },
-    }),
-  ]);
+  // Keep Prisma queries sequential on the Worker/Neon adapter. The same
+  // Worker isolate can otherwise attempt overlapping database I/O on one
+  // Prisma client, which has already caused intermittent Worker API failures
+  // in this deployment.
+  const recentFromIp = await prisma.surveyResponse.count({
+    where: { ipHash, createdAt: { gte: tenMinutesAgo } },
+  });
+  const recentFromIpAndDevice = await prisma.surveyResponse.count({
+    where: { ipHash, fingerprint: fingerprintHash, createdAt: { gte: tenMinutesAgo } },
+  });
 
   let status: "VALID" | "FLAGGED" | "REJECTED" = "VALID";
   let flagReason: string | null = null;
