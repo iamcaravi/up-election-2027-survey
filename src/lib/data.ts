@@ -128,20 +128,18 @@ export async function getConstituencyBySlug(stateSlug: string, slug: string, ele
   });
   if (!membership || !membership.isActive) return null;
 
-  const [candidates, surveys, responseCount] = await Promise.all([
-    prisma.candidate.findMany({
-      where: { constituencyId: constituency.id, electionId: election.id, isActive: true },
-      include: { party: true },
-      orderBy: [{ confidenceScore: "asc" }, { name: "asc" }],
-    }),
-    prisma.survey.findMany({
-      where: { constituencyId: constituency.id, electionId: election.id, isActive: true },
-      take: 1,
-    }),
-    prisma.surveyResponse.count({
-      where: { constituencyId: constituency.id, survey: { electionId: election.id } },
-    }),
-  ]);
+  const candidates = await prisma.candidate.findMany({
+    where: { constituencyId: constituency.id, electionId: election.id, isActive: true },
+    include: { party: true },
+    orderBy: [{ confidenceScore: "asc" }, { name: "asc" }],
+  });
+  const surveys = await prisma.survey.findMany({
+    where: { constituencyId: constituency.id, electionId: election.id, isActive: true },
+    take: 1,
+  });
+  const responseCount = await prisma.surveyResponse.count({
+    where: { constituencyId: constituency.id, survey: { electionId: election.id } },
+  });
 
   return { ...constituency, election, candidates, surveys, _count: { surveyResponses: responseCount } };
 }
