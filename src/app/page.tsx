@@ -35,19 +35,12 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function Home() {
-  const [stats, states, upDistrictsData, heroConfig, sectionsConfigRaw, issueStats] = await Promise.all([
-    getHomeStats(),
-    getStates(),
-    // The homepage defaults the survey selector to Uttar Pradesh. Render its
-    // districts in the initial payload so the first selector interaction is
-    // instant instead of waiting for a client-side /api/districts request.
-    getDistricts("uttar-pradesh").catch(() => ({ state: null, districts: [] })),
-    getSiteSetting("HERO_CONFIG", DEFAULT_HERO_CONFIG),
-    getSiteSetting("HOMEPAGE_SECTIONS_CONFIG", DEFAULT_HOMEPAGE_SECTIONS_CONFIG),
-    // A failure here must not take down the rest of the homepage — fall back
-    // to the section's own empty state (total: 0) rather than throwing.
-    getHomepageIssueStats().catch(() => ({ total: 0, percentages: {} })),
-  ]);
+  const stats = await getHomeStats();
+  const states = await getStates();
+  const upDistrictsData = await getDistricts("uttar-pradesh").catch(() => ({ state: null, districts: [] }));
+  const heroConfig = await getSiteSetting("HERO_CONFIG", DEFAULT_HERO_CONFIG);
+  const sectionsConfigRaw = await getSiteSetting("HOMEPAGE_SECTIONS_CONFIG", DEFAULT_HOMEPAGE_SECTIONS_CONFIG);
+  const issueStats = await getHomepageIssueStats().catch(() => ({ total: 0, percentages: {} }));
 
   // Feature cards below have no state context yet (the visitor hasn't
   // picked one) — always send them to browse/pick a state rather than
