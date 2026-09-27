@@ -3,14 +3,12 @@ import { prisma } from "./prisma";
 import { ensureMlaSatisfactionQuestion } from "./survey-template-data";
 
 export async function getHomeStats() {
-  const [states, constituencies, districts, responses, activeSurveys, parties] = await Promise.all([
-    prisma.state.count({ where: { isActive: true } }),
-    prisma.constituency.count(),
-    prisma.district.count(),
-    prisma.surveyResponse.count({ where: { status: "VALID" } }),
-    prisma.survey.count({ where: { isActive: true } }),
-    prisma.party.count({ where: { isActive: true } }),
-  ]);
+  const states = await prisma.state.count({ where: { isActive: true } });
+  const constituencies = await prisma.constituency.count();
+  const districts = await prisma.district.count();
+  const responses = await prisma.surveyResponse.count({ where: { status: "VALID" } });
+  const activeSurveys = await prisma.survey.count({ where: { isActive: true } });
+  const parties = await prisma.party.count({ where: { isActive: true } });
   return { states, constituencies, districts, responses, activeSurveys, parties };
 }
 
