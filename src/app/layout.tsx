@@ -76,26 +76,12 @@ export const viewport: Viewport = {
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
-  const [states, sectionsConfigRaw, socialLinks, locale] = await Promise.all([
-    getStates(),
-    getSiteSetting("HOMEPAGE_SECTIONS_CONFIG", DEFAULT_HOMEPAGE_SECTIONS_CONFIG),
-    getSocialLinks(),
-    // Reading the locale cookie here opts the whole tree into dynamic
-    // rendering (see next/headers `cookies()`: "Using it in a layout or
-    // page will opt a route into dynamic rendering") — there is no way to
-    // know the visitor's locale for <html lang> and root metadata without
-    // reading it at this level, since it wraps every route including the
-    // handful of small static pages (about/contact/privacy/terms/
-    // disclaimer/methodology/faq, the state-selector shells) that were
-    // previously ISR-cached. Every genuinely heavy page (results,
-    // analysis, state/constituency/survey) was already `ƒ` dynamic before
-    // this change (they fetch live DB data per request), so the actual
-    // cost of this trade-off is limited to a handful of cheap, low-traffic
-    // pages losing their ISR cache — accepted deliberately in exchange for
-    // a correct <html lang>, no language flash, and locale-correct
-    // metadata, which the static Hindi-only shell could never provide.
-    getServerLocale(),
-  ]);
+  // Keep DB reads serialized on Workers. Parallel Prisma calls can cause
+  // intermittent request-context failures under concurrent mobile requests.
+  const locale = await getServerLocale();
+  const states = await getStates();
+  const sectionsConfigRaw = await getSiteSetting("HOMEPAGE_SECTIONS_CONFIG", DEFAULT_HOMEPAGE_SECTIONS_CONFIG);
+  const socialLinks = await getSocialLinks();
   // Every state's slug + current election slug — SiteChrome (a client
   // component) uses the current URL to resolve nav links to WHICHEVER
   // state the visitor is actually browsing, instead of the site ever
