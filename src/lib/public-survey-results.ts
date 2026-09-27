@@ -90,10 +90,8 @@ export async function getPublicSurveyResults(
   // unaffected — every bucket's percentage is always computed from the real
   // current vote count.
   const minCellSize = 1;
-  const [electionPeriodMode, isSynthetic] = await Promise.all([
-    getSiteSetting<ElectionPeriodVisibility>("ELECTION_PERIOD_MODE", { restricted: false }),
-    getSiteSetting<boolean>(SYNTHETIC_DATA_MODE_KEY, false),
-  ]);
+  const electionPeriodMode = await getSiteSetting<ElectionPeriodVisibility>("ELECTION_PERIOD_MODE", { restricted: false });
+  const isSynthetic = await getSiteSetting<boolean>(SYNTHETIC_DATA_MODE_KEY, false);
   const activeDataSource = isSynthetic ? SYNTHETIC_DATA_SOURCE : REAL_DATA_SOURCE;
   const visibility = evaluateResultsVisibility(survey, electionPeriodMode);
   const base = {
@@ -170,57 +168,56 @@ export async function getPublicSurveyResults(
   const mlaOptionIds = mlaQuestion ? mlaQuestion.options.map((option) => option.id) : [];
   const candidateRefs = candidateQuestion.options.flatMap((option) => option.candidateRef ? [option.candidateRef] : []);
 
-  const [responses, preferenceAnswers, candidates, groupedDemographics, groupedMla] = await Promise.all([
-    prisma.surveyResponse.findMany({
-      where: { surveyId: survey.id, status: ELIGIBLE_RESPONSE_STATUS, dataSource: activeDataSource },
-      select: { id: true, status: true, createdAt: true },
-    }),
-    prisma.surveyAnswer.findMany({
-      where: {
-        response: { surveyId: survey.id, status: ELIGIBLE_RESPONSE_STATUS, dataSource: activeDataSource },
-        question: { key: { in: ["party_preference", "candidate_choice"] } },
-        optionId: { not: null },
-      },
-      select: { responseId: true, optionId: true, question: { select: { key: true } } },
-    }),
-    candidateRefs.length
-      ? prisma.candidate.findMany({
-          where: { id: { in: candidateRefs } },
-          select: {
-            id: true,
-            name: true,
-            nameHindi: true,
-            electionId: true,
-            constituencyId: true,
-            partyId: true,
-            status: true,
-            isActive: true,
-          },
-        })
-      : Promise.resolve([]),
-    demographicQuestionIds.size
-      ? prisma.surveyAnswer.groupBy({
-          by: ["questionId", "optionId"],
-          where: {
-            questionId: { in: Array.from(demographicQuestionIds.keys()) },
-            optionId: { not: null },
-            response: { surveyId: survey.id, status: ELIGIBLE_RESPONSE_STATUS, dataSource: activeDataSource },
-          },
-          _count: { _all: true },
-        })
-      : Promise.resolve([]),
-    mlaOptionIds.length
-      ? prisma.surveyAnswer.groupBy({
-          by: ["optionId"],
-          where: {
-            questionId: mlaQuestion!.id,
-            optionId: { not: null },
-            response: { surveyId: survey.id, status: ELIGIBLE_RESPONSE_STATUS, dataSource: activeDataSource },
-          },
-          _count: { _all: true },
-        })
-      : Promise.resolve([]),
-  ]);
+  // Serialize DB operations for the Cloudflare Worker/Neon runtime.
+  const responses = await prisma.surveyResponse.findMany({
+    where: { surveyId: survey.id, status: ELIGIBLE_RESPONSE_STATUS, dataSource: activeDataSource },
+    select: { id: true, status: true, createdAt: true },
+  });
+  const preferenceAnswers = await prisma.surveyAnswer.findMany({
+    where: {
+      response: { surveyId: survey.id, status: ELIGIBLE_RESPONSE_STATUS, dataSource: activeDataSource },
+      question: { key: { in: ["party_preference", "candidate_choice"] } },
+      optionId: { not: null },
+    },
+    select: { responseId: true, optionId: true, question: { select: { key: true } } },
+  });
+  const candidates = candidateRefs.length
+    ? await prisma.candidate.findMany({
+        where: { id: { in: candidateRefs } },
+        select: {
+          id: true,
+          name: true,
+          nameHindi: true,
+          electionId: true,
+          constituencyId: true,
+          partyId: true,
+          status: true,
+          isActive: true,
+        },
+      })
+    : [];
+  const groupedDemographics = demographicQuestionIds.size
+    ? await prisma.surveyAnswer.groupBy({
+        by: ["questionId", "optionId"],
+        where: {
+          questionId: { in: Array.from(demographicQuestionIds.keys()) },
+          optionId: { not: null },
+          response: { surveyId: survey.id, status: ELIGIBLE_RESPONSE_STATUS, dataSource: activeDataSource },
+        },
+        _count: { _all: true },
+      })
+    : [];
+  const groupedMla = mlaOptionIds.length
+    ? await prisma.surveyAnswer.groupBy({
+        by: ["optionId"],
+        where: {
+          questionId: mlaQuestion!.id,
+          optionId: { not: null },
+          response: { surveyId: survey.id, status: ELIGIBLE_RESPONSE_STATUS, dataSource: activeDataSource },
+        },
+        _count: { _all: true },
+      })
+    : [];
 
   const partyOptions: PublicPartyOptionInput[] = partyQuestion.options.map((option) => ({
     id: option.id,
