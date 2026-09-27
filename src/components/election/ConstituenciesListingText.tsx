@@ -8,22 +8,20 @@ export function ConstituenciesListingText({
   stateName,
   stateHref,
   electionName,
-  electionHref,
   constituencyCount,
 }: {
   stateName: string;
   stateHref: string;
   electionName: string;
-  electionHref: string;
   constituencyCount: number;
 }) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   return (
     <>
       <Breadcrumb
         items={[
+          { label: locale === "hi" ? "राज्य" : "States", href: "/rajya" },
           { label: stateName, href: stateHref },
-          { label: electionName, href: electionHref },
           { label: t.hierarchy.allConstituencies },
         ]}
       />

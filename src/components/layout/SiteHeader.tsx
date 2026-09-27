@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Menu, X, Search } from "lucide-react";
 import { LocaleToggle } from "./LocaleToggle";
@@ -16,7 +17,8 @@ interface SiteHeaderProps {
 }
 
 export function SiteHeader({ resultsHref, analysisHref }: SiteHeaderProps) {
-  const { t } = useLocale();
+  const pathname = usePathname();
+  const { t, locale } = useLocale();
   const [open, setOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
@@ -39,8 +41,8 @@ export function SiteHeader({ resultsHref, analysisHref }: SiteHeaderProps) {
 
   const navItems = [
     { href: "/", label: t.nav.home },
-    { href: "/#elections", label: t.nav.elections },
-    { href: "/find-constituency", label: t.siteHeader.constituency },
+    { href: "/rajya", label: locale === "hi" ? "राज्य" : "States" },
+    { href: "/find-constituency", label: locale === "hi" ? "विधानसभा क्षेत्र" : "Constituencies" },
     { href: resultsHref, label: t.siteHeader.results },
     { href: analysisHref, label: t.siteHeader.analysis },
     { href: "/about", label: t.siteHeader.aboutUs },
@@ -64,35 +66,67 @@ export function SiteHeader({ resultsHref, analysisHref }: SiteHeaderProps) {
 
         {/* Center Navigation - Desktop */}
         <nav className="hidden shrink-0 flex-nowrap items-center gap-0.5 xl:flex">
-          {navItems.map((item) => (
-            <Link
-              key={item.label}
-              href={item.href}
-              className={cn(
-                "relative shrink-0 whitespace-nowrap px-2.5 py-2 text-sm font-semibold text-ink transition-colors hover:text-ink-2",
-                item.href === "/" &&
-                  "after:absolute after:-bottom-0.5 after:left-1/2 after:h-0.5 after:w-4 after:-translate-x-1/2 after:rounded-full after:bg-ink"
-              )}
-            >
-              {item.label}
-            </Link>
-          ))}
+          {navItems.map((item) => {
+            const isHome = item.href === "/" && pathname === "/";
+            const isResults =
+              (item.href === resultsHref || item.label === t.siteHeader.results) &&
+              (pathname?.includes("/results") ?? false);
+            const isAnalysis =
+              (item.href === analysisHref || item.label === t.siteHeader.analysis) &&
+              (pathname?.includes("/analysis") ?? false);
+            const isFindConstituency =
+              item.href === "/find-constituency" && (pathname?.startsWith("/find-constituency") ?? false);
+            const isAbout =
+              item.href === "/about" && pathname === "/about";
+            const isState =
+              (item.href === "/states" || item.href === "/rajya") &&
+              !isHome &&
+              !isResults &&
+              !isAnalysis &&
+              !isFindConstituency &&
+              !isAbout &&
+              (pathname === "/states" ||
+                pathname === "/rajya" ||
+                (Boolean(pathname) &&
+                  pathname !== "/" &&
+                  !pathname?.startsWith("/find-constituency") &&
+                  !pathname?.startsWith("/about") &&
+                  !pathname?.startsWith("/privacy") &&
+                  !pathname?.startsWith("/terms") &&
+                  !pathname?.startsWith("/results") &&
+                  !pathname?.startsWith("/analysis")));
+            const isActive = isHome || isState || isResults || isAnalysis || isFindConstituency || isAbout;
+
+            return (
+              <Link
+                key={item.label}
+                href={item.href}
+                className={cn(
+                  "relative shrink-0 whitespace-nowrap px-2.5 py-2 text-sm font-semibold text-ink transition-colors hover:text-ink-2",
+                  isActive &&
+                    "after:absolute after:-bottom-0.5 after:left-1/2 after:h-0.5 after:w-5 after:-translate-x-1/2 after:rounded-full after:bg-blue-600 text-blue-600"
+                )}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
         </nav>
 
         {/* Right Controls */}
         <div className="flex shrink-0 items-center gap-1 sm:gap-2">
-          {/* Search - Desktop: icon only, opens a compact popover using the existing SearchBox */}
-          <div ref={searchRef} className="relative hidden lg:block">
+          {/* Search: Desktop + Mobile Popover */}
+          <div ref={searchRef} className="relative">
             <button
               onClick={() => setSearchOpen((o) => !o)}
               aria-label={t.siteHeader.search}
               aria-expanded={searchOpen}
               className="flex h-9 w-9 items-center justify-center rounded-lg text-ink transition-colors hover:bg-surface-2"
             >
-              <Search size={20} />
+              <Search size={18} className="sm:h-5 sm:w-5" />
             </button>
             {searchOpen && (
-              <div className="absolute right-0 top-full z-50 mt-2 w-80">
+              <div className="absolute right-0 top-full z-50 mt-2 w-72 sm:w-80 shadow-2xl">
                 <SearchBox autoFocus />
               </div>
             )}

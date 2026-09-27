@@ -7,6 +7,7 @@ import { ChevronRight, Building2, CalendarDays, MapPin, Users2 } from "lucide-re
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { Container } from "@/components/ui/Container";
 import { cn } from "@/lib/utils";
+import type { CurrentMlaInfo } from "@/lib/current-mla";
 import {
   DEFAULT_HERO_ELEMENTS_CONFIG,
   HERO_ELEMENT_KEYS,
@@ -27,6 +28,12 @@ export interface SurveyHeroProps {
   config?: HeroElementsConfig;
   /** Overrides the breadcrumb's last segment (defaults to "सर्वे") — e.g. the Results page passes "सर्वेक्षण परिणाम". */
   breadcrumbLabel?: string;
+  /** Current sitting MLA info to display in the header card */
+  currentMla?: CurrentMlaInfo | null;
+  /** URL for MLA's political party logo */
+  partyLogoUrl?: string | null;
+  /** Destination link when clicking "विधायक जानकारी देखें" */
+  mlaHref?: string | null;
 
   // --- Editor-only props (all optional/no-ops on the public site) ---------
   /** Turns on selection outlines + drag/resize handles. Never set true on the public site. */
@@ -49,13 +56,16 @@ export function SurveyHero({
   electionYear,
   config = DEFAULT_HERO_ELEMENTS_CONFIG,
   breadcrumbLabel,
+  currentMla,
+  partyLogoUrl,
+  mlaHref,
   editable = false,
   selectedKey = null,
   onSelect,
   onChangeBox,
   zoom = 1,
 }: SurveyHeroProps) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const canvasRef = useRef<HTMLDivElement>(null);
   const { elements, background } = config;
 
@@ -106,18 +116,22 @@ export function SurveyHero({
     );
   }
 
-  // Public rendering: ONE responsive flex layout (no absolute per-element
-  // canvas) so the hero reflows naturally for any constituency/district/state
-  // name length, in either language, instead of relying on admin-tuned
-  // pixel/percentage positions that only fit the content they were tuned
-  // against. This is the single source of truth for every page that renders
-  // SurveyHero — fixing it here fixes all of them at once.
-  return (
-    <div className="relative isolate overflow-hidden border-b border-border">
-      {backgroundLayer}
-      <div className="absolute inset-0 -z-10 bg-gradient-to-r from-white via-white/90 to-white/25 sm:to-white/10" aria-hidden="true" />
+  const showMlaCard = currentMla !== undefined;
+  const mlaPartyName =
+    locale === "hi" && currentMla?.partyHindi
+      ? currentMla.partyHindi
+      : currentMla?.party ?? (locale === "hi" ? "पार्टी विवरण उपलब्ध नहीं" : "Party details unavailable");
+  const mlaDisplayName =
+    locale === "hi" && currentMla?.nameHindi
+      ? currentMla.nameHindi
+      : currentMla?.name ?? t.surveyFlow.noMlaData;
 
-      <Container className="relative py-2.5 sm:min-h-[125px] sm:py-4">
+  // Public rendering: Clean, compact header without large right-side background
+  // image, featuring the Current MLA card on the right on desktop, and neatly
+  // integrated into the mobile header layout.
+  return (
+    <div className="relative isolate overflow-hidden border-b border-border bg-gradient-to-b from-slate-50/70 via-white to-white dark:from-slate-900/40 dark:via-slate-950 dark:to-slate-950">
+      <Container className="relative py-3 sm:py-4">
         <nav aria-label={t.common.breadcrumbAriaLabel} className="flex items-center gap-1.5 overflow-x-auto whitespace-nowrap text-xs font-medium text-muted sm:text-sm">
           <Link href={stateHref} className="shrink-0 hover:text-ink">{stateName}</Link>
           <ChevronRight size={13} className="shrink-0" aria-hidden="true" />
@@ -128,44 +142,20 @@ export function SurveyHero({
           <span className="shrink-0 font-semibold text-ink">{breadcrumbLabel ?? t.surveyFlow.breadcrumbSurvey}</span>
         </nav>
 
-        <div className="mt-2 flex flex-col gap-2 sm:mt-3.5 sm:flex-row sm:items-center sm:justify-between sm:gap-7">
-          <div className="min-w-0 sm:max-w-xl sm:flex-1">
+        <div className="mt-2.5 flex flex-col gap-3.5 sm:mt-3 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+          <div className="min-w-0 sm:flex-1">
             <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-accent">
               <MapPin size={12} /> {stateName}
             </p>
 
-            <div className="mt-0.5 flex items-start justify-between gap-2.5 sm:block">
-              <div className="min-w-0 flex-1">
-                <h1 className="font-display text-2xl font-extrabold leading-[1.3] py-0.5 break-words text-ink sm:text-3xl lg:text-4xl">
-                  {constituencyName}
-                </h1>
-                <p className="mt-0.5 text-xs sm:mt-1 sm:text-sm font-medium text-muted">
-                  {t.surveyFlow.constituencyNumberLabel.replace("{number}", String(constituencyNumber))}
-                </p>
-              </div>
+            <h1 className="mt-0.5 font-display text-2xl font-extrabold leading-[1.25] text-ink sm:text-3xl lg:text-4xl">
+              {constituencyName}
+            </h1>
+            <p className="mt-0.5 text-xs sm:text-sm font-medium text-muted">
+              {t.surveyFlow.constituencyNumberLabel.replace("{number}", String(constituencyNumber))}
+            </p>
 
-              {/* Mobile-only compact "आपकी राय" pill/card */}
-              <div className="sm:hidden shrink-0 rounded-xl bg-ink/95 px-2.5 py-1.5 text-center shadow-sm border border-white/10 max-w-[125px]">
-                <div className="flex items-center justify-center gap-1.5">
-                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/15">
-                    <Users2 size={11} className="text-white" />
-                  </span>
-                  <p className="font-display text-xs font-extrabold text-white leading-none whitespace-nowrap">
-                    {t.surveyFlow.ctaCardTitle}
-                  </p>
-                </div>
-                <p className="text-[10px] text-white/75 leading-tight mt-1 whitespace-nowrap">
-                  {t.surveyFlow.ctaCardSubtitle}
-                </p>
-                <div className="mx-auto mt-1 flex h-0.5 w-16 overflow-hidden rounded-full">
-                  <span className="w-1/3 bg-orange-500" />
-                  <span className="w-1/3 bg-white" />
-                  <span className="w-1/3 bg-green-600" />
-                </div>
-              </div>
-            </div>
-
-            <dl className="mt-2 flex flex-wrap gap-x-5 gap-y-1 sm:gap-x-7 sm:gap-y-1.5 text-xs sm:text-sm">
+            <dl className="mt-2.5 flex flex-wrap gap-x-5 gap-y-1.5 text-xs sm:text-sm">
               <HeroStatContent icon={<MapPin size={13} />} label={t.surveyFlow.statState} value={stateName} />
               <HeroStatContent icon={<Building2 size={13} />} label={t.surveyFlow.statDistrict} value={districtName} />
               <HeroStatContent icon={<Users2 size={13} />} label={t.surveyFlow.statConstituency} value={String(constituencyNumber)} />
@@ -173,19 +163,79 @@ export function SurveyHero({
             </dl>
           </div>
 
-          {/* Desktop-only full-size "आपकी राय" card (unchanged) */}
-          <div className="hidden sm:block w-[205px] shrink-0 rounded-xl bg-ink px-4 py-2.5 text-left shadow-[var(--shadow-soft)]">
-            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/15">
-              <Users2 size={13} className="text-white" />
-            </span>
-            <p className="mt-1.5 font-display text-base font-extrabold text-white">{t.surveyFlow.ctaCardTitle}</p>
-            <p className="text-xs text-white/75">{t.surveyFlow.ctaCardSubtitle}</p>
-            <div className="mt-1.5 flex h-1 w-24 overflow-hidden rounded-full">
-              <span className="w-1/3 bg-orange-500" />
-              <span className="w-1/3 bg-white" />
-              <span className="w-1/3 bg-green-600" />
+          {/* Current MLA Information Card (Desktop & Mobile) */}
+          {showMlaCard ? (
+            <div className="w-full sm:w-auto sm:min-w-[310px] sm:max-w-[360px] shrink-0 rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 p-3.5 sm:p-4 shadow-xs">
+              <div className="flex items-center gap-3.5">
+                {/* MLA Photo / Avatar */}
+                {currentMla?.photoUrl ? (
+                  <div className="relative h-14 w-14 sm:h-16 sm:w-16 shrink-0 overflow-hidden rounded-full border-2 border-slate-100 dark:border-slate-800 shadow-xs bg-slate-100 dark:bg-slate-800">
+                    <Image
+                      src={currentMla.photoUrl}
+                      alt={currentMla.name ?? "MLA"}
+                      fill
+                      sizes="64px"
+                      className="object-cover"
+                    />
+                  </div>
+                ) : (
+                  <div className="flex h-14 w-14 sm:h-16 sm:w-16 shrink-0 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-extrabold text-xl shadow-inner border border-slate-200/60 dark:border-slate-700">
+                    {currentMla?.name ? currentMla.name.trim().slice(0, 1) : <Users2 size={24} className="text-muted" />}
+                  </div>
+                )}
+
+                {/* MLA Details */}
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between gap-1.5">
+                    <span className="inline-flex items-center rounded-md bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 border border-blue-200/60 dark:border-blue-900/40">
+                      {t.surveyFlow.currentMla}
+                    </span>
+                    {partyLogoUrl ? (
+                      <div className="relative h-6 w-6 sm:h-7 sm:w-7 shrink-0 rounded-full border border-slate-200/80 dark:border-slate-700 bg-white dark:bg-slate-800 p-0.5 overflow-hidden shadow-2xs">
+                        <Image src={partyLogoUrl} alt={currentMla?.party ?? "Party"} fill sizes="28px" className="object-contain" />
+                      </div>
+                    ) : currentMla?.partyShortName ? (
+                      <span className="text-[11px] font-bold text-muted bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">
+                        {currentMla.partyShortName}
+                      </span>
+                    ) : null}
+                  </div>
+
+                  <h3 className="mt-1 font-display text-sm sm:text-base font-extrabold text-ink truncate leading-snug">
+                    {mlaDisplayName}
+                  </h3>
+                  <p className="text-xs text-muted font-medium truncate">
+                    {mlaPartyName}
+                  </p>
+                  <p className="text-xs text-muted/80 truncate">
+                    {constituencyName} (AC {constituencyNumber})
+                  </p>
+                  <div className="mt-1.5 flex items-center justify-start">
+                    <Link
+                      href={mlaHref ?? "#"}
+                      className="inline-flex items-center gap-1 rounded-full border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors"
+                    >
+                      <span>{locale === "hi" ? "विधायक जानकारी देखें" : "View MLA Profile"}</span>
+                      <span aria-hidden="true">→</span>
+                    </Link>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="hidden sm:block w-[205px] shrink-0 rounded-xl bg-ink px-4 py-2.5 text-left shadow-[var(--shadow-soft)]">
+              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/15">
+                <Users2 size={13} className="text-white" />
+              </span>
+              <p className="mt-1.5 font-display text-base font-extrabold text-white">{t.surveyFlow.ctaCardTitle}</p>
+              <p className="text-xs text-white/75">{t.surveyFlow.ctaCardSubtitle}</p>
+              <div className="mt-1.5 flex h-1 w-24 overflow-hidden rounded-full">
+                <span className="w-1/3 bg-orange-500" />
+                <span className="w-1/3 bg-white" />
+                <span className="w-1/3 bg-green-600" />
+              </div>
+            </div>
+          )}
         </div>
       </Container>
     </div>

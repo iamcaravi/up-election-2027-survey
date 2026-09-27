@@ -14,7 +14,12 @@ interface PresenceStats {
   total: number;
 }
 
-export function VisitorPresence() {
+interface VisitorPresenceProps {
+  className?: string;
+  dividerClassName?: string;
+}
+
+export function VisitorPresence({ className, dividerClassName }: VisitorPresenceProps = {}) {
   const { t } = useLocale();
   const [stats, setStats] = useState<PresenceStats | null>(null);
   const [failed, setFailed] = useState(false);
@@ -75,14 +80,14 @@ export function VisitorPresence() {
   const liveLine = t.presence.liveNow.replace("{count}", liveText);
 
   return (
-    <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs text-muted">
+    <div className={className || "flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs text-muted"}>
       <span className="flex items-center gap-1.5 whitespace-nowrap">
         <span className="relative flex h-1.5 w-1.5 shrink-0">
-          <span className="absolute inset-0 rounded-full bg-positive [animation:presence-pulse_1.8s_ease-in-out_infinite]" aria-hidden="true" />
+          <span className="absolute inset-0 rounded-full bg-emerald-500 [animation:presence-pulse_1.8s_ease-in-out_infinite]" aria-hidden="true" />
         </span>
         {liveLine}
       </span>
-      <span className="hidden text-border sm:inline" aria-hidden="true">
+      <span className={dividerClassName || "hidden text-border sm:inline"} aria-hidden="true">
         |
       </span>
       <span className="whitespace-nowrap">

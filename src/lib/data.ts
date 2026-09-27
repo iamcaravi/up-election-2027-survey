@@ -1,6 +1,8 @@
 import "server-only";
 import { prisma } from "./prisma";
 import { ensureMlaSatisfactionQuestion } from "./survey-template-data";
+import { MLA_SATISFACTION_OPTIONS } from "./enums";
+import { getSearchTerms } from "./search-normalization";
 
 export async function getHomeStats() {
   const states = await prisma.state.count({ where: { isActive: true } });
@@ -197,22 +199,35 @@ export async function getTrendingConstituencies(stateId: string, limit = 6) {
 }
 
 export async function searchAll(query: string) {
-  const q = query.trim();
-  if (!q) return { districts: [], constituencies: [], candidates: [] };
+  const terms = getSearchTerms(query);
+  if (!terms.length) return { districts: [], constituencies: [], candidates: [] };
 
   const [districts, nameMatchedConstituencies, candidates, electionSlugsByState] = await Promise.all([
     prisma.district.findMany({
-      where: { name: { contains: q } },
+      where: {
+        OR: [
+          ...terms.map((t) => ({ name: { contains: t, mode: "insensitive" as const } })),
+          ...terms.map((t) => ({ slug: { contains: t, mode: "insensitive" as const } })),
+        ],
+      },
       include: { state: true },
-      take: 5,
+      take: 6,
     }),
     prisma.constituency.findMany({
-      where: { name: { contains: q } },
+      where: {
+        OR: [
+          ...terms.map((t) => ({ name: { contains: t, mode: "insensitive" as const } })),
+          ...terms.map((t) => ({ slug: { contains: t, mode: "insensitive" as const } })),
+        ],
+      },
       include: { district: true, state: true },
-      take: 8,
+      take: 10,
     }),
     prisma.candidate.findMany({
-      where: { name: { contains: q }, isActive: true },
+      where: {
+        isActive: true,
+        OR: terms.map((t) => ({ name: { contains: t, mode: "insensitive" as const } })),
+      },
       include: { constituency: { include: { district: true, state: true } }, party: true },
       take: 8,
     }),
@@ -263,7 +278,14 @@ export async function getFullSurveyForConstituency(constituencyId: string, elect
     },
   });
 
-  if (survey && !survey.questions.some((q) => q.key === "mla_satisfaction")) {
+  const mlaQ = survey?.questions.find((q) => q.key === "mla_satisfaction");
+  const needsMlaSync =
+    survey &&
+    (!mlaQ ||
+      mlaQ.options.length !== MLA_SATISFACTION_OPTIONS.length ||
+      mlaQ.options.some((o, i) => o.key !== MLA_SATISFACTION_OPTIONS[i]?.key));
+
+  if (survey && needsMlaSync) {
     await ensureMlaSatisfactionQuestion(prisma, survey.id);
     survey = await prisma.survey.findFirst({
       where: { id: survey.id },

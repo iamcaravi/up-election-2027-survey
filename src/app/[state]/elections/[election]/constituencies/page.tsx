@@ -49,7 +49,6 @@ export default async function ConstituenciesPage({
           stateName={state.name}
           stateHref={statePath(state.slug)}
           electionName={election.name}
-          electionHref={electionPath(state.slug, election.slug)}
           constituencyCount={constituencies.length}
         />
       </div>

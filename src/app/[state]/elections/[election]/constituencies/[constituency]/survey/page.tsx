@@ -1,22 +1,14 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { getStateAndElection, getConstituencyBySlug, getFullSurveyForConstituency, getSiteSetting } from "@/lib/data";
+import { getStateAndElection, getConstituencyBySlug, getFullSurveyForConstituency } from "@/lib/data";
 import { getCurrentMlaForConstituency } from "@/lib/current-mla";
-import { SurveyHero } from "@/components/survey/SurveyHero";
 import { SurveyExperience, type SurveyOptionItem } from "@/components/survey/SurveyExperience";
-import { SurveyTrustStrip } from "@/components/survey/SurveyTrustStrip";
-import { Container } from "@/components/ui/Container";
-import { electionPath, districtPath, statePath, constituencyPath } from "@/lib/routes";
+import { electionPath, constituencyPath } from "@/lib/routes";
 import { getPartyLogoUrl, getPartyDisplayName } from "@/lib/party-logos";
 import { getIssueIcon } from "@/lib/survey-issue-icons";
 import { buildPageMetadata } from "@/lib/seo";
 import { getServerLocale } from "@/lib/i18n/locale-cookie";
-import {
-  SURVEY_HERO_ELEMENTS_KEY,
-  surveyHeroElementsOverrideKey,
-  normalizeHeroElementsConfig,
-  DEFAULT_HERO_ELEMENTS_CONFIG,
-} from "@/lib/survey-hero-elements-config";
+import { prisma } from "@/lib/prisma";
 
 export async function generateMetadata({
   params,
@@ -49,15 +41,14 @@ export default async function SurveyPage({
   const constituency = await getConstituencyBySlug(stateSlug, slug, electionSlug);
   if (!constituency) notFound();
 
-  const survey = await getFullSurveyForConstituency(constituency.id, election.id);
-  if (!survey) notFound();
-
-  const [globalHeroConfigRaw, heroConfigOverrideRaw, currentMla] = await Promise.all([
-    getSiteSetting(SURVEY_HERO_ELEMENTS_KEY, DEFAULT_HERO_ELEMENTS_CONFIG),
-    getSiteSetting<unknown>(surveyHeroElementsOverrideKey(constituency.id), null),
+  const [survey, currentMla, validResponseCount] = await Promise.all([
+    getFullSurveyForConstituency(constituency.id, election.id),
     getCurrentMlaForConstituency(constituency, election.id),
+    prisma.surveyResponse.count({
+      where: { constituencyId: constituency.id, status: "VALID" },
+    }),
   ]);
-  const heroConfig = normalizeHeroElementsConfig(heroConfigOverrideRaw ?? globalHeroConfigRaw);
+  if (!survey) notFound();
 
   const basePath = electionPath(state.slug, election.slug);
   const questionByKey = new Map(survey.questions.map((q) => [q.key, q]));
@@ -67,10 +58,10 @@ export default async function SurveyPage({
   // parties, then Other/NOTA/Undecided last).
   const rawPartyOptions = questionByKey.get("party_preference")?.options ?? [];
   const partyOptions = rawPartyOptions.filter((option) => {
-    const slug = (option.party?.slug ?? option.key).toLowerCase();
+    const s = (option.party?.slug ?? option.key).toLowerCase();
     const shortName = (option.party?.shortName ?? option.label).toLowerCase();
     if (state.slug === "uttar-pradesh") {
-      if (slug === "ncp" || slug.includes("nationalist-congress") || shortName === "ncp") {
+      if (s === "ncp" || s.includes("nationalist-congress") || shortName === "ncp") {
         return false;
       }
     }
@@ -79,9 +70,6 @@ export default async function SurveyPage({
   const parties: SurveyOptionItem[] = partyOptions.map((option) => {
     const shortName = option.party?.shortName ?? option.label;
     const slugForLogo = option.party?.slug ?? option.key;
-    // "Other"/"NOTA"/"Undecided" are meta options rather than real contesting
-    // parties — shown with a short generic abbreviation instead of their
-    // full DB shortName, matching how the real party cards read (BJP, SP…).
     const abbreviation =
       slugForLogo === "other" ? "OTH" : slugForLogo === "nota" ? "NOTA" : slugForLogo === "undecided" ? "N/A" : shortName;
     return {
@@ -118,37 +106,27 @@ export default async function SurveyPage({
   }));
 
   return (
-    <div>
-      <div className="hidden sm:block">
-        <SurveyHero
-          stateName={constituency.state.name}
-          stateHref={statePath(state.slug)}
-          districtName={constituency.district.name}
-          districtHref={districtPath(state.slug, election.slug, constituency.district.slug)}
-          constituencyName={constituency.name}
-          constituencyNumber={constituency.number}
-          electionYear={election.year}
-          config={heroConfig}
-        />
-      </div>
-      <Container className="pt-2 sm:pt-4 pb-4 sm:pb-5">
-        <SurveyExperience
-          surveyId={survey.id}
-          constituencyName={constituency.name}
-          stateName={constituency.state.name}
-          stateSlug={state.slug}
-          basePath={basePath}
-          constituencySlug={slug}
-          parties={parties}
-          issues={issues}
-          ageGroups={ageGroups}
-          genders={genders}
-          socialCategories={socialCategories}
-          religions={religions}
-          currentMla={currentMla}
-        />
-        <SurveyTrustStrip />
-      </Container>
+    <div className="min-h-screen bg-[#f4f7fa] dark:bg-slate-950">
+      <SurveyExperience
+        surveyId={survey.id}
+        constituencyName={constituency.name}
+        constituencyNumber={constituency.number}
+        districtName={constituency.district.name}
+        districtSlug={constituency.district.slug}
+        stateName={constituency.state.name}
+        stateSlug={state.slug}
+        electionYear={election.year}
+        validResponseCount={validResponseCount}
+        basePath={basePath}
+        constituencySlug={slug}
+        parties={parties}
+        issues={issues}
+        ageGroups={ageGroups}
+        genders={genders}
+        socialCategories={socialCategories}
+        religions={religions}
+        currentMla={currentMla}
+      />
     </div>
   );
 }

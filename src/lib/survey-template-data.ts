@@ -182,48 +182,46 @@ export async function ensureMlaSatisfactionQuestion(
   prisma: PrismaClient,
   surveyId: string
 ) {
-  const existing = await prisma.surveyQuestion.findUnique({
+  let existing = await prisma.surveyQuestion.findUnique({
     where: { surveyId_key: { surveyId, key: "mla_satisfaction" } },
     include: { options: true },
   });
 
-  if (existing) {
-    if (existing.options.length < MLA_SATISFACTION_OPTIONS.length) {
-      for (let i = 0; i < MLA_SATISFACTION_OPTIONS.length; i++) {
-        const opt = MLA_SATISFACTION_OPTIONS[i];
-        await prisma.surveyOption.upsert({
-          where: { questionId_key: { questionId: existing.id, key: opt.key } },
-          update: { label: opt.label, order: i, isActive: true },
-          create: { questionId: existing.id, key: opt.key, label: opt.label, order: i, isActive: true },
-        });
-      }
-    }
-    return existing;
+  if (!existing) {
+    existing = await prisma.surveyQuestion.create({
+      data: {
+        surveyId,
+        key: "mla_satisfaction",
+        label: "क्या आप अपने वर्तमान विधायक (MLA) के कार्यों से कितने संतुष्ट हैं?",
+        type: "SINGLE_CHOICE",
+        required: false,
+        allowSkip: true,
+        order: 1,
+      },
+      include: { options: true },
+    });
   }
 
-  const question = await prisma.surveyQuestion.create({
-    data: {
-      surveyId,
-      key: "mla_satisfaction",
-      label: "क्या आप अपने वर्तमान विधायक (MLA) के कार्यों से कितने संतुष्ट हैं?",
-      type: "SINGLE_CHOICE",
-      required: false,
-      allowSkip: true,
-      order: 1,
-    },
-  });
+  const validKeys = new Set<string>(MLA_SATISFACTION_OPTIONS.map((o) => o.key));
+  for (let i = 0; i < MLA_SATISFACTION_OPTIONS.length; i++) {
+    const opt = MLA_SATISFACTION_OPTIONS[i];
+    await prisma.surveyOption.upsert({
+      where: { questionId_key: { questionId: existing.id, key: opt.key } },
+      update: { label: opt.label, order: i, isActive: true },
+      create: { questionId: existing.id, key: opt.key, label: opt.label, order: i, isActive: true },
+    });
+  }
 
-  await prisma.surveyOption.createMany({
-    data: MLA_SATISFACTION_OPTIONS.map((opt, i) => ({
-      questionId: question.id,
-      key: opt.key,
-      label: opt.label,
-      order: i,
-      isActive: true,
-    })),
-  });
+  for (const opt of existing.options) {
+    if (!validKeys.has(opt.key)) {
+      await prisma.surveyOption.update({
+        where: { id: opt.id },
+        data: { isActive: false },
+      });
+    }
+  }
 
-  return question;
+  return existing;
 }
 
 // Creates the platform's standard survey question set on an already-created

@@ -231,11 +231,14 @@ export function AnalysisResultsView({
               same sorted list as overallTopIssues, just not sliced to 5 —
               same distribution, same numbers, only the presentation
               changed. */}
+          {/* Section F — Key Issues Overall: Donut chart alongside a responsive 2-column
+              ranked top issues list (1-6 in left column, 7-12 in right column on desktop/tablet;
+              1-column on mobile). Redundant unranked list removed to eliminate duplicate percentages. */}
           {ANALYSIS_CONFIG.keyIssues && (
             <section className="mt-8 card-surface rounded-2xl p-5 sm:p-6">
               <SectionHeader eyebrow={t.analysisHub.keyIssuesEyebrow} title={t.analysisHub.keyIssuesOverallHeading} subtitle={t.analysisHub.keyIssuesOverallSubtitle} />
-              <div className="mt-5 grid gap-4 lg:grid-cols-[40fr_25fr_35fr] lg:items-start">
-                <div className="flex min-w-0 justify-center lg:col-span-1">
+              <div className="mt-5 grid gap-6 lg:grid-cols-12 lg:items-start">
+                <div className="flex min-w-0 justify-center lg:col-span-4 xl:col-span-4">
                   <IssuesDonutChart
                     distribution={statewide.demographics.top_issue}
                     centerLabel={t.analysisHub.keyIssuesOverallHeading}
@@ -244,39 +247,40 @@ export function AnalysisResultsView({
                     tooltip
                   />
                 </div>
-                <div className="min-w-0 border-t border-border pt-4 lg:col-span-1 lg:border-l lg:border-t-0 lg:pl-4 lg:pt-0">
-                  {allIssuesForGrid.length > 0 ? (
-                    <ul className="space-y-1.5">
-                      {allIssuesForGrid.map((issue) => (
-                        <li key={issue.key} className="flex items-center justify-between gap-2 text-sm">
-                          <span className="flex min-w-0 items-center gap-1.5 text-foreground">
-                            <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: issue.color }} />
-                            <span className="truncate">{issue.label}</span>
-                          </span>
-                          <span className="shrink-0 font-display font-bold tabular-nums text-ink">{issue.percentage}%</span>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="text-xs text-muted">{t.analysisHub.notEnoughTakeaways}</p>
-                  )}
-                </div>
-                <div className="min-w-0 border-t border-border pt-4 lg:col-span-1 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
+                <div className="min-w-0 border-t border-border pt-5 lg:col-span-8 xl:col-span-8 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
                   <h3 className="font-display text-xs font-bold uppercase tracking-wide text-muted">{t.analysisHub.topIssuesRankingLabel}</h3>
                   {allIssuesForGrid.length > 0 ? (
-                    <ol className="mt-3 space-y-2">
-                      {allIssuesForGrid.slice(0, 6).map((issue, index) => (
-                        <li key={issue.key} className="flex items-center justify-between gap-2 rounded-lg border border-border bg-surface-2 px-3 py-2">
-                          <span className="flex min-w-0 items-center gap-2 text-sm text-foreground">
-                            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-ink text-[11px] font-bold text-white">
-                              {index + 1}
+                    <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                      {/* Left Column: items 1-6 */}
+                      <div className="space-y-2">
+                        {allIssuesForGrid.slice(0, 6).map((issue, index) => (
+                          <div key={issue.key} className="flex items-center justify-between gap-2 rounded-lg border border-border bg-surface-2 px-3 py-2">
+                            <span className="flex min-w-0 items-center gap-2 text-sm text-foreground">
+                              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-ink text-[11px] font-bold text-white">
+                                {index + 1}
+                              </span>
+                              <span className="truncate font-medium">{issue.label}</span>
                             </span>
-                            <span className="truncate">{issue.label}</span>
-                          </span>
-                          <span className="shrink-0 font-display font-bold tabular-nums text-ink">{issue.percentage}%</span>
-                        </li>
-                      ))}
-                    </ol>
+                            <span className="shrink-0 font-display font-bold tabular-nums text-ink">{issue.percentage}%</span>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Right Column: items 7-12 */}
+                      <div className="space-y-2">
+                        {allIssuesForGrid.slice(6, 12).map((issue, index) => (
+                          <div key={issue.key} className="flex items-center justify-between gap-2 rounded-lg border border-border bg-surface-2 px-3 py-2">
+                            <span className="flex min-w-0 items-center gap-2 text-sm text-foreground">
+                              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-ink text-[11px] font-bold text-white">
+                                {index + 7}
+                              </span>
+                              <span className="truncate font-medium">{issue.label}</span>
+                            </span>
+                            <span className="shrink-0 font-display font-bold tabular-nums text-ink">{issue.percentage}%</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   ) : (
                     <p className="mt-3 text-xs text-muted">{t.analysisHub.notEnoughTakeaways}</p>
                   )}

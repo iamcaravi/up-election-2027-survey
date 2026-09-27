@@ -1,12 +1,15 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ArrowRight, Building2, ChevronDown, MapPin, Users } from "lucide-react";
+import { ArrowRight, Building2, ChevronDown, MapPin, Search, Users } from "lucide-react";
 import type { ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { displayStateName } from "@/lib/utils";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { getDistrictDisplayName, UP_DISTRICT_HINDI_NAMES } from "@/lib/district-hindi";
+import { getConstituencyDisplayName } from "@/lib/constituency-hindi";
+import { matchesCrossLanguage, getSearchTerms as getSearchTermsNormalized } from "@/lib/search-normalization";
 
 export interface SurveyEntryState {
   id: string;
@@ -47,7 +50,7 @@ interface SurveyEntryCardProps {
   initialDistricts?: DistrictItem[];
 }
 
-function FieldSelect<T extends { id: string }>({
+export function FieldSelect<T extends { id: string }>({
   label,
   placeholder,
   value,
@@ -55,6 +58,7 @@ function FieldSelect<T extends { id: string }>({
   disabled,
   getLabel,
   getSearchTerms,
+  matchesSearch,
   onSelect,
   icon,
   iconClass,
@@ -66,52 +70,52 @@ function FieldSelect<T extends { id: string }>({
   disabled?: boolean;
   getLabel: (item: T) => string;
   getSearchTerms?: (item: T) => string[];
+  matchesSearch?: (item: T, query: string) => boolean;
   onSelect: (item: T) => void;
   icon: ReactNode;
   iconClass: string;
 }) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
-  const [isMobile, setIsMobile] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const noOptionsLabel = t.heroSurvey.noOptions;
   const closeOptionsLabel = t.heroSurvey.closeOptions;
-  const searchPlaceholder = t.heroSurvey.searchPlaceholder;
+  const searchPlaceholder = t.heroSurvey.searchPlaceholder || (locale === "hi" ? "खोजें..." : "Search...");
 
-  // Below `sm:` (640px, this codebase's own mobile/tablet cutoff — see
-  // Hero.tsx) the dropdown gets a real, visible search <input> instead of
-  // relying on the desktop trigger-button's invisible keydown-buffer typing
-  // below, since a <button> never opens the on-screen keyboard and mobile
-  // browsers don't fire physical keydown events without one. Desktop's
-  // existing click-then-type flow is untouched.
+  // Autofocus search input when dropdown opens
   useEffect(() => {
-    const mq = window.matchMedia("(max-width: 639.98px)");
-    setIsMobile(mq.matches);
-    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
-    mq.addEventListener("change", handler);
-    return () => mq.removeEventListener("change", handler);
-  }, []);
+    if (!open) return;
+    const raf = requestAnimationFrame(() => searchInputRef.current?.focus());
+    return () => cancelAnimationFrame(raf);
+  }, [open]);
 
-  // Items change when the parent field above this one is reselected (e.g. a
-  // new state reloads the district list) — clear any leftover filter so it
-  // doesn't silently hide the freshly-loaded list.
+  // Items change when the parent field above this one is reselected
   useEffect(() => {
     setQuery("");
     setHighlightedIndex(-1);
   }, [items]);
 
-  // Case-insensitive substring matching against label and any extra search
-  // terms (English/Hindi aliases, district slugs, constituency numbers)
+  // Case-insensitive substring matching against label and cross-language search terms
   const normalizedQuery = query.trim().toLowerCase();
   const filteredItems = normalizedQuery
     ? items.filter((item) => {
+        if (matchesSearch && matchesSearch(item, normalizedQuery)) return true;
         const label = getLabel(item).toLowerCase();
         if (label.includes(normalizedQuery)) return true;
         if (getSearchTerms) {
           const terms = getSearchTerms(item);
-          return terms.some((term) => term.toLowerCase().includes(normalizedQuery));
+          if (terms.some((term) => term.toLowerCase().includes(normalizedQuery))) return true;
+        }
+        // Fallback cross-language query expansion
+        const queryTerms = getSearchTermsNormalized(normalizedQuery);
+        for (const qt of queryTerms) {
+          if (label.includes(qt)) return true;
+          if (getSearchTerms) {
+            const terms = getSearchTerms(item);
+            if (terms.some((t) => t.toLowerCase().includes(qt))) return true;
+          }
         }
         return false;
       })
@@ -120,18 +124,6 @@ function FieldSelect<T extends { id: string }>({
   useEffect(() => {
     setHighlightedIndex(-1);
   }, [query]);
-
-  // Autofocus the mobile search input once the dropdown (and the input
-  // inside it) has actually mounted, so the on-screen keyboard opens
-  // immediately without a second tap. requestAnimationFrame waits one
-  // paint past the `open` flip so the ref is guaranteed to be attached
-  // first — this only ever runs once per open/close (deps are booleans),
-  // so it can't loop or repeatedly steal focus back from the user.
-  useEffect(() => {
-    if (!open || !isMobile) return;
-    const raf = requestAnimationFrame(() => searchInputRef.current?.focus());
-    return () => cancelAnimationFrame(raf);
-  }, [open, isMobile]);
 
   function closeDropdown() {
     setOpen(false);
@@ -190,20 +182,22 @@ function FieldSelect<T extends { id: string }>({
   }
 
   return (
-    <div className="relative">
+    <div className="relative w-full lg:w-auto">
       <button
         type="button"
         disabled={disabled}
         onClick={() => setOpen((o) => !o)}
         onKeyDown={handleTriggerKeyDown}
         aria-label={label}
-        className="flex h-11 w-full min-w-[9.5rem] items-center justify-center gap-2 whitespace-nowrap rounded-full border border-[#101A3A]/12 bg-white px-3.5 text-center text-sm font-semibold text-[#101A3A] shadow-[0_1px_2px_rgba(16,26,58,0.06),0_6px_16px_-6px_rgba(16,26,58,0.18)] transition-all hover:border-[#101A3A]/20 hover:shadow-[0_1px_2px_rgba(16,26,58,0.08),0_10px_20px_-6px_rgba(16,26,58,0.22)] disabled:cursor-not-allowed disabled:border-[#101A3A]/8 disabled:text-[#101A3A]/40 disabled:shadow-[0_1px_2px_rgba(16,26,58,0.04)] disabled:hover:border-[#101A3A]/8 sm:min-w-[11rem] sm:text-base lg:h-12 lg:min-w-[12.5rem] lg:px-4"
+        className="flex h-11 w-full items-center justify-between gap-2 whitespace-nowrap rounded-xl border border-slate-200/90 bg-white px-3.5 text-sm font-semibold text-slate-800 shadow-xs transition-all hover:border-slate-300 hover:shadow-sm disabled:cursor-not-allowed disabled:border-slate-100 disabled:text-slate-400 sm:text-base lg:h-12 lg:w-auto lg:min-w-[11.5rem]"
       >
-        <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${disabled ? "bg-[#101A3A]/5 text-[#101A3A]/30" : iconClass}`}>
-          {icon}
-        </span>
-        <span className="max-w-[7.5rem] truncate text-left sm:max-w-[9rem] lg:max-w-[10rem]">{value ? getLabel(value) : placeholder}</span>
-        <ChevronDown size={14} className={`h-3.5 w-3.5 shrink-0 transition-transform sm:h-4 sm:w-4 ${disabled ? "text-[#101A3A]/30" : "text-[#101A3A]/50"} ${open ? "rotate-180" : ""}`} />
+        <div className="flex items-center gap-2 min-w-0">
+          <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${disabled ? "bg-slate-100 text-slate-400" : iconClass}`}>
+            {icon}
+          </span>
+          <span className="truncate text-left max-w-[200px] sm:max-w-none">{value ? getLabel(value) : placeholder}</span>
+        </div>
+        <ChevronDown size={15} className={`shrink-0 transition-transform ${disabled ? "text-slate-300" : "text-slate-500"} ${open ? "rotate-180" : ""}`} />
       </button>
       {open && !disabled && (
         <>
@@ -223,9 +217,10 @@ function FieldSelect<T extends { id: string }>({
               bottom of the hero banner and opening upward avoids the
               viewport's bottom edge instead. z-50 keeps the panel above
               that same sticky header (z-40) in either direction. */}
-          <div className="absolute left-0 right-0 top-full z-50 mt-2 min-w-[13rem] overflow-hidden rounded-xl border border-[#101A3A]/15 bg-white shadow-xl sm:bottom-full sm:top-auto sm:mb-2 sm:mt-0">
-            {isMobile && (
-              <div className="border-b border-[#101A3A]/10 p-2">
+          <div className="absolute left-0 right-0 top-full z-50 mt-2 min-w-[13rem] sm:min-w-[15rem] overflow-hidden rounded-xl border border-[#101A3A]/15 bg-white shadow-xl sm:bottom-full sm:top-auto sm:mb-2 sm:mt-0">
+            <div className="border-b border-[#101A3A]/10 p-2 sticky top-0 bg-white z-10">
+              <div className="relative">
+                <Search size={14} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
                   ref={searchInputRef}
                   type="text"
@@ -235,10 +230,10 @@ function FieldSelect<T extends { id: string }>({
                   onKeyDown={handleNavKeys}
                   placeholder={searchPlaceholder}
                   aria-label={label}
-                  className="h-9 w-full rounded-lg border border-[#101A3A]/15 bg-white px-3 text-sm text-[#101A3A] focus:outline-none focus:ring-2 focus:ring-[#101A3A]/20"
+                  className="h-9 w-full rounded-lg border border-[#101A3A]/15 bg-white pl-8 pr-3 text-xs sm:text-sm text-[#101A3A] placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#101A3A]/20"
                 />
               </div>
-            )}
+            </div>
             <div className="max-h-64 overflow-y-auto">
               {filteredItems.length === 0 && <p className="px-4 py-3 text-sm text-[#101A3A]/60">{noOptionsLabel}</p>}
               {filteredItems.map((item, idx) => (
@@ -411,6 +406,17 @@ export function SurveyEntryCard({ states, heading, initialDistricts }: SurveyEnt
             "उत्तर प्रदेश",
             "यूपी",
           ]}
+          matchesSearch={(s, q) =>
+            matchesCrossLanguage(
+              {
+                name: s.name,
+                slug: s.slug,
+                nameHi: displayStateName(s.name, s.slug, "hi"),
+                nameEn: displayStateName(s.name, s.slug, "en"),
+              },
+              q
+            )
+          }
           onSelect={setSelectedState}
           icon={<MapPin size={13} strokeWidth={2.5} />}
           iconClass="bg-blue-100 text-blue-700"
@@ -421,8 +427,26 @@ export function SurveyEntryCard({ states, heading, initialDistricts }: SurveyEnt
           value={selectedDistrict}
           items={districts}
           disabled={!selectedState || loadingDistricts}
-          getLabel={(d) => d.name}
-          getSearchTerms={(d) => [d.name, d.slug]}
+          getLabel={(d) => getDistrictDisplayName(d.slug, d.name, locale)}
+          getSearchTerms={(d) => [
+            d.name,
+            d.slug,
+            d.slug.replace(/-/g, " "),
+            UP_DISTRICT_HINDI_NAMES[d.slug] ?? "",
+            getDistrictDisplayName(d.slug, d.name, "hi"),
+            getDistrictDisplayName(d.slug, d.name, "en"),
+          ]}
+          matchesSearch={(d, q) =>
+            matchesCrossLanguage(
+              {
+                name: d.name,
+                slug: d.slug,
+                nameHi: UP_DISTRICT_HINDI_NAMES[d.slug] ?? getDistrictDisplayName(d.slug, d.name, "hi"),
+                nameEn: d.name,
+              },
+              q
+            )
+          }
           onSelect={setSelectedDistrict}
           icon={<Building2 size={13} strokeWidth={2.5} />}
           iconClass="bg-emerald-100 text-emerald-700"
@@ -433,14 +457,30 @@ export function SurveyEntryCard({ states, heading, initialDistricts }: SurveyEnt
           value={selectedConstituency}
           items={constituencies}
           disabled={!selectedDistrict || loadingConstituencies}
-          getLabel={(c) => `${c.number}. ${c.name}`}
+          getLabel={(c) => `${c.number}. ${getConstituencyDisplayName(c.slug, c.name, locale)}`}
           getSearchTerms={(c) => [
             c.name,
             c.slug,
+            c.slug.replace(/-/g, " "),
             String(c.number),
             `${c.number}. ${c.name}`,
             `${c.number} ${c.name}`,
+            getConstituencyDisplayName(c.slug, c.name, "hi"),
+            `${c.number}. ${getConstituencyDisplayName(c.slug, c.name, "hi")}`,
+            `${c.number} ${getConstituencyDisplayName(c.slug, c.name, "hi")}`,
           ]}
+          matchesSearch={(c, q) =>
+            matchesCrossLanguage(
+              {
+                name: c.name,
+                slug: c.slug,
+                number: c.number,
+                nameHi: getConstituencyDisplayName(c.slug, c.name, "hi"),
+                nameEn: c.name,
+              },
+              q
+            )
+          }
           onSelect={setSelectedConstituency}
           icon={<Users size={13} strokeWidth={2.5} />}
           iconClass="bg-rose-100 text-rose-700"

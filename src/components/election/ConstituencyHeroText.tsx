@@ -8,8 +8,6 @@ import { formatNumber } from "@/lib/utils";
 export function ConstituencyHeroText({
   stateName,
   stateHref,
-  electionName,
-  electionHref,
   districtName,
   districtHref,
   constituencyName,
@@ -24,8 +22,6 @@ export function ConstituencyHeroText({
 }: {
   stateName: string;
   stateHref: string;
-  electionName: string;
-  electionHref: string;
   districtName: string;
   districtHref: string;
   constituencyName: string;
@@ -38,14 +34,15 @@ export function ConstituencyHeroText({
   surveyHref: string;
   resultsHref: string;
 }) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
 
   return (
     <>
       <Breadcrumb
         items={[
+          { label: locale === "hi" ? "राज्य" : "States", href: "/rajya" },
           { label: stateName, href: stateHref },
-          { label: electionName, href: electionHref },
+          { label: locale === "hi" ? "जिले" : "Districts", href: `${stateHref}#district-explorer` },
           { label: districtName, href: districtHref },
           { label: constituencyName },
         ]}

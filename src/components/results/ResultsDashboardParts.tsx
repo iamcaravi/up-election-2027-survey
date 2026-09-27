@@ -190,136 +190,73 @@ export function PartySupportChart({
   const totalResponses = available.reduce((sum, bucket) => sum + bucket.count, 0);
   const numberFormatter = new Intl.NumberFormat(locale === "hi" ? "hi-IN" : "en-IN");
 
-  const renderSemicircleLabel = (props: PieLabelRenderProps) => {
-    const cx = Number(props.cx);
-    const cy = Number(props.cy);
-    const midAngle = Number(props.midAngle);
-    const outerRadius = Number(props.outerRadius);
-    const index = props.index ?? -1;
-    const entry = rows[index];
-    if (!entry) return null;
-    const small = entry.value < 5;
-    const labelRadius = outerRadius + (small ? 32 : 16);
-    const x = cx + labelRadius * Math.cos(-midAngle * SEMICIRCLE_RADIAN);
-    const y = cy + labelRadius * Math.sin(-midAngle * SEMICIRCLE_RADIAN);
-    return (
-      <g>
-        {small && (
-          <line
-            x1={cx + (outerRadius + 3) * Math.cos(-midAngle * SEMICIRCLE_RADIAN)}
-            y1={cy + (outerRadius + 3) * Math.sin(-midAngle * SEMICIRCLE_RADIAN)}
-            x2={x}
-            y2={y - (y > cy ? 0 : 8)}
-            stroke="#94a3b8"
-            strokeWidth={1}
-          />
-        )}
-        <text
-          x={x}
-          y={y}
-          textAnchor="middle"
-          dominantBaseline="central"
-          className={`fill-ink font-display font-extrabold tabular-nums ${small ? "text-[11px]" : "text-sm sm:text-base"}`}
-        >
-          {entry.value}%
-        </text>
-      </g>
-    );
-  };
-
-  const leaderKey = rows[0]?.key;
-
   return (
-    <div className={`flex flex-col gap-6 ${stacked ? "" : "md:flex-row md:items-stretch"}`}>
-      <div className={`relative flex min-w-0 flex-col items-center justify-center ${stacked ? "" : "md:w-[58%]"}`}>
-        <div className="h-72 w-full sm:h-80 lg:h-96">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart margin={{ top: 24, right: 48, bottom: 0, left: 48 }}>
-              <Pie
-                data={rows}
-                dataKey="value"
-                nameKey="name"
-                cx="50%"
-                cy="92%"
-                startAngle={180}
-                endAngle={0}
-                innerRadius="55%"
-                outerRadius="100%"
-                paddingAngle={2}
-                stroke="var(--color-surface, #fff)"
-                strokeWidth={3}
-                isAnimationActive={!reducedMotion}
-                animationDuration={700}
-                label={renderSemicircleLabel}
-                labelLine={false}
-              >
-                {rows.map((entry) => (
-                  <Cell key={entry.key} fill={entry.color} tabIndex={0} aria-label={`${entry.name} ${entry.value}% · ${entry.count}`} />
-                ))}
-              </Pie>
-              <Tooltip content={(props) => <PartySupportTooltip {...props} />} />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 flex flex-col items-center pb-2 text-center sm:pb-4">
-          <span className="font-display text-4xl font-extrabold tabular-nums text-ink sm:text-5xl">
+    <div className={`flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-8 py-2 ${stacked ? "!flex-col" : ""}`}>
+      <div className="relative h-[210px] w-[210px] shrink-0">
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={rows}
+              dataKey="value"
+              nameKey="name"
+              cx="50%"
+              cy="50%"
+              outerRadius="90%"
+              innerRadius="62%"
+              paddingAngle={rows.length > 1 ? 2 : 0}
+              stroke="var(--color-surface, #fff)"
+              strokeWidth={2}
+            >
+              {rows.map((entry) => (
+                <Cell key={entry.key} fill={entry.color} />
+              ))}
+            </Pie>
+            <Tooltip
+              formatter={(val: any, _name: any, item: any) => {
+                const row = item?.payload as (typeof rows)[number] | undefined;
+                return [
+                  `${typeof val === "number" ? val : Number(val ?? 0)}%${row ? ` · ${numberFormatter.format(row.count)}` : ""}`,
+                  row?.name ?? "",
+                ];
+              }}
+            />
+          </PieChart>
+        </ResponsiveContainer>
+        <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
+          <span className="font-display text-2xl sm:text-3xl font-black tabular-nums text-ink leading-tight">
             {numberFormatter.format(totalResponses)}
           </span>
-          <span className="text-xs font-semibold text-muted sm:text-sm">{t.results.totalResponsesCard}</span>
+          <span className="text-[11px] font-medium text-muted mt-0.5">
+            {locale === "hi" ? "कुल प्रतिक्रियाएं" : "Total Responses"}
+          </span>
         </div>
       </div>
 
-      <div className={`min-w-0 md:self-center ${stacked ? "" : "md:w-[42%]"}`}>
-        <table className="w-full border-collapse text-sm">
-          <thead>
-            <tr className="border-b border-border text-left text-[11px] font-semibold uppercase tracking-wide text-muted">
-              <th className="pb-2 font-semibold">{t.results.partySupportTableParty}</th>
-              <th className="pb-2 text-right font-semibold">{t.results.partySupportTablePercent}</th>
-              {/* Two right-aligned numeric headers collide at 320–375px with
-                  no room between them — drop the response-count column below
-                  `sm:` rather than let it clip; the percentage alone stays
-                  meaningful and readable at that width. */}
-              <th className="hidden pb-2 text-right font-semibold sm:table-cell">{t.results.partySupportTableResponses}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((entry) => {
-              const isLeader = entry.key === leaderKey;
-              return (
-                <tr
-                  key={entry.key}
-                  className={`border-b border-border/60 last:border-0 ${isLeader ? "bg-surface-2/60" : ""}`}
-                >
-                  <td className="min-w-0 py-2.5 pr-2">
-                    <div className="flex min-w-0 items-center gap-2">
-                      <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: entry.color }} />
-                      {entry.logoUrl ? (
-                        <Image src={entry.logoUrl} alt="" width={18} height={18} className="h-[18px] w-[18px] shrink-0 rounded-full object-contain" />
-                      ) : null}
-                      <span className={`truncate text-ink ${isLeader ? "font-extrabold" : "font-semibold"}`}>{entry.name}</span>
-                    </div>
-                  </td>
-                  <td className={`py-2.5 text-right font-display tabular-nums text-ink ${isLeader ? "text-base font-extrabold" : "font-bold"}`}>
-                    {entry.value}%
-                  </td>
-                  <td className="hidden py-2.5 text-right tabular-nums text-muted sm:table-cell">{numberFormatter.format(entry.count)}</td>
-                </tr>
-              );
-            })}
-            {suppressed.map((bucket) => (
-              <tr key={bucket.key} className="border-b border-border/60 text-muted last:border-0">
-                <td className="min-w-0 py-2.5 pr-2">
-                  <div className="flex min-w-0 items-center gap-2">
-                    <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-border" />
-                    <span className="truncate font-semibold">{bucket.label}</span>
-                  </div>
-                </td>
-                <td className="py-2.5 text-right">{t.results.suppressed}</td>
-                <td className="hidden sm:table-cell" />
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="w-full sm:w-auto sm:min-w-[190px] flex-1 space-y-2.5">
+        {rows.map((entry) => (
+          <div key={entry.key} className="flex items-center justify-between gap-3 text-sm">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: entry.color }} />
+              {entry.logoUrl ? (
+                <Image src={entry.logoUrl} alt="" width={16} height={16} className="h-4 w-4 shrink-0 rounded-full object-contain" />
+              ) : null}
+              <span className="font-medium text-ink truncate text-[13px] sm:text-sm">{entry.name}</span>
+            </div>
+            <div className="shrink-0 text-right font-display text-[13px] sm:text-sm">
+              <span className="font-bold text-ink tabular-nums">{entry.value}%</span>
+              <span className="ml-1 text-xs text-muted tabular-nums">({numberFormatter.format(entry.count)})</span>
+            </div>
+          </div>
+        ))}
+        {suppressed.map((bucket) => (
+          <div key={bucket.key} className="flex items-center justify-between gap-3 text-sm text-muted">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-border" />
+              <span className="font-medium truncate text-[13px] sm:text-sm">{bucket.label}</span>
+            </div>
+            <span className="shrink-0 text-xs">{t.results.suppressed}</span>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -442,67 +379,150 @@ export function IssuesDonutChart({
 // pages share one implementation instead of drifting apart; falls back to
 // IssuesDonutChart's own unavailable/suppressed placeholder when there's
 // nothing to rank.
+export const RANK_COLORS = [
+  "#ea580c", // 1 - Orange
+  "#2563eb", // 2 - Blue
+  "#16a34a", // 3 - Green
+  "#dc2626", // 4 - Red
+  "#9333ea", // 5 - Purple
+  "#d97706", // 6 - Amber
+  "#c2410c", // 7 - Dark Orange
+  "#64748b", // 8 - Slate
+  "#0891b2", // 9 - Cyan
+  "#4f46e5", // 10 - Indigo
+];
+
 export function KeyIssuesPanel({
   distribution,
   centerLabel,
   topIssuesLabel,
+  totalResponses,
 }: {
   distribution: PublicDistribution;
-  centerLabel: string;
-  topIssuesLabel: string;
+  centerLabel?: string;
+  topIssuesLabel?: string;
+  totalResponses?: number | null;
 }) {
   const { locale, t } = useLocale();
+  const numberFormatter = new Intl.NumberFormat(locale === "hi" ? "hi-IN" : "en-IN");
   const available =
     distribution.state === "available"
       ? distribution.buckets.filter((b): b is Extract<PublicAnalyticsBucket, { state: "available" }> => b.state === "available")
       : [];
 
   if (available.length === 0) {
-    return <IssuesDonutChart distribution={distribution} centerLabel={centerLabel} />;
+    return <InlineState>{distribution.state === "suppressed" ? t.results.resultsSuppressed : t.results.noBreakdownData}</InlineState>;
   }
 
   const sorted = available
-    .map((b, index) => ({
+    .map((b) => ({
       key: b.key,
       label: resolveOptionLabel(b.key, b, locale, t.surveyQuestions.options),
       percentage: b.percentage,
-      color: b.colorHex ?? ISSUE_COLORS[index % ISSUE_COLORS.length],
+      count: b.count,
     }))
-    .sort((a, b) => b.percentage - a.percentage);
+    .sort((a, b) => b.percentage - a.percentage || b.count - a.count);
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[40fr_25fr_35fr] lg:items-start">
-      <div className="flex min-w-0 justify-center lg:col-span-1">
-        <IssuesDonutChart distribution={distribution} centerLabel={centerLabel} size="lg" hideLegend tooltip />
+    <div className="w-full">
+      {/* Desktop ranked bars (>=sm) */}
+      <div className="hidden sm:block w-full">
+        <div className="grid grid-cols-[minmax(180px,260px)_1fr_80px_90px] items-center gap-4 sm:gap-6 pb-2.5 border-b border-border text-xs font-bold uppercase tracking-wider text-muted">
+          <div></div>
+          <div></div>
+          <div className="text-right">{locale === "hi" ? "प्रतिशत" : "Percent"}</div>
+          <div className="text-right">{locale === "hi" ? "प्रतिक्रियाएं" : "Responses"}</div>
+        </div>
+
+        <div className="divide-y divide-border/40">
+          {sorted.map((issue, index) => {
+            const rankColor = RANK_COLORS[index % RANK_COLORS.length];
+            return (
+              <div
+                key={issue.key}
+                className="grid grid-cols-[minmax(180px,260px)_1fr_80px_90px] items-center gap-4 sm:gap-6 py-3"
+              >
+                <div className="flex items-center gap-3.5 min-w-0 pr-2">
+                  <span
+                    className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white shadow-xs"
+                    style={{ backgroundColor: rankColor }}
+                  >
+                    {index + 1}
+                  </span>
+                  <span className="font-semibold text-sm sm:text-base text-ink truncate">
+                    {issue.label}
+                  </span>
+                </div>
+
+                <div className="min-w-0 w-full">
+                  <div className="h-3.5 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-500"
+                      style={{
+                        width: `${Math.min(100, Math.max(3, issue.percentage))}%`,
+                        backgroundColor: rankColor,
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div
+                  className="text-right font-display font-extrabold text-sm sm:text-base tabular-nums"
+                  style={{ color: rankColor }}
+                >
+                  {issue.percentage}%
+                </div>
+
+                <div className="text-right font-semibold text-xs sm:text-sm text-muted tabular-nums">
+                  {numberFormatter.format(issue.count)}
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
-      <div className="min-w-0 border-t border-border pt-4 lg:col-span-1 lg:border-l lg:border-t-0 lg:pl-4 lg:pt-0">
-        <ul className="space-y-1.5">
-          {sorted.map((issue) => (
-            <li key={issue.key} className="flex items-center justify-between gap-2 text-sm">
-              <span className="flex min-w-0 items-center gap-1.5 text-foreground">
-                <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: issue.color }} />
-                <span className="truncate">{issue.label}</span>
+
+      {/* Mobile ranked bars (<sm) */}
+      <div className="block sm:hidden w-full divide-y divide-border/40">
+        {sorted.map((issue, index) => {
+          const rankColor = RANK_COLORS[index % RANK_COLORS.length];
+          return (
+            <div key={issue.key} className="flex items-center gap-3 py-3">
+              <span
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white shadow-xs"
+                style={{ backgroundColor: rankColor }}
+              >
+                {index + 1}
               </span>
-              <span className="shrink-0 font-display font-bold tabular-nums text-ink">{issue.percentage}%</span>
-            </li>
-          ))}
-        </ul>
-      </div>
-      <div className="min-w-0 border-t border-border pt-4 lg:col-span-1 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
-        <h3 className="font-display text-xs font-bold uppercase tracking-wide text-muted">{topIssuesLabel}</h3>
-        <ol className="mt-3 space-y-2">
-          {sorted.slice(0, 6).map((issue, index) => (
-            <li key={issue.key} className="flex items-center justify-between gap-2 rounded-lg border border-border bg-surface-2 px-3 py-2">
-              <span className="flex min-w-0 items-center gap-2 text-sm text-foreground">
-                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-ink text-[11px] font-bold text-white">
-                  {index + 1}
-                </span>
-                <span className="truncate">{issue.label}</span>
-              </span>
-              <span className="shrink-0 font-display font-bold tabular-nums text-ink">{issue.percentage}%</span>
-            </li>
-          ))}
-        </ol>
+
+              <div className="min-w-0 flex-1">
+                <div className="flex items-baseline justify-between gap-2">
+                  <span className="font-semibold text-sm text-ink truncate">
+                    {issue.label}
+                  </span>
+                  <div className="shrink-0 text-right font-display">
+                    <span className="font-extrabold text-sm tabular-nums" style={{ color: rankColor }}>
+                      {issue.percentage}%
+                    </span>
+                    <span className="ml-1 text-xs text-muted tabular-nums">
+                      ({numberFormatter.format(issue.count)})
+                    </span>
+                  </div>
+                </div>
+
+                <div className="mt-1.5 h-2.5 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all duration-500"
+                    style={{
+                      width: `${Math.min(100, Math.max(4, issue.percentage))}%`,
+                      backgroundColor: rankColor,
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -769,77 +789,81 @@ export function MlaSatisfactionChart({
     const bucket = bucketsByKey.get(opt.key);
     return {
       key: opt.key,
-      label: locale === "hi" ? opt.label : opt.labelEn,
-      sublabel: locale === "hi" ? opt.sublabel : opt.sublabelEn,
+      name: locale === "hi" ? opt.label : opt.labelEn,
       color: opt.colorHex,
       count: bucket && bucket.state === "available" ? bucket.count : 0,
-      percentage: bucket && bucket.state === "available" ? bucket.percentage : 0,
+      value: bucket && bucket.state === "available" ? bucket.percentage : 0,
       isSuppressed: bucket?.state === "suppressed",
     };
-  }).filter((row) => row.count > 0 || row.isSuppressed);
+  });
 
-  const chartRows = rows.filter((row) => !row.isSuppressed && row.percentage > 0);
+  const chartRows = rows.filter((row) => !row.isSuppressed && row.value > 0);
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-3 text-xs text-muted">
-        <span>
-          <span className="font-bold text-foreground">{t.results.totalResponsesCard}:</span> {numberFormatter.format(total)}
-        </span>
-        <span className="text-[11px] text-muted">{t.results.mlaSatisfactionDenominator}</span>
+    <div className="flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-8 py-2">
+      <div className="relative h-[210px] w-[210px] shrink-0">
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={chartRows.length > 0 ? chartRows : [{ key: "empty", value: 1, color: "#e2e8f0" }]}
+              dataKey="value"
+              nameKey="name"
+              cx="50%"
+              cy="50%"
+              outerRadius="90%"
+              innerRadius="62%"
+              paddingAngle={chartRows.length > 1 ? 2 : 0}
+              stroke="var(--color-surface, #fff)"
+              strokeWidth={2}
+            >
+              {chartRows.length > 0 ? (
+                chartRows.map((row) => (
+                  <Cell key={row.key} fill={row.color} />
+                ))
+              ) : (
+                <Cell fill="#e2e8f0" />
+              )}
+            </Pie>
+            <Tooltip
+              formatter={(val: any, _name: any, item: any) => {
+                const row = item?.payload as (typeof chartRows)[number] | undefined;
+                return [
+                  `${typeof val === "number" ? val : Number(val ?? 0)}%${row ? ` · ${numberFormatter.format(row.count)}` : ""}`,
+                  row?.name ?? "",
+                ];
+              }}
+            />
+          </PieChart>
+        </ResponsiveContainer>
+        <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
+          <span className="font-display text-2xl sm:text-3xl font-black tabular-nums text-ink leading-tight">
+            {numberFormatter.format(total)}
+          </span>
+          <span className="text-[11px] font-medium text-muted mt-0.5">
+            {locale === "hi" ? "कुल प्रतिक्रियाएं" : "Total Responses"}
+          </span>
+        </div>
       </div>
 
-      <div className="grid items-center gap-5 sm:grid-cols-[minmax(180px,220px)_1fr]">
-        <div className="h-[220px] min-w-0">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={chartRows}
-                dataKey="percentage"
-                nameKey="label"
-                cx="50%"
-                cy="50%"
-                outerRadius="72%"
-                innerRadius="42%"
-                paddingAngle={2}
-                stroke="none"
-                label={({ percent }) => `${Math.round((percent ?? 0) * 100)}%`}
-              >
-                {chartRows.map((row) => (
-                  <Cell key={row.key} fill={row.color} />
-                ))}
-              </Pie>
-              <Tooltip
-                formatter={(value: number | string | undefined, _name, item) => {
-                  const row = item?.payload as (typeof chartRows)[number] | undefined;
-                  return [
-                    `${typeof value === "number" ? value : Number(value ?? 0)}%${row ? ` · ${numberFormatter.format(row.count)}` : ""}`,
-                    row?.label ?? "",
-                  ];
-                }}
-              />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-
-        <div className="space-y-2">
-          {rows.map((row) => (
-            <div key={row.key} className="rounded-xl border border-border/70 bg-surface p-3">
-              <div className="flex items-center justify-between gap-3 text-sm">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: row.color }} />
-                    <span className="truncate font-semibold text-ink">{row.label}</span>
-                  </div>
-                  {row.sublabel && <p className="mt-1 text-[11px] text-muted truncate">{row.sublabel}</p>}
-                </div>
-                <span className="shrink-0 font-display text-sm font-bold tabular-nums text-ink">
-                  {row.isSuppressed ? t.results.suppressed : `${row.percentage}%`}
-                </span>
-              </div>
+      <div className="w-full sm:w-auto sm:min-w-[190px] flex-1 space-y-3">
+        {rows.map((row) => (
+          <div key={row.key} className="flex items-center justify-between gap-3 text-sm">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: row.color }} />
+              <span className="font-medium text-ink truncate text-sm">{row.name}</span>
             </div>
-          ))}
-        </div>
+            <div className="shrink-0 text-right font-display text-sm">
+              {row.isSuppressed ? (
+                <span className="text-xs text-muted">{t.results.suppressed}</span>
+              ) : (
+                <>
+                  <span className="font-bold text-ink tabular-nums">{row.value}%</span>
+                  <span className="ml-1 text-xs text-muted tabular-nums">({numberFormatter.format(row.count)})</span>
+                </>
+              )}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

@@ -3,7 +3,6 @@ import { prisma } from "@/lib/prisma";
 import {
   statePath,
   electionPath,
-  districtsPath,
   districtPath,
   constituencyPath,
   stateResultsPath,
@@ -23,7 +22,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Baseline static routes that must always be indexed, even if the database is temporarily unreachable
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: siteUrl, lastModified: now, changeFrequency: "daily", priority: 1.0 },
-    { url: `${siteUrl}/states`, lastModified: now, changeFrequency: "daily", priority: 0.9 },
+    { url: `${siteUrl}/rajya`, lastModified: now, changeFrequency: "daily", priority: 0.9 },
     { url: `${siteUrl}${resultsLandingPath()}`, lastModified: now, changeFrequency: "daily", priority: 0.85 },
     { url: `${siteUrl}${analysisLandingPath()}`, lastModified: now, changeFrequency: "daily", priority: 0.85 },
     { url: `${siteUrl}/find-constituency`, lastModified: now, changeFrequency: "weekly", priority: 0.7 },
@@ -95,25 +94,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       for (const election of state.elections) {
         const electionDate = election.updatedAt ?? stateDate;
 
-        addRoute({
-          url: `${siteUrl}${electionPath(state.slug, election.slug)}`,
-          lastModified: electionDate,
-          changeFrequency: "daily",
-          priority: 0.75,
-        });
-
+        // The election overview and district-listing pages are no longer part of
+        // the navigation flow (State → District → Constituency), so they are
+        // intentionally not listed here.
         addRoute({
           url: `${siteUrl}${analysisPath(state.slug, election.slug)}`,
           lastModified: electionDate,
           changeFrequency: "daily",
           priority: 0.8,
-        });
-
-        addRoute({
-          url: `${siteUrl}${districtsPath(state.slug, election.slug)}`,
-          lastModified: electionDate,
-          changeFrequency: "daily",
-          priority: 0.65,
         });
 
         addRoute({

@@ -122,45 +122,40 @@ export function PublicResultsView({
 
       {data.visibility.state === "visible" && !isZeroState && (
         <>
-          <div id="results-polling-cards" className="mt-6 grid gap-6 lg:grid-cols-2">
-          <section id="mla-satisfaction" className="card-surface scroll-mt-24 rounded-2xl p-5 sm:p-6" aria-labelledby="mla-satisfaction-heading">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <h2 id="mla-satisfaction-heading" className="font-display text-xl font-bold">{t.results.mlaSatisfaction}</h2>
-                <p className="mt-1 text-xs text-muted">{t.results.mlaSatisfactionSubtitle}</p>
+          <div id="results-polling-cards" className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <section id="mla-satisfaction" className="card-surface scroll-mt-24 rounded-2xl p-5 sm:p-6" aria-labelledby="mla-satisfaction-heading">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h2 id="mla-satisfaction-heading" className="font-display text-xl font-bold">{t.results.mlaSatisfaction}</h2>
+                  <p className="mt-1 text-xs text-muted">{t.results.mlaSatisfactionSubtitle}</p>
+                </div>
+                <PrivacyPill />
               </div>
-              <PrivacyPill />
-            </div>
 
-            <div className="mt-5">
-              <MlaIdentityCard mla={data.mla} locale={locale} />
-            </div>
-
-            <div className="mt-6">
-              <MlaSatisfactionChart
-                distribution={data.mlaSatisfaction ?? data.analytics?.mlaSatisfaction ?? { state: "unavailable", reason: "no_responses", minRequired: data.sample.minCellSize }}
-                locale={locale}
-              />
-            </div>
-          </section>
-
-          <section id="party" className="card-surface scroll-mt-24 rounded-2xl p-5 sm:p-6" aria-labelledby="party-results-heading">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <h2 id="party-results-heading" className="font-display text-xl font-bold">{t.results.partySupport}</h2>
-                <p className="mt-1 text-xs text-muted">{t.results.partyDenominator}</p>
+              <div className="mt-5">
+                <MlaSatisfactionChart
+                  distribution={data.mlaSatisfaction ?? data.analytics?.mlaSatisfaction ?? { state: "unavailable", reason: "no_responses", minRequired: data.sample.minCellSize }}
+                  locale={locale}
+                />
               </div>
-              <PrivacyPill />
-            </div>
-            <div className="mt-5 overflow-x-auto pb-1">
-              {data.analytics?.partyPreference.state === "available" ? (
-                <PartySupportChart buckets={data.analytics.partyPreference.buckets} locale={locale} />
-              ) : (
-                <InlineState>{isZeroState ? t.results.zeroParty : t.results.resultsSuppressed}</InlineState>
-              )}
-            </div>
-          </section>
+            </section>
 
+            <section id="party" className="card-surface scroll-mt-24 rounded-2xl p-5 sm:p-6" aria-labelledby="party-results-heading">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h2 id="party-results-heading" className="font-display text-xl font-bold">{t.results.partySupport}</h2>
+                  <p className="mt-1 text-xs text-muted">{t.results.partyDenominator}</p>
+                </div>
+                <PrivacyPill />
+              </div>
+              <div className="mt-5">
+                {data.analytics?.partyPreference.state === "available" ? (
+                  <PartySupportChart buckets={data.analytics.partyPreference.buckets} locale={locale} />
+                ) : (
+                  <InlineState>{isZeroState ? t.results.zeroParty : t.results.resultsSuppressed}</InlineState>
+                )}
+              </div>
+            </section>
           </div>
 
           <section id="issues" className="card-surface scroll-mt-24 mt-6 rounded-2xl p-5 sm:p-6" aria-labelledby="issues-heading">
@@ -169,13 +164,26 @@ export function PublicResultsView({
                 <h2 id="issues-heading" className="font-display text-xl font-bold">{t.results.topIssues}</h2>
                 <p className="mt-1 text-xs text-muted">{t.results.amongRespondents}</p>
               </div>
-              <PrivacyPill />
+              <div className="flex items-center gap-3">
+                {validResponseCount !== null && validResponseCount > 0 && (
+                  <div className="rounded-xl border border-border bg-surface-2 px-3 py-1 text-right">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-muted">
+                      {locale === "hi" ? "कुल प्रतिक्रियाएं" : "Total Responses"}
+                    </p>
+                    <p className="font-display text-base sm:text-lg font-black text-ink leading-tight">
+                      {numberFormatter.format(validResponseCount)}
+                    </p>
+                  </div>
+                )}
+                <PrivacyPill />
+              </div>
             </div>
             <div className="mt-5">
               <KeyIssuesPanel
                 distribution={data.analytics?.demographics.top_issue ?? { state: "unavailable", reason: "no_answers", minRequired: data.sample.minCellSize }}
                 centerLabel={t.results.topIssues}
                 topIssuesLabel={t.analysisHub.topIssuesRankingLabel}
+                totalResponses={validResponseCount}
               />
             </div>
           </section>

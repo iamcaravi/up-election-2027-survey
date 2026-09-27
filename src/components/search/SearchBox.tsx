@@ -6,6 +6,8 @@ import { Search, Loader2, MapPin, Building2, User } from "lucide-react";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { districtPath, constituencyPath } from "@/lib/routes";
+import { getDistrictDisplayName } from "@/lib/district-hindi";
+import { getConstituencyDisplayName } from "@/lib/constituency-hindi";
 
 interface SearchResults {
   districts: { type: "district"; slug: string; name: string; stateSlug: string; electionSlug: string | null }[];
@@ -31,7 +33,7 @@ interface SearchResults {
 }
 
 export function SearchBox({ className, autoFocus }: { className?: string; autoFocus?: boolean }) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResults | null>(null);
@@ -129,7 +131,7 @@ export function SearchBox({ className, autoFocus }: { className?: string; autoFo
                   className="flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-left text-sm hover:bg-surface-2"
                 >
                   <MapPin size={15} className="text-ink" />
-                  {d.name}
+                  <span>{getDistrictDisplayName(d.slug, d.name, locale)}</span>
                 </button>
               ))}
             </div>
@@ -151,7 +153,10 @@ export function SearchBox({ className, autoFocus }: { className?: string; autoFo
                   className="flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-left text-sm hover:bg-surface-2"
                 >
                   <Building2 size={15} className="shrink-0 text-ink" />
-                  <span className="whitespace-nowrap">{c.name}</span>
+                  <span className="whitespace-nowrap">{getConstituencyDisplayName(c.slug, c.name, locale)}</span>
+                  <span className="ml-auto text-xs text-muted">
+                    {getDistrictDisplayName(c.districtName.toLowerCase().replace(/\s+/g, "-"), c.districtName, locale)}
+                  </span>
                 </button>
               ))}
             </div>
@@ -175,7 +180,9 @@ export function SearchBox({ className, autoFocus }: { className?: string; autoFo
                   <User size={15} className="text-ink" />
                   <span>{c.name}</span>
                   {c.partyShortName && <span className="text-xs text-muted">{c.partyShortName}</span>}
-                  <span className="ml-auto text-xs text-muted">{c.constituencyName}</span>
+                  <span className="ml-auto text-xs text-muted">
+                    {getConstituencyDisplayName(c.constituencySlug, c.constituencyName, locale)}
+                  </span>
                 </button>
               ))}
             </div>

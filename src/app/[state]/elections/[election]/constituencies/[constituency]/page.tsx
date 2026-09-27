@@ -1,11 +1,15 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getStateAndElection, getConstituencyBySlug } from "@/lib/data";
-import { Container } from "@/components/ui/Container";
-import { ConstituencyHeroText } from "@/components/election/ConstituencyHeroText";
+import { getCurrentMlaForConstituency } from "@/lib/current-mla";
+import { ConstituencyDetailPage } from "@/components/constituency/ConstituencyDetailPage";
 import { districtPath, electionPath, statePath, constituencyPath } from "@/lib/routes";
 import { buildPageMetadata } from "@/lib/seo";
 import { getServerLocale } from "@/lib/i18n/locale-cookie";
+import { displayStateName } from "@/lib/utils";
+import { getDistrictDisplayName } from "@/lib/district-hindi";
+
+import { getConstituencyDisplayName } from "@/lib/constituency-hindi";
 
 export async function generateMetadata({
   params,
@@ -15,17 +19,18 @@ export async function generateMetadata({
   const { state: stateSlug, election: electionSlug, constituency: slug } = await params;
   const [c, locale] = await Promise.all([getConstituencyBySlug(stateSlug, slug, electionSlug), getServerLocale()]);
   if (!c) return {};
+  const cName = getConstituencyDisplayName(c.slug, c.name, locale);
   return buildPageMetadata({
-    title: locale === "hi" ? `${c.name} चुनाव सर्वेक्षण` : `${c.name} Election Survey`,
+    title: locale === "hi" ? `${cName} चुनाव सर्वेक्षण` : `${cName} Election Survey`,
     description:
       locale === "hi"
-        ? `${c.name} विधानसभा क्षेत्र (${c.district.name}, ${c.state.name}) सार्वजनिक सर्वे, उम्मीदवार पसंद, मुख्य मुद्दे और क्षेत्रवार सर्वे रुझान।`
-        : `${c.name} Assembly constituency (${c.district.name}, ${c.state.name}) public survey, candidate preferences, key issues and constituency-level survey trends.`,
-    ogTitle: locale === "hi" ? `${c.name} सर्वे` : `${c.name} Survey`,
+        ? `${cName} विधानसभा क्षेत्र (${c.district.name}, ${c.state.name}) सार्वजनिक सर्वे, उम्मीदवार पसंद, मुख्य मुद्दे और क्षेत्रवार सर्वे रुझान।`
+        : `${cName} Assembly constituency (${c.district.name}, ${c.state.name}) public survey, candidate preferences, key issues and constituency-level survey trends.`,
+    ogTitle: locale === "hi" ? `${cName} सर्वे` : `${cName} Survey`,
     ogDescription:
       locale === "hi"
-        ? `${c.name} विधानसभा क्षेत्र, ${c.district.name} जिला, ${c.state.name} के लिए सार्वजनिक सर्वे।`
-        : `Public survey for ${c.name} assembly constituency, ${c.district.name} district, ${c.state.name}.`,
+        ? `${cName} विधानसभा क्षेत्र, ${c.district.name} जिला, ${c.state.name} के लिए सार्वजनिक सर्वे।`
+        : `Public survey for ${cName} assembly constituency, ${c.district.name} district, ${c.state.name}.`,
     path: constituencyPath(c.state.slug, electionSlug, c.slug),
   });
 }
@@ -45,31 +50,33 @@ export default async function ConstituencyPage({
   const constituency = await getConstituencyBySlug(stateSlug, slug, electionSlug);
   if (!constituency) notFound();
 
+  // Fetch the current MLA via the authoritative resolver (checks DB INCUMBENT
+  // candidate → data/up/current-mlas.json → constituency.currentMlaName).
+  const currentMlaInfo = await getCurrentMlaForConstituency(constituency, election.id);
+
   const basePath = electionPath(state.slug, election.slug);
+  const locale = await getServerLocale();
+
+  const stateName = displayStateName(state.name, state.slug, locale);
+  const districtName = getDistrictDisplayName(constituency.district.slug, constituency.district.name, locale);
+  const constituencyName = getConstituencyDisplayName(constituency.slug, constituency.name, locale);
+
+  const hasSurvey = constituency.surveys && constituency.surveys.length > 0;
 
   return (
-    <div>
-      <div className="border-b border-border bg-surface">
-        <Container className="py-12">
-          <ConstituencyHeroText
-            stateName={state.name}
-            stateHref={statePath(state.slug)}
-            electionName={election.name}
-            electionHref={electionPath(state.slug, election.slug)}
-            districtName={constituency.district.name}
-            districtHref={districtPath(state.slug, election.slug, constituency.district.slug)}
-            constituencyName={constituency.name}
-            constituencyNumber={constituency.number}
-            reservedStatus={constituency.reservedStatus}
-            currentMlaName={constituency.currentMlaName}
-            result2022WinnerName={constituency.result2022WinnerName}
-            result2022WinnerParty={constituency.result2022WinnerParty}
-            responseCount={constituency._count.surveyResponses}
-            surveyHref={`${basePath}/constituencies/${slug}/survey`}
-            resultsHref={`${basePath}/constituencies/${slug}/results`}
-          />
-        </Container>
-      </div>
-    </div>
+    <ConstituencyDetailPage
+      stateName={stateName}
+      stateHref={statePath(state.slug)}
+      districtName={districtName}
+      districtHref={districtPath(state.slug, election.slug, constituency.district.slug)}
+      constituencyName={constituencyName}
+      constituencyNumber={constituency.number}
+      reservedStatus={constituency.reservedStatus}
+      currentMlaInfo={currentMlaInfo}
+      responseCount={constituency._count.surveyResponses}
+      surveyHref={`${basePath}/constituencies/${slug}/survey`}
+      resultsHref={`${basePath}/constituencies/${slug}/results`}
+      hasSurvey={hasSurvey}
+    />
   );
 }

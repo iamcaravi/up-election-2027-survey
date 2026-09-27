@@ -95,6 +95,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang={locale}
+      data-scroll-behavior="smooth"
       suppressHydrationWarning
       className={`${inter.variable} ${manrope.variable} ${notoDevanagari.variable} h-full antialiased`}
     >

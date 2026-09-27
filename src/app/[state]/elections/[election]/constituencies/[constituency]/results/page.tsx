@@ -1,21 +1,11 @@
 import { notFound } from "next/navigation";
-import { Suspense } from "react";
 import type { Metadata } from "next";
-import { getStateAndElection, getConstituencyBySlug, getSiteSetting } from "@/lib/data";
+import { getStateAndElection, getConstituencyBySlug } from "@/lib/data";
 import { getPublicSurveyResults } from "@/lib/public-survey-results";
-import { getPublicStatewideResults } from "@/lib/public-statewide-results";
-import { ResultsTabs } from "@/components/results/ResultsTabs";
-import { SurveyHero } from "@/components/survey/SurveyHero";
-import { Container } from "@/components/ui/Container";
-import { electionPath, districtPath, statePath, constituencyPath } from "@/lib/routes";
+import { ApprovedConstituencyResultsView } from "@/components/results/ApprovedConstituencyResultsView";
+import { analysisPath, constituencyPath } from "@/lib/routes";
 import { buildPageMetadata } from "@/lib/seo";
 import { getServerLocale } from "@/lib/i18n/locale-cookie";
-import {
-  SURVEY_HERO_ELEMENTS_KEY,
-  surveyHeroElementsOverrideKey,
-  normalizeHeroElementsConfig,
-  DEFAULT_HERO_ELEMENTS_CONFIG,
-} from "@/lib/survey-hero-elements-config";
 
 export async function generateMetadata({
   params,
@@ -34,6 +24,7 @@ export async function generateMetadata({
     path: `${constituencyPath(c.state.slug, electionSlug, c.slug)}/results`,
   });
 }
+
 export const dynamic = "force-dynamic";
 
 export default async function ResultsPage({
@@ -50,37 +41,22 @@ export default async function ResultsPage({
 
   const results = await getPublicSurveyResults(scopedElection.election.id, constituency.id);
   if (!results) notFound();
-  const statewideResults = await getPublicStatewideResults(scopedElection.election.id);
 
-  const [globalHeroConfigRaw, heroConfigOverrideRaw] = await Promise.all([
-    getSiteSetting(SURVEY_HERO_ELEMENTS_KEY, DEFAULT_HERO_ELEMENTS_CONFIG),
-    getSiteSetting<unknown>(surveyHeroElementsOverrideKey(constituency.id), null),
-  ]);
-  const heroConfig = normalizeHeroElementsConfig(heroConfigOverrideRaw ?? globalHeroConfigRaw);
+  const analysisHref = analysisPath(scopedElection.state.slug, scopedElection.election.slug);
 
-  const basePath = electionPath(scopedElection.state.slug, scopedElection.election.slug);
   return (
-    <div>
-      <SurveyHero
-        stateName={constituency.state.name}
-        stateHref={statePath(scopedElection.state.slug)}
-        districtName={constituency.district.name}
-        districtHref={districtPath(scopedElection.state.slug, scopedElection.election.slug, constituency.district.slug)}
-        constituencyName={constituency.name}
-        constituencyNumber={constituency.number}
-        electionYear={scopedElection.election.year}
-        config={heroConfig}
-        breadcrumbLabel="सर्वेक्षण परिणाम"
-      />
-      <Container className="py-6 sm:py-8">
-        <Suspense fallback={null}>
-          <ResultsTabs
-            constituencyResults={results}
-            statewideResults={statewideResults}
-            surveyHref={`${basePath}/constituencies/${constituency.slug}/survey`}
-          />
-        </Suspense>
-      </Container>
-    </div>
+    <ApprovedConstituencyResultsView
+      data={results}
+      stateSlug={stateSlug}
+      electionSlug={electionSlug}
+      districtSlug={constituency.district.slug}
+      constituencySlug={constituency.slug}
+      constituencyNumber={constituency.number}
+      constituencyNameEn={constituency.name}
+      districtNameEn={constituency.district.name}
+      stateNameEn={constituency.state.name}
+      electionYear={scopedElection.election.year}
+      analysisHref={analysisHref}
+    />
   );
 }

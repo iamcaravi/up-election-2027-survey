@@ -1,26 +1,26 @@
 import type { Metadata } from "next";
 import { getStates } from "@/lib/data";
-import { Container } from "@/components/ui/Container";
-import { StatesGrid } from "@/components/states/StatesGrid";
-import { StatesLandingBreadcrumb } from "@/components/states/StatesLandingBreadcrumb";
+import { RajyaPageContent } from "@/components/states/RajyaPageContent";
 import { getServerLocale } from "@/lib/i18n/locale-cookie";
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getServerLocale();
   return locale === "hi"
-    ? { title: "राज्य", description: "इंडिया इलेक्शन सर्वे प्लेटफ़ॉर्म पर हर राज्य को देखें।" }
-    : { title: "States", description: "Browse every state on the India Election Survey platform." };
+    ? {
+        title: "राज्य | VoterSurvey.in",
+        description:
+          "भारत के विभिन्न राज्यों में होने वाले विधानसभा चुनावों से जुड़ी जनता की राय, स्थानीय मुद्दों और विकास से जुड़े महत्वपूर्ण तथ्यों को जानें और सर्वे में भाग लें।",
+      }
+    : {
+        title: "States | VoterSurvey.in",
+        description:
+          "Explore public opinions, local issues, and developmental facts for assembly elections across Indian states on VoterSurvey.in.",
+      };
 }
 
 export const revalidate = 60;
 
 export default async function StatesPage() {
   const states = await getStates();
-
-  return (
-    <Container className="py-14">
-      <StatesLandingBreadcrumb />
-      <StatesGrid states={states} />
-    </Container>
-  );
+  return <RajyaPageContent states={states} />;
 }
