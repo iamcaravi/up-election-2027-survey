@@ -45,18 +45,11 @@ export interface PublicStatewideResultsDto {
   mlaSatisfaction: PublicDistribution;
 }
 
-const statewideCache = new Map<string, { data: PublicStatewideResultsDto; expiresAt: number }>();
-
 export async function getPublicStatewideResults(
   electionId: string,
   district?: { id: string; name: string; slug: string }
 ): Promise<PublicStatewideResultsDto | null> {
-  const cacheKey = `${electionId}:${district?.id ?? "all"}`;
   const nowMs = Date.now();
-  const cached = statewideCache.get(cacheKey);
-  if (cached && nowMs < cached.expiresAt) {
-    return cached.data;
-  }
 
   const election = await prisma.election.findUnique({ where: { id: electionId }, include: { state: true } });
   if (!election) return null;
@@ -82,92 +75,86 @@ export async function getPublicStatewideResults(
     constituency: constituencyScope,
   };
 
-  const [
-    responseAgg,
-    countLast7Days,
-    countPrior7Days,
-    partyAnswers,
-    demographicAnswers,
-    mlaSatisfactionAnswers,
-    totalConstituencies,
-    respondingSurveys,
-  ] = await Promise.all([
-    prisma.surveyResponse.aggregate({
-      where: responseWhere,
-      _count: { _all: true },
-      _max: { createdAt: true },
-    }),
-    prisma.surveyResponse.count({
-      where: { ...responseWhere, createdAt: { gte: oneWeekAgo } },
-    }),
-    prisma.surveyResponse.count({
-      where: { ...responseWhere, createdAt: { gte: twoWeeksAgo, lt: oneWeekAgo } },
-    }),
-    prisma.surveyAnswer.findMany({
-      where: {
-        response: {
-          status: ELIGIBLE_RESPONSE_STATUS,
-          dataSource: activeDataSource,
-          survey: { electionId },
-          constituency: constituencyScope,
-        },
-        question: { key: "party_preference" },
-        optionId: { not: null },
-      },
-      select: {
-        option: {
-          select: {
-            key: true,
-            label: true,
-            order: true,
-            partyId: true,
-            party: { select: { nameEnglish: true, nameHindi: true, shortName: true, colorHex: true, logoUrl: true, displayOrder: true, isActive: true } },
-          },
-        },
-      },
-    }),
-    prisma.surveyAnswer.findMany({
-      where: {
-        response: {
-          status: ELIGIBLE_RESPONSE_STATUS,
-          dataSource: activeDataSource,
-          survey: { electionId },
-          constituency: constituencyScope,
-        },
-        question: { key: { in: [...STATEWIDE_DEMOGRAPHIC_KEYS] } },
-        optionId: { not: null },
-      },
-      select: {
-        question: { select: { key: true } },
-        option: { select: { key: true, label: true, order: true } },
-      },
-    }),
-    prisma.surveyAnswer.findMany({
-      where: {
-        response: {
-          status: ELIGIBLE_RESPONSE_STATUS,
-          dataSource: activeDataSource,
-          survey: { electionId },
-          constituency: constituencyScope,
-        },
-        question: { key: "mla_satisfaction" },
-        optionId: { not: null },
-      },
-      select: {
-        option: { select: { key: true, label: true, order: true } },
-      },
-    }),
-    prisma.constituency.count({ where: { stateId: election.stateId, ...constituencyScope } }),
-    prisma.survey.findMany({
-      where: {
-        electionId,
-        responses: { some: { status: ELIGIBLE_RESPONSE_STATUS, dataSource: activeDataSource } },
+  // Serialize DB operations for the Cloudflare Worker/Neon runtime.
+  // Parallel Prisma queries were a source of intermittent request-context
+  // failures after the Netlify -> Workers migration.
+  const responseAgg = await prisma.surveyResponse.aggregate({
+    where: responseWhere,
+    _count: { _all: true },
+    _max: { createdAt: true },
+  });
+  const countLast7Days = await prisma.surveyResponse.count({
+    where: { ...responseWhere, createdAt: { gte: oneWeekAgo } },
+  });
+  const countPrior7Days = await prisma.surveyResponse.count({
+    where: { ...responseWhere, createdAt: { gte: twoWeeksAgo, lt: oneWeekAgo } },
+  });
+  const partyAnswers = await prisma.surveyAnswer.findMany({
+    where: {
+      response: {
+        status: ELIGIBLE_RESPONSE_STATUS,
+        dataSource: activeDataSource,
+        survey: { electionId },
         constituency: constituencyScope,
       },
-      select: { constituencyId: true },
-      distinct: ["constituencyId"],
-    }),
-  ]);
+      question: { key: "party_preference" },
+      optionId: { not: null },
+    },
+    select: {
+      option: {
+        select: {
+          key: true,
+          label: true,
+          order: true,
+          partyId: true,
+          party: { select: { nameEnglish: true, nameHindi: true, shortName: true, colorHex: true, logoUrl: true, displayOrder: true, isActive: true } },
+        },
+      },
+    },
+  });
+  const demographicAnswers = await prisma.surveyAnswer.findMany({
+    where: {
+      response: {
+        status: ELIGIBLE_RESPONSE_STATUS,
+        dataSource: activeDataSource,
+        survey: { electionId },
+        constituency: constituencyScope,
+      },
+      question: { key: { in: [...STATEWIDE_DEMOGRAPHIC_KEYS] } },
+      optionId: { not: null },
+    },
+    select: {
+      question: { select: { key: true } },
+      option: { select: { key: true, label: true, order: true } },
+    },
+  });
+  const mlaSatisfactionAnswers = await prisma.surveyAnswer.findMany({
+    where: {
+      response: {
+        status: ELIGIBLE_RESPONSE_STATUS,
+        dataSource: activeDataSource,
+        survey: { electionId },
+        constituency: constituencyScope,
+      },
+      question: { key: "mla_satisfaction" },
+      optionId: { not: null },
+    },
+    select: {
+      option: { select: { key: true, label: true, order: true } },
+    },
+  });
+  const totalConstituencies = await prisma.constituency.count({
+    where: { stateId: election.stateId, ...constituencyScope },
+  });
+  const respondingSurveys = await prisma.survey.findMany({
+    where: {
+      electionId,
+      responses: { some: { status: ELIGIBLE_RESPONSE_STATUS, dataSource: activeDataSource } },
+      constituency: constituencyScope,
+    },
+    select: { constituencyId: true },
+    distinct: ["constituencyId"],
+  });
 
   const validResponseCount = responseAgg._count._all;
   const lastResponseAt = responseAgg._max.createdAt;
@@ -208,7 +195,6 @@ export async function getPublicStatewideResults(
     mlaSatisfaction,
   };
 
-  statewideCache.set(cacheKey, { data: result, expiresAt: nowMs + 60_000 });
   return result;
 }
 
