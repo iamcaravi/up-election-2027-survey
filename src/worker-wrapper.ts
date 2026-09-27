@@ -48,6 +48,18 @@ function getCacheKeyUrl(url: URL, locale: string): string {
 
 export default {
   async fetch(request: Request, env: any, ctx: any) {
+    // Keep the explicit Worker -> process.env bridge. The Vinext/Next server
+    // runtime and Prisma code read DATABASE_URL/SESSION_SECRET from process.env.
+    // nodejs_compat_populate_process_env is enabled too, but this bridge is
+    // intentionally retained because it was the known-working path on this
+    // deployment before the Cloudflare migration fixes.
+    const globalState = globalThis as typeof globalThis & {
+      __DATABASE_URL?: string;
+      __SESSION_SECRET?: string;
+    };
+    if (env?.DATABASE_URL) globalState.__DATABASE_URL = env.DATABASE_URL;
+    if (env?.SESSION_SECRET) globalState.__SESSION_SECRET = env.SESSION_SECRET;
+
     const url = new URL(request.url);
 
     if (isCacheablePublicGet(request, url)) {
