@@ -27,9 +27,41 @@ export function constituencyPath(stateSlug: string, electionSlug: string, consti
   return `${electionPath(stateSlug, electionSlug)}/constituencies/${constituencySlug}`;
 }
 
-/** The state-wide "चुनाव विश्लेषण" analytics landing page — not a constituency/candidate page. */
-export function analysisPath(stateSlug: string, electionSlug: string) {
-  return `${electionPath(stateSlug, electionSlug)}/analysis`;
+/**
+ * State-level Analysis. Kept for existing callers; now points at the ONE
+ * canonical, scope-driven Analysis page (see analysisScopePath). The election
+ * slug is no longer part of the URL — the page resolves the state's active
+ * election itself.
+ */
+export function analysisPath(stateSlug: string, electionSlug?: string) {
+  void electionSlug; // accepted for existing callers; not part of the canonical URL
+  return analysisScopePath({ state: stateSlug });
+}
+
+// ── Canonical Result / Analysis (one implementation each, scope in the query) ──
+export interface ResultScope {
+  state?: string;
+  district?: string;
+  constituency?: string;
+}
+
+function scopeSearch(scope: ResultScope) {
+  const q = new URLSearchParams();
+  if (scope.state) q.set("state", scope.state);
+  if (scope.district) q.set("district", scope.district);
+  if (scope.constituency) q.set("constituency", scope.constituency);
+  const s = q.toString();
+  return s ? `?${s}` : "";
+}
+
+/** The single public Result page for State / District / Assembly scope. */
+export function resultsPath(scope: ResultScope = {}) {
+  return `/results${scopeSearch(scope)}`;
+}
+
+/** The single public Analysis page for State / District / Assembly scope. */
+export function analysisScopePath(scope: ResultScope = {}) {
+  return `/analysis${scopeSearch(scope)}`;
 }
 
 // The Results journey is a standalone flow independent of the State/Election
@@ -41,7 +73,7 @@ export function resultsLandingPath() {
 }
 
 export function stateResultsPath(stateSlug: string) {
-  return `/results/${stateSlug}`;
+  return resultsPath({ state: stateSlug });
 }
 
 // Analysis is likewise a standalone flow — Analysis → pick a state → that
@@ -56,5 +88,5 @@ export function analysisLandingPath() {
 // current active election server-side and forwards to analysisPath, so the
 // landing page's cards don't need an election slug up front.
 export function analysisLandingStatePath(stateSlug: string) {
-  return `/analysis/${stateSlug}`;
+  return analysisScopePath({ state: stateSlug });
 }

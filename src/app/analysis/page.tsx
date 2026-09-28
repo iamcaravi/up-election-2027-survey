@@ -1,32 +1,53 @@
 import type { Metadata } from "next";
-import { getStates } from "@/lib/data";
-import { Container } from "@/components/ui/Container";
-import { StatesGrid } from "@/components/states/StatesGrid";
-import { AnalysisLandingBreadcrumb } from "@/components/analysis/AnalysisLandingBreadcrumb";
+import { redirect } from "next/navigation";
 import { getServerLocale } from "@/lib/i18n/locale-cookie";
+import { getScopedAnalysis, resolveScope, sameScope } from "@/lib/scoped-survey";
+import { analysisQuery, readAnalysisParams } from "@/lib/analysis-params";
+import { ScopedAnalysisView } from "@/components/analysis/scoped/ScopedAnalysisView";
+import { buildPageMetadata } from "@/lib/seo";
+import { applySeoOverride } from "@/lib/seo-overrides";
 
-export async function generateMetadata(): Promise<Metadata> {
+// THE canonical Analysis page (State / District / Assembly + filters), all in
+// the query string. Legacy analysis URLs redirect here with scope preserved.
+
+type SearchParams = Promise<Record<string, string | string[] | undefined>>;
+
+export async function generateMetadata({ searchParams }: { searchParams: SearchParams }): Promise<Metadata> {
   const locale = await getServerLocale();
-  return locale === "hi"
-    ? { title: "विश्लेषण", description: "पार्टी समर्थन, मुख्य मुद्दे और मतदाता रुझान — विस्तृत चुनाव विश्लेषण देखने के लिए एक राज्य चुनें।" }
-    : { title: "Analysis", description: "Select a state to explore its detailed election analysis — party support, key issues and voter trends." };
+  const hi = locale === "hi";
+  const { scope: requested } = readAnalysisParams(await searchParams);
+  const scope = await resolveScope(requested, locale);
+  const place = scope.constituency?.name ?? scope.district?.name ?? scope.state?.name;
+  const year = scope.election?.year ?? 2027;
+  const path = `/analysis${analysisQuery(scope.params)}`;
+  const base = buildPageMetadata({
+    title: place
+      ? hi
+        ? `${place} विधानसभा सर्वेक्षण ${year} — विस्तृत विश्लेषण`
+        : `${place} Assembly Survey ${year} — Detailed Analysis`
+      : hi
+        ? "विस्तृत विश्लेषण"
+        : "Detailed Analysis",
+    description: place
+      ? hi
+        ? `${place} के सर्वेक्षण परिणामों का विस्तृत विश्लेषण — जनसांख्यिकी, क्रॉस विश्लेषण, रुझान और तुलना।`
+        : `Detailed analysis of ${place}'s survey results — demographics, cross-analysis, trends and comparisons.`
+      : hi
+        ? "राज्य, जिला या विधानसभा क्षेत्र चुनकर सर्वेक्षण परिणामों का विस्तृत विश्लेषण देखें।"
+        : "Choose a state, district or constituency for a detailed analysis of survey results.",
+    path,
+  });
+  return applySeoOverride(base, path);
 }
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
 
-// The standalone Analysis journey's entry point: Analysis → pick a state →
-// that state's analysis dashboard (src/app/[state]/elections/[election]/
-// analysis/page.tsx, reached via /analysis/[state]'s redirect). Deliberately
-// independent of Find Constituency / Results / Election Overview — a
-// visitor clicking "Analysis" from the header or homepage card lands here
-// directly, never on a district/constituency browsing page.
-export default async function AnalysisLandingPage() {
-  const states = await getStates();
+export default async function AnalysisPage({ searchParams }: { searchParams: SearchParams }) {
+  const locale = await getServerLocale();
+  const { scope: requested, filters } = readAnalysisParams(await searchParams);
+  const scope = await resolveScope(requested, locale);
+  if (!sameScope(requested, scope.params)) redirect(`/analysis${analysisQuery(scope.params, filters)}`);
 
-  return (
-    <Container className="py-14">
-      <AnalysisLandingBreadcrumb />
-      <StatesGrid states={states} variant="analysis" />
-    </Container>
-  );
+  const data = scope.level === "none" ? null : await getScopedAnalysis(scope, locale, filters);
+  return <ScopedAnalysisView scope={scope} data={data} hi={locale === "hi"} />;
 }

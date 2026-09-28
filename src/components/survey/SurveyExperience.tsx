@@ -43,6 +43,7 @@ import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { getDeviceFingerprint } from "@/lib/fingerprint";
 import { cn } from "@/lib/utils";
 import type { CurrentMlaInfo } from "@/lib/current-mla";
+import { resultsPath } from "@/lib/routes";
 
 export interface SurveyOptionItem {
   key: string;
@@ -535,7 +536,7 @@ export function SurveyExperience({
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
 
-  const resultsHref = `${basePath}/constituencies/${constituencySlug}/results`;
+  const resultsHref = resultsPath({ state: stateSlug, district: districtSlug, constituency: constituencySlug });
 
   const mlaName =
     (locale === "hi" && currentMla?.nameHindi?.trim())
@@ -658,6 +659,7 @@ export function SurveyExperience({
         constituencySlug={constituencySlug}
         stateSlug={stateSlug}
         districtSlug={districtSlug}
+        basePath={basePath}
       />
     );
   }
@@ -673,7 +675,7 @@ export function SurveyExperience({
           होम
         </Link>
         <span>&gt;</span>
-        <Link href={`/${stateSlug}`} className="hover:text-slate-900 transition-colors">
+        <Link href="/rajya" className="hover:text-slate-900 transition-colors">
           राज्य
         </Link>
         <span>&gt;</span>
@@ -681,19 +683,19 @@ export function SurveyExperience({
           {stateName}
         </Link>
         <span>&gt;</span>
-        <Link href={`/${stateSlug}#districts`} className="hover:text-slate-900 transition-colors">
+        <Link href={`/${stateSlug}#district-explorer`} className="hover:text-slate-900 transition-colors">
           जिले
         </Link>
         <span>&gt;</span>
         <Link
-          href={`/${stateSlug}/elections/assembly-${electionYear}/districts/${districtSlug}`}
+          href={`${basePath}/districts/${districtSlug}`}
           className="hover:text-slate-900 transition-colors"
         >
           {districtName}
         </Link>
         <span>&gt;</span>
         <Link
-          href={`/${stateSlug}/elections/assembly-${electionYear}/constituencies/${constituencySlug}`}
+          href={`${basePath}/constituencies/${constituencySlug}`}
           className="hover:text-slate-900 transition-colors"
         >
           {constituencyName}
@@ -1446,6 +1448,7 @@ function SuccessScreen({
   constituencySlug,
   stateSlug,
   districtSlug,
+  basePath,
 }: {
   constituencyName: string;
   constituencyNumber?: number;
@@ -1457,6 +1460,7 @@ function SuccessScreen({
   constituencySlug: string;
   stateSlug: string;
   districtSlug: string;
+  basePath: string;
 }) {
   const router = useRouter();
   const [copied, setCopied] = useState(false);
@@ -1503,19 +1507,27 @@ function SuccessScreen({
           होम
         </Link>
         <span>&gt;</span>
+        <Link href="/rajya" className="hover:text-slate-900 transition-colors">
+          राज्य
+        </Link>
+        <span>&gt;</span>
         <Link href={`/${stateSlug}`} className="hover:text-slate-900 transition-colors">
           {stateName}
         </Link>
         <span>&gt;</span>
+        <Link href={`/${stateSlug}#district-explorer`} className="hover:text-slate-900 transition-colors">
+          जिले
+        </Link>
+        <span>&gt;</span>
         <Link
-          href={`/${stateSlug}/elections/assembly-${electionYear}/districts/${districtSlug}`}
+          href={`${basePath}/districts/${districtSlug}`}
           className="hover:text-slate-900 transition-colors"
         >
           {districtName}
         </Link>
         <span>&gt;</span>
         <Link
-          href={`/${stateSlug}/elections/assembly-${electionYear}/constituencies/${constituencySlug}`}
+          href={`${basePath}/constituencies/${constituencySlug}`}
           className="hover:text-slate-900 transition-colors"
         >
           {constituencyName}

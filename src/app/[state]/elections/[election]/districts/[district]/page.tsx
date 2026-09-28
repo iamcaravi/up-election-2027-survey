@@ -10,7 +10,7 @@ import {
   type DistrictConstituencyItem,
 } from "@/components/district/detail/DistrictConstituencyBrowser";
 import { DistrictInfoStrip } from "@/components/district/detail/DistrictInfoStrip";
-import { constituencyPath, statePath, districtPath, stateResultsPath } from "@/lib/routes";
+import { constituencyPath, statePath, districtPath, resultsPath } from "@/lib/routes";
 import { ELIGIBLE_RESPONSE_STATUS } from "@/lib/enums";
 import { REAL_DATA_SOURCE, SYNTHETIC_DATA_MODE_KEY, SYNTHETIC_DATA_SOURCE } from "@/lib/synthetic-data";
 import { buildPageMetadata } from "@/lib/seo";
@@ -153,7 +153,7 @@ export default async function DistrictPage({
         </div>
 
         <div className="mt-4 sm:mt-5">
-          <DistrictInfoStrip hi={hi} resultsHref={stateResultsPath(state.slug)} participateHref="#district-constituencies" />
+          <DistrictInfoStrip hi={hi} resultsHref={resultsPath({ state: state.slug, district: district.slug })} participateHref="#district-constituencies" />
         </div>
       </Container>
     </div>

@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { StateMap } from "@/components/map/StateMap";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { analysisScopePath } from "@/lib/routes";
 
 const ANALYSIS_CARDS = [
   {
@@ -81,7 +82,7 @@ export function LatestAnalysisSection() {
               className="h-full"
             >
               <Link
-                href={`/analysis/${item.stateSlug}`}
+                href={analysisScopePath({ state: item.stateSlug })}
                 className="group flex items-center gap-2.5 sm:gap-3 rounded-2xl border border-slate-100/90 bg-white p-2.5 sm:p-3 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md h-full"
               >
                 {/* Left: State map silhouette in soft tinted pastel box */}

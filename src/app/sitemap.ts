@@ -131,12 +131,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
             priority: 0.8,
           });
 
-          addRoute({
-            url: `${cPath}/results`,
-            lastModified: cDate,
-            changeFrequency: "hourly",
-            priority: 0.6,
-          });
+          // Constituency results live on the canonical /results page with a
+          // multi-param query (?state=&district=&constituency=). Those URLs
+          // are not listed here because "&" is escaped differently by the
+          // Next dev server and the Vinext runtime; the constituency page
+          // above links to its result.
         }
       }
     }

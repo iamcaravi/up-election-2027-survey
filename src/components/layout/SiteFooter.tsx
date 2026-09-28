@@ -6,6 +6,7 @@ import { Home, Heart, BarChart2, User } from "lucide-react";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import type { SocialLinksConfig, SocialPlatform } from "@/lib/social-links";
 import { XIcon, FacebookIcon, InstagramIcon, YoutubeIcon, LinkedinIcon } from "@/components/ui/SocialIcons";
+import { VisitorPresence } from "./VisitorPresence";
 
 interface SiteFooterProps {
   /** Real route to the current (URL-resolved) state's active election / results page. */
@@ -71,7 +72,9 @@ export function SiteFooter({ resultsHref, analysisHref, socialLinks }: SiteFoote
             </Link>
           </div>
 
-          {/* ── CENTER: Inline Navigation Links (Desktop: 1 row, Mobile: 2 compact rows) ── */}
+          {/* ── CENTER: Inline Navigation Links (Desktop: 1 row, Mobile: 2 compact rows)
+              with the live online/visitor count directly beneath them ── */}
+          <div className="flex flex-col items-center gap-1.5">
           <nav
             aria-label="Footer Quick Links"
             className="flex flex-wrap items-center justify-center gap-x-2.5 sm:gap-x-3 gap-y-1 text-xs sm:text-[13px] font-medium text-slate-300"
@@ -89,6 +92,11 @@ export function SiteFooter({ resultsHref, analysisHref, socialLinks }: SiteFoote
               </div>
             ))}
           </nav>
+          <VisitorPresence
+            className="flex flex-wrap items-center justify-center gap-x-2.5 gap-y-0.5 text-[11px] font-medium text-slate-400"
+            dividerClassName="text-slate-600"
+          />
+          </div>
 
           {/* ── RIGHT: Separator + Social Icons + Email ── */}
           <div className="flex items-center justify-center lg:justify-end gap-3 shrink-0">

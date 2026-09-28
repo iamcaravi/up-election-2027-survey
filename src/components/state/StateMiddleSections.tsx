@@ -21,6 +21,7 @@ import {
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { formatNumber } from "@/lib/utils";
 import { StateMap } from "@/components/map/StateMap";
+import { analysisScopePath } from "@/lib/routes";
 
 export interface PriorityItem {
   label: string;
@@ -221,7 +222,6 @@ const STATE_ANALYSIS_ARTICLES: Record<
 export function StateMiddleSections({
   stateName,
   stateSlug,
-  electionSlug,
   districtCount,
   constituencyCount,
   participantCount,
@@ -302,7 +302,7 @@ export function StateMiddleSections({
   const analysisArticles = articlesData.map((art) => ({
     title: locale === "hi" ? art.titleHi : art.titleEn,
     date: locale === "hi" ? art.dateHi : art.dateEn,
-    href: `/${stateSlug}/elections/${electionSlug}/analysis`,
+    href: analysisScopePath({ state: stateSlug }),
   }));
 
   const isUp = stateSlug === "uttar-pradesh";
@@ -433,7 +433,7 @@ export function StateMiddleSections({
                 </p>
               </div>
               <Link
-                href={`/${stateSlug}/elections/${electionSlug}/analysis`}
+                href={analysisScopePath({ state: stateSlug })}
                 className="text-xs xl:text-sm font-semibold text-blue-600 hover:text-blue-700 inline-flex items-center gap-1 bg-slate-50 hover:bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200/80 transition-colors"
               >
                 <span>{locale === "hi" ? "सभी मुद्दे देखें" : "All Issues"}</span>
@@ -445,7 +445,7 @@ export function StateMiddleSections({
               {issues.map((iss) => (
                 <Link
                   key={iss.id}
-                  href={`/${stateSlug}/elections/${electionSlug}/analysis`}
+                  href={analysisScopePath({ state: stateSlug })}
                   className={`${iss.bg} ${iss.border} border rounded-xl p-3 flex flex-col items-center justify-center text-center hover:scale-[1.02] transition-transform shadow-2xs group cursor-pointer`}
                 >
                   <div className="mb-1.5 flex items-center justify-center">
@@ -592,7 +592,7 @@ export function StateMiddleSections({
               </div>
 
               <Link
-                href={`/${stateSlug}/elections/${electionSlug}/analysis`}
+                href={analysisScopePath({ state: stateSlug })}
                 className="mt-2 inline-flex items-center justify-center gap-1.5 border border-blue-200 text-blue-600 hover:bg-blue-50/60 rounded-xl px-4 py-2.5 font-semibold text-sm xl:text-base transition-colors"
               >
                 <span>{locale === "hi" ? "राज्य का पूरा प्रोफाइल देखें" : "View Full State Profile"}</span>
@@ -613,7 +613,7 @@ export function StateMiddleSections({
                 </p>
               </div>
               <Link
-                href={`/${stateSlug}/elections/${electionSlug}/analysis`}
+                href={analysisScopePath({ state: stateSlug })}
                 className="text-xs xl:text-sm font-semibold text-blue-600 hover:text-blue-700 inline-flex items-center gap-1 bg-slate-50 hover:bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200/80 transition-colors"
               >
                 <span>{locale === "hi" ? "सभी विश्लेषण देखें" : "All Analysis"}</span>
@@ -756,7 +756,7 @@ export function StateMiddleSections({
               {locale === "hi" ? "मुख्य मुद्दे" : "Key Issues"}
             </h3>
             <Link
-              href={`/${stateSlug}/elections/${electionSlug}/analysis`}
+              href={analysisScopePath({ state: stateSlug })}
               className="text-xs sm:text-sm font-semibold text-blue-600 hover:text-blue-700 inline-flex items-center gap-1 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200/80"
             >
               <span>{locale === "hi" ? "सभी मुद्दे देखें" : "View All"}</span>
@@ -768,7 +768,7 @@ export function StateMiddleSections({
             {issues.slice(0, 4).map((iss) => (
               <Link
                 key={iss.id}
-                href={`/${stateSlug}/elections/${electionSlug}/analysis`}
+                href={analysisScopePath({ state: stateSlug })}
                 className={`${iss.bg} ${iss.border} border rounded-xl p-2 sm:p-2.5 flex flex-col items-center justify-center text-center shadow-2xs`}
               >
                 <div className="mb-1.5 flex items-center justify-center">
@@ -789,7 +789,7 @@ export function StateMiddleSections({
               {locale === "hi" ? "हाल के विश्लेषण" : "Recent Analysis"}
             </h3>
             <Link
-              href={`/${stateSlug}/elections/${electionSlug}/analysis`}
+              href={analysisScopePath({ state: stateSlug })}
               className="text-xs sm:text-sm font-semibold text-blue-600 hover:text-blue-700 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200/80 inline-flex items-center gap-1"
             >
               <span>{locale === "hi" ? "सभी देखें" : "View All"}</span>

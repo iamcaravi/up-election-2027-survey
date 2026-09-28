@@ -10,6 +10,7 @@ import { displayStateName } from "@/lib/utils";
 import { getDistrictDisplayName } from "@/lib/district-hindi";
 
 import { getConstituencyDisplayName } from "@/lib/constituency-hindi";
+import { resultsPath } from "@/lib/routes";
 
 export async function generateMetadata({
   params,
@@ -75,7 +76,7 @@ export default async function ConstituencyPage({
       currentMlaInfo={currentMlaInfo}
       responseCount={constituency._count.surveyResponses}
       surveyHref={`${basePath}/constituencies/${slug}/survey`}
-      resultsHref={`${basePath}/constituencies/${slug}/results`}
+      resultsHref={resultsPath({ state: state.slug, district: constituency.district.slug, constituency: constituency.slug })}
       hasSurvey={hasSurvey}
     />
   );
