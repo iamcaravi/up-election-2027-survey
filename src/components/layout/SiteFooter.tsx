@@ -15,6 +15,8 @@ interface SiteFooterProps {
   analysisHref: string;
   /** Admin-configured social URLs (src/lib/social-links.ts) */
   socialLinks: SocialLinksConfig;
+  /** Fixed mobile tab bar; SiteChrome turns it off on routes with their own bottom actions (the survey). */
+  showMobileNav?: boolean;
 }
 
 const SOCIAL_PLATFORMS: { platform: SocialPlatform; label: string; defaultUrl: string; Icon: (props: { size?: number }) => React.ReactElement }[] = [
@@ -25,7 +27,7 @@ const SOCIAL_PLATFORMS: { platform: SocialPlatform; label: string; defaultUrl: s
   { platform: "linkedin", label: "LinkedIn", defaultUrl: "https://linkedin.com", Icon: LinkedinIcon },
 ];
 
-export function SiteFooter({ resultsHref, analysisHref, socialLinks }: SiteFooterProps) {
+export function SiteFooter({ resultsHref, analysisHref, socialLinks, showMobileNav = true }: SiteFooterProps) {
   const { locale } = useLocale();
   const pathname = usePathname();
   const isHi = locale === "hi";
@@ -50,7 +52,7 @@ export function SiteFooter({ resultsHref, analysisHref, socialLinks }: SiteFoote
   return (
     <>
       {/* ── Single Ultra-Compact Dark Navy Footer Bar matching Reference Image ── */}
-      <footer className="border-t border-slate-800/90 bg-[#061224] text-slate-300 pb-16 lg:pb-0">
+      <footer className={`border-t border-slate-800/90 bg-[#061224] text-slate-300 ${showMobileNav ? "pb-16 lg:pb-0" : ""}`}>
         <div className="mx-auto w-full max-w-7xl px-4 py-4 sm:px-6 lg:px-8 lg:py-0 lg:h-[74px] flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3.5 lg:gap-6">
 
           {/* ── LEFT: Logo + Tagline ── */}
@@ -161,6 +163,7 @@ export function SiteFooter({ resultsHref, analysisHref, socialLinks }: SiteFoote
       </footer>
 
       {/* ── Mobile Bottom Tab Navigation ── */}
+      {showMobileNav && (
       <nav
         aria-label="Mobile Bottom Navigation"
         className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-around border-t border-slate-200/90 bg-white/95 px-2 py-1.5 backdrop-blur-lg shadow-[0_-2px_10px_rgba(0,0,0,0.06)] lg:hidden"
@@ -196,6 +199,7 @@ export function SiteFooter({ resultsHref, analysisHref, socialLinks }: SiteFoote
           );
         })}
       </nav>
+      )}
     </>
   );
 }

@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation";
 import { SiteHeader } from "./SiteHeader";
 import { SiteFooter } from "./SiteFooter";
-import { analysisPath, analysisLandingPath, resultsLandingPath, stateResultsPath } from "@/lib/routes";
+import { analysisPath, analysisLandingPath, isConstituencySurveyPath, resultsLandingPath, stateResultsPath } from "@/lib/routes";
 import type { SocialLinksConfig } from "@/lib/social-links";
 
 interface NavState {
@@ -51,6 +51,9 @@ export function SiteChrome({
   // a state-agnostic page goes to the Analysis landing page to pick a state
   // first, matching the same pattern Results already uses.
   const analysisHref = currentState?.electionSlug ? analysisPath(currentState.slug, currentState.electionSlug) : analysisLandingPath();
+  // The survey has its own Previous/Next/Submit actions; the site-wide mobile
+  // tab bar would duplicate them and cover the answer options.
+  const showMobileNav = !isConstituencySurveyPath(pathname);
 
   return (
     <>
@@ -59,7 +62,7 @@ export function SiteChrome({
       </div>
       <main className="flex-1">{children}</main>
       <div data-section="footer">
-        <SiteFooter resultsHref={resultsHref} analysisHref={analysisHref} socialLinks={socialLinks} />
+        <SiteFooter resultsHref={resultsHref} analysisHref={analysisHref} socialLinks={socialLinks} showMobileNav={showMobileNav} />
       </div>
     </>
   );

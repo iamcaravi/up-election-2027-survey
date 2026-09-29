@@ -14,7 +14,7 @@ import type { Locale } from "./i18n/LocaleProvider";
 // can never drift apart. Each is now `{hi, en}` — the same key set as
 // every other translated pair in this codebase — since a page's SEO title
 // must match the language it actually renders in for that visitor.
-export type SeoStaticCategory = "home" | "about" | "contact" | "privacy" | "terms" | "disclaimer" | "faq" | "methodology";
+export type SeoStaticCategory = "home" | "about" | "contact" | "help" | "privacy" | "terms" | "disclaimer" | "faq" | "methodology";
 export type SeoStateScopedCategory = "state" | "results" | "analysis";
 export type SeoCategory = SeoStaticCategory | SeoStateScopedCategory;
 
@@ -73,6 +73,19 @@ export const SEO_STATIC_CATALOG: SeoCatalogEntry[] = [
       title: "Contact Us",
       description:
         "Get in touch with VoterSurvey.in for general enquiries, survey or data questions, technical support, privacy requests, or election/regulatory communication.",
+    },
+  },
+  {
+    category: "help",
+    label: "Help",
+    path: "/help",
+    hi: {
+      title: "मदद",
+      description: "सर्वेक्षण में भाग लेने, अपना विधानसभा क्षेत्र खोजने, परिणाम और विश्लेषण समझने के बारे में मदद और अक्सर पूछे जाने वाले प्रश्न।",
+    },
+    en: {
+      title: "Help",
+      description: "Help with taking the survey, finding your constituency, and understanding results and analysis, plus frequently asked questions.",
     },
   },
   {

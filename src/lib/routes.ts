@@ -27,6 +27,14 @@ export function constituencyPath(stateSlug: string, electionSlug: string, consti
   return `${electionPath(stateSlug, electionSlug)}/constituencies/${constituencySlug}`;
 }
 
+// Matches exactly the survey route built above:
+// /[state]/elections/[election]/constituencies/[constituency]/survey
+const SURVEY_PATH_RE = /^\/[^/]+\/elections\/[^/]+\/constituencies\/[^/]+\/survey\/?$/;
+
+export function isConstituencySurveyPath(pathname: string | null | undefined) {
+  return !!pathname && SURVEY_PATH_RE.test(pathname);
+}
+
 /**
  * State-level Analysis. Kept for existing callers; now points at the ONE
  * canonical, scope-driven Analysis page (see analysisScopePath). The election

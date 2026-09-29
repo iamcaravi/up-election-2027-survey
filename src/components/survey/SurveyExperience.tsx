@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
+  ArrowLeft,
+  ArrowRight,
   BarChart2,
   BarChart3,
   Check,
@@ -18,6 +20,7 @@ import {
   Leaf,
   Loader2,
   Lock,
+  MapPin,
   Megaphone,
   MoreHorizontal,
   Shield,
@@ -27,6 +30,7 @@ import {
   Meh,
   Share2,
   Target,
+  User,
   Users,
   Briefcase,
   Users2,
@@ -38,6 +42,7 @@ import {
   Bus,
   Waves,
   HelpCircle,
+  type LucideIcon,
 } from "lucide-react";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { getDeviceFingerprint } from "@/lib/fingerprint";
@@ -201,7 +206,7 @@ const ISSUE_META: Record<
   {
     title: string;
     subtitle: string;
-    icon: any;
+    icon: LucideIcon | ((props: { className?: string }) => React.ReactElement);
     iconColor: string;
     iconBg: string;
     border: string;
@@ -621,28 +626,11 @@ export function SurveyExperience({
     }
   }
 
-  // Stepper definition
   const stepperItems = [
-    {
-      step: 1,
-      title: "प्रश्न 1",
-      subtitle: "वर्तमान विधायक से संतुष्टि",
-    },
-    {
-      step: 2,
-      title: "प्रश्न 2",
-      subtitle: "वोट प्राथमिकता",
-    },
-    {
-      step: 3,
-      title: "प्रश्न 3",
-      subtitle: "क्षेत्र के विकास से जुड़ी राय",
-    },
-    {
-      step: 4,
-      title: "प्रश्न 4",
-      subtitle: "अन्य महत्वपूर्ण विषय",
-    },
+    { step: 1, title: "प्रश्न 1", subtitle: "वर्तमान विधायक के कार्यों से संतुष्टि" },
+    { step: 2, title: "प्रश्न 2", subtitle: "वोट प्राथमिकता" },
+    { step: 3, title: "प्रश्न 3", subtitle: "क्षेत्र के विकास से जुड़ी राय" },
+    { step: 4, title: "प्रश्न 4", subtitle: "अन्य महत्वपूर्ण विषय" },
   ];
 
   // If completed, show approved Success Screen
@@ -664,280 +652,248 @@ export function SurveyExperience({
     );
   }
 
+  // Current-MLA header card — everything comes from the same currentMla prop
+  // (getCurrentMlaForConstituency); the party logo is looked up in this
+  // survey's own party options rather than a second data source.
+  const mlaPartyFull = (
+    (locale === "hi" ? currentMla?.partyHindi?.trim() || currentMla?.party?.trim() : currentMla?.party?.trim()) || ""
+  ).trim();
+  const mlaPartyShort = currentMla?.partyShortName?.trim() || "";
+  const mlaPartyLabel = mlaPartyFull
+    ? mlaPartyShort && mlaPartyShort.toLowerCase() !== mlaPartyFull.toLowerCase()
+      ? `${mlaPartyFull} (${mlaPartyShort})`
+      : mlaPartyFull
+    : mlaPartyShort;
+  const mlaPartyOption = mlaPartyShort
+    ? parties.find((p) => (p.abbreviation ?? "").toLowerCase() === mlaPartyShort.toLowerCase())
+    : undefined;
+
+  const questionTitle = "text-[21px] sm:text-[26px] lg:text-[30px] font-black text-slate-900 tracking-tight leading-snug";
+  const questionHelper = "text-slate-500 text-sm sm:text-[15px] font-medium mt-1.5";
+
   return (
-    <div className="w-full max-w-6xl mx-auto px-3 sm:px-5 lg:px-6 py-3 sm:py-5 pb-44 sm:pb-48 lg:pb-32">
-      {/* 1. TOP BREADCRUMB */}
+    <div className="mx-auto w-full max-w-6xl px-3 py-3 sm:px-5 sm:py-5 lg:px-6">
+      {/* Breadcrumb */}
       <nav
         aria-label="Breadcrumb"
-        className="flex items-center flex-wrap gap-1.5 text-xs sm:text-[13px] text-slate-500 mb-2.5 sm:mb-3.5"
+        className="mb-2.5 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-slate-500 sm:mb-3.5 sm:text-[13px]"
       >
-        <Link href="/" className="hover:text-slate-900 transition-colors">
+        <Link href="/" className="transition-colors hover:text-slate-900">
           होम
         </Link>
-        <span>&gt;</span>
-        <Link href="/rajya" className="hover:text-slate-900 transition-colors">
+        <span aria-hidden="true" className="hidden sm:inline">&gt;</span>
+        <Link href="/rajya" className="hidden transition-colors hover:text-slate-900 sm:inline">
           राज्य
         </Link>
-        <span>&gt;</span>
-        <Link href={`/${stateSlug}`} className="hover:text-slate-900 transition-colors">
+        <span aria-hidden="true">&gt;</span>
+        <Link href={`/${stateSlug}`} className="transition-colors hover:text-slate-900">
           {stateName}
         </Link>
-        <span>&gt;</span>
-        <Link href={`/${stateSlug}#district-explorer`} className="hover:text-slate-900 transition-colors">
+        <span aria-hidden="true" className="hidden sm:inline">&gt;</span>
+        <Link href={`/${stateSlug}#district-explorer`} className="hidden transition-colors hover:text-slate-900 sm:inline">
           जिले
         </Link>
-        <span>&gt;</span>
-        <Link
-          href={`${basePath}/districts/${districtSlug}`}
-          className="hover:text-slate-900 transition-colors"
-        >
+        <span aria-hidden="true">&gt;</span>
+        <Link href={`${basePath}/districts/${districtSlug}`} className="transition-colors hover:text-slate-900">
           {districtName}
         </Link>
-        <span>&gt;</span>
-        <Link
-          href={`${basePath}/constituencies/${constituencySlug}`}
-          className="hover:text-slate-900 transition-colors"
-        >
+        <span aria-hidden="true">&gt;</span>
+        <Link href={`${basePath}/constituencies/${constituencySlug}`} className="transition-colors hover:text-slate-900">
           {constituencyName}
         </Link>
-        <span>&gt;</span>
-        <span className="font-semibold text-slate-900">सर्वेक्षण</span>
+        <span aria-hidden="true">&gt;</span>
+        <span className="font-semibold text-slate-900" aria-current="page">
+          सर्वेक्षण
+        </span>
       </nav>
 
-      {/* 2. COMPACT DESKTOP INTRO BANNER (Target Height ~120-135px) */}
-      <div className="hidden md:block bg-white rounded-2xl border border-slate-200/80 px-5 py-3.5 sm:px-6 sm:py-4 shadow-2xs mb-3.5 sm:mb-4">
-        <p className="text-xs sm:text-[13px] font-bold text-[#ea580c] tracking-wide">
-          {stateName} • {districtName} • {constituencyName}
-        </p>
-        <h1 className="text-xl sm:text-[23px] font-black text-slate-900 mt-0.5 tracking-tight leading-tight">
-          विधानसभा चुनाव सर्वेक्षण {electionYear}
-        </h1>
-        <p className="text-slate-600 text-xs sm:text-[13px] mt-0.5 font-medium leading-normal">
-          अपने क्षेत्र से जुड़ी राय साझा करें। आपकी राय आपके क्षेत्र की तस्वीर समझने में मदद करती है।
-        </p>
-      </div>
+      {/* Constituency header + current MLA */}
+      <header className="rounded-2xl border border-slate-200/80 bg-white shadow-2xs">
+        <div className="flex flex-col md:flex-row md:items-stretch">
+          <div className="flex min-w-0 flex-1 items-start gap-4 px-4 pb-3 pt-3.5 sm:px-5 sm:py-5">
+            <span
+              className="hidden h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-orange-50 text-[#ea580c] sm:flex"
+              aria-hidden="true"
+            >
+              <MapPin size={28} strokeWidth={2.2} />
+            </span>
+            <div className="min-w-0">
+              <p className="text-xs font-bold tracking-wide text-[#ea580c] sm:text-sm">
+                {stateName} • {districtName} • {constituencyName}
+              </p>
+              <h1 className="mt-0.5 text-lg font-black leading-tight tracking-tight text-slate-900 sm:text-2xl lg:text-[30px]">
+                विधानसभा चुनाव सर्वेक्षण {electionYear}
+              </h1>
+              <p className="mt-1 text-xs font-medium leading-relaxed text-slate-600 sm:text-sm">
+                अपने क्षेत्र से जुड़ी राय साझा करें। आपकी राय आपके क्षेत्र की तस्वीर समझने में मदद करती है।
+              </p>
+            </div>
+          </div>
 
-      {/* COMPACT MOBILE INTRO (Only for mobile, tight height) */}
-      <div className="md:hidden bg-white rounded-xl border border-slate-200/80 px-3.5 py-2.5 shadow-2xs mb-2.5">
-        <p className="text-[11px] font-bold text-[#ea580c]">
-          {stateName} • {districtName} • {constituencyName}
-        </p>
-        <h1 className="text-base font-black text-slate-900 mt-0.5">
-          विधानसभा चुनाव सर्वेक्षण {electionYear}
-        </h1>
-      </div>
+          <div className="mx-4 border-t border-slate-100 md:mx-0 md:my-4 md:border-l md:border-t-0" aria-hidden="true" />
 
-      {/* 3. MAIN 2-COLUMN LAYOUT (DESKTOP: Left ~30-31%, Right ~69-70%) / 1-COLUMN (MOBILE) */}
-      <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] lg:grid-cols-[300px_1fr] gap-4 lg:gap-5 items-start">
-        {/* LEFT SIDEBAR (DESKTOP ONLY, COMPACT ~20px PADDING, TIGHT STEPPER) */}
-        <div className="hidden md:flex flex-col gap-3">
-          {/* Progress & Stepper Card */}
-          <div className="bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-5 shadow-2xs">
+          <div className="flex items-center gap-3 px-4 pb-3.5 pt-3 sm:gap-3.5 sm:px-5 sm:py-4 md:w-[330px] lg:w-[370px]">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600 sm:h-14 sm:w-14" aria-hidden="true">
+              <User size={24} strokeWidth={2.2} />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-[11px] font-medium text-slate-500 sm:text-xs">वर्तमान विधायक</p>
+              <p className="break-words text-[15px] font-extrabold leading-tight text-slate-900 sm:text-lg">
+                {mlaName ?? "जानकारी उपलब्ध नहीं"}
+              </p>
+              {mlaName && mlaPartyLabel && (
+                <p className="mt-0.5 break-words text-xs font-bold leading-tight text-[#ea580c] sm:text-[13px]">{mlaPartyLabel}</p>
+              )}
+            </div>
+            {mlaName && mlaPartyShort && (
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-white shadow-2xs sm:h-14 sm:w-14">
+                {mlaPartyOption?.logoUrl ? (
+                  <Image src={mlaPartyOption.logoUrl} alt={mlaPartyShort} width={48} height={48} className="h-full w-full object-contain p-1" />
+                ) : (
+                  <span
+                    className="flex h-full w-full items-center justify-center text-[11px] font-bold text-white"
+                    style={{ backgroundColor: mlaPartyOption?.colorHex ?? "#64748b" }}
+                  >
+                    {mlaPartyShort.slice(0, 4)}
+                  </span>
+                )}
+              </span>
+            )}
+          </div>
+        </div>
+      </header>
+
+      <div className="mt-3 grid grid-cols-1 items-start gap-4 sm:mt-4 lg:grid-cols-[300px_minmax(0,1fr)] lg:gap-5">
+        {/* Progress sidebar (desktop) */}
+        <aside className="hidden flex-col gap-3 lg:flex" aria-label="सर्वेक्षण प्रगति">
+          <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <BarChart2 className="w-4 h-4 text-blue-600" />
-                <span className="font-bold text-slate-900 text-sm sm:text-base">आपकी प्रगति</span>
+                <BarChart2 className="h-4 w-4 text-blue-600" aria-hidden="true" />
+                <span className="text-base font-bold text-slate-900">आपकी प्रगति</span>
               </div>
-              <span className="font-bold text-slate-700 text-xs sm:text-sm">{progressPct}%</span>
+              <span className="text-sm font-bold text-slate-700">{progressPct}%</span>
+            </div>
+            <div className="mb-4 mt-2.5 h-2 w-full overflow-hidden rounded-full bg-slate-100">
+              <div className="h-full rounded-full bg-[#ea580c] transition-all duration-300" style={{ width: `${progressPct}%` }} />
             </div>
 
-            {/* Orange Progress Bar (8px height) */}
-            <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden mt-2.5 mb-4">
-              <div
-                className="h-full bg-[#ea580c] transition-all duration-300 rounded-full"
-                style={{ width: `${progressPct}%` }}
-              />
-            </div>
-
-            {/* Stepper Items (Row height ~52px, circles 34px) */}
-            <div className="flex flex-col space-y-2.5">
+            <ol className="flex flex-col gap-1.5">
               {stepperItems.map((item, idx) => {
                 const isPassed = pageIndex > idx;
                 const isCurrent = pageIndex === idx;
-                const isLastItem = idx === stepperItems.length - 1;
-
                 return (
-                  <div key={item.step} className="relative flex items-center gap-3">
-                    {/* Connecting line */}
-                    {!isLastItem && (
-                      <div
-                        className={cn(
-                          "absolute left-[17px] top-[30px] w-0.5 h-4 -ml-[1px] transition-colors z-0",
-                          isPassed ? "bg-emerald-500" : "bg-slate-200"
-                        )}
-                      />
-                    )}
-
-                    {/* Step Icon (34px) */}
-                    <div
+                  <li
+                    key={item.step}
+                    aria-current={isCurrent ? "step" : undefined}
+                    className={cn("flex items-center gap-3 rounded-xl px-2 py-2 transition-colors", isCurrent && "bg-orange-50")}
+                  >
+                    <span
                       className={cn(
-                        "relative z-10 w-[34px] h-[34px] rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-all",
+                        "flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold transition-all",
                         isPassed
                           ? "bg-emerald-500 text-white"
                           : isCurrent
-                          ? "bg-[#ea580c] text-white shadow-xs ring-2 ring-orange-200"
-                          : "border-2 border-slate-300 text-slate-400 bg-white"
+                          ? "bg-[#ea580c] text-white ring-4 ring-orange-100"
+                          : "border-2 border-slate-300 bg-white text-slate-400"
                       )}
                     >
-                      {isPassed ? <Check size={16} strokeWidth={3} /> : item.step}
-                    </div>
-
-                    {/* Step Title & Subtitle */}
-                    <div className="min-w-0">
-                      <p
-                        className={cn(
-                          "text-xs sm:text-[13.5px] font-bold leading-tight",
-                          isCurrent
-                            ? "text-slate-900"
-                            : isPassed
-                            ? "text-slate-800"
-                            : "text-slate-400"
-                        )}
-                      >
+                      {isPassed ? <Check size={17} strokeWidth={3} /> : item.step}
+                    </span>
+                    <span className="min-w-0">
+                      <span className={cn("block text-[14px] font-bold leading-tight", isCurrent ? "text-[#ea580c]" : isPassed ? "text-slate-800" : "text-slate-500")}>
                         {item.title}
-                      </p>
-                      <p className="text-[11px] sm:text-xs text-slate-500 leading-tight mt-0.5">
-                        {item.subtitle}
-                      </p>
-                    </div>
-                  </div>
+                      </span>
+                      <span className="mt-0.5 block text-xs leading-tight text-slate-500">{item.subtitle}</span>
+                    </span>
+                  </li>
                 );
               })}
-            </div>
+            </ol>
           </div>
 
-          {/* Real Statistics Box (Compact Horizontal 3-Column Card) */}
-          <div className="bg-white rounded-2xl border border-slate-200/80 p-3 sm:p-3.5 shadow-2xs">
-            <div className="grid grid-cols-3 gap-1.5 text-center divide-x divide-slate-100">
-              <div className="px-1 flex flex-col items-center">
-                <div className="w-7 h-7 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center mb-1">
+          <div className="rounded-2xl border border-slate-200/80 bg-white p-3.5 shadow-2xs">
+            <div className="grid grid-cols-3 gap-1.5 divide-x divide-slate-100 text-center">
+              <div className="flex flex-col items-center px-1">
+                <div className="mb-1 flex h-7 w-7 items-center justify-center rounded-lg bg-purple-50 text-purple-600">
                   <Landmark size={14} />
                 </div>
-                <span className="font-extrabold text-slate-900 text-sm sm:text-base leading-tight">
-                  {validResponseCount}
-                </span>
-                <span className="text-[10px] font-bold text-slate-700 leading-tight mt-0.5">
-                  कुल प्रतिक्रियाएं
-                </span>
-                <span className="text-[9px] text-slate-400 leading-tight">
-                  अब तक प्राप्त
-                </span>
+                <span className="text-base font-extrabold leading-tight text-slate-900">{validResponseCount}</span>
+                <span className="mt-0.5 text-[10px] font-bold leading-tight text-slate-700">कुल प्रतिक्रियाएं</span>
+                <span className="text-[9px] leading-tight text-slate-400">अब तक प्राप्त</span>
               </div>
-
-              <div className="px-1 flex flex-col items-center">
-                <div className="w-7 h-7 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center mb-1">
+              <div className="flex flex-col items-center px-1">
+                <div className="mb-1 flex h-7 w-7 items-center justify-center rounded-lg bg-orange-50 text-orange-600">
                   <ShieldCheck size={14} />
                 </div>
-                <span className="font-extrabold text-slate-900 text-sm sm:text-base leading-tight">
+                <span className="text-base font-extrabold leading-tight text-slate-900">
                   {constituencyNumber ? `#${constituencyNumber}` : "100%"}
                 </span>
-                <span className="text-[10px] font-bold text-slate-700 leading-tight mt-0.5">
+                <span className="mt-0.5 text-[10px] font-bold leading-tight text-slate-700">
                   {constituencyNumber ? "विधानसभा संख्या" : "सुरक्षित एवं गोपनीय"}
                 </span>
-                <span className="text-[9px] text-slate-400 leading-tight">
-                  इस क्षेत्र में
-                </span>
+                <span className="text-[9px] leading-tight text-slate-400">इस क्षेत्र में</span>
               </div>
-
-              <div className="px-1 flex flex-col items-center">
-                <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center mb-1">
+              <div className="flex flex-col items-center px-1">
+                <div className="mb-1 flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
                   <BarChart3 size={14} />
                 </div>
-                <span className="font-extrabold text-slate-900 text-sm sm:text-base leading-tight">
-                  {electionYear}
-                </span>
-                <span className="text-[10px] font-bold text-slate-700 leading-tight mt-0.5">
-                  विधानसभा चुनाव
-                </span>
-                <span className="text-[9px] text-slate-400 leading-tight">
-                  आने वाला है
-                </span>
+                <span className="text-base font-extrabold leading-tight text-slate-900">{electionYear}</span>
+                <span className="mt-0.5 text-[10px] font-bold leading-tight text-slate-700">विधानसभा चुनाव</span>
+                <span className="text-[9px] leading-tight text-slate-400">आने वाला है</span>
               </div>
             </div>
           </div>
-        </div>
+        </aside>
 
-        {/* RIGHT / MAIN QUESTION CARD (Compact padding: 20-24px, tightly spaced) */}
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-5 lg:p-6 shadow-2xs">
-          {/* Card Top: Progress Pill & Percentage */}
+        {/* Question card */}
+        <section className="min-w-0 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-2xs sm:p-5 lg:p-6" aria-live="polite">
           <div className="flex items-center justify-between">
-            <span className="bg-orange-50 text-[#ea580c] font-bold text-xs px-2.5 py-0.5 rounded-full border border-orange-100">
+            <span className="rounded-full border border-orange-100 bg-orange-50 px-2.5 py-0.5 text-xs font-bold text-[#ea580c]">
               प्रश्न {pageIndex + 1} / 4
             </span>
-            <span className="font-bold text-slate-600 text-xs sm:text-sm">
-              {progressPct}%
-            </span>
+            <span className="text-xs font-bold text-slate-600 sm:text-sm">{progressPct}%</span>
+          </div>
+          <div className="mb-4 mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-100 sm:mb-5">
+            <div className="h-full rounded-full bg-[#ea580c] transition-all duration-300" style={{ width: `${progressPct}%` }} />
           </div>
 
-          {/* Orange Progress Bar (8px) */}
-          <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden mt-2 mb-3.5 sm:mb-4">
-            <div
-              className="h-full bg-[#ea580c] transition-all duration-300 rounded-full"
-              style={{ width: `${progressPct}%` }}
-            />
-          </div>
-
-          {/* QUESTION 1: CURRENT MLA SATISFACTION */}
+          {/* Q1 — current MLA satisfaction (single select) */}
           {pageKey === "mla_satisfaction" && (
-            <div className="space-y-3.5 sm:space-y-4">
-              <div>
-                <h2 className="text-[22px] sm:text-[26px] lg:text-[28px] font-black text-slate-900 tracking-tight leading-snug">
-                  {locale === "en"
-                    ? mlaName
-                      ? `Are you satisfied with the work of your current MLA ${mlaName}?`
-                      : "Are you satisfied with the work of your current MLA?"
-                    : mlaName
-                    ? `क्या आप अपने वर्तमान विधायक ${mlaName} के कार्यों से खुश हैं?`
-                    : "क्या आप अपने वर्तमान विधायक के कार्यों से खुश हैं?"}
-                </h2>
-                <p className="text-slate-500 text-sm sm:text-[15px] font-medium mt-1">
-                  कृपया नीचे दिए गए विकल्पों में से एक को चुनें।
-                </p>
-              </div>
+            <div>
+              <h2 id="q-title" className={questionTitle}>
+                {locale === "en"
+                  ? mlaName
+                    ? `Are you satisfied with the work of your current MLA ${mlaName}?`
+                    : "Are you satisfied with the work of your current MLA?"
+                  : mlaName
+                  ? `क्या आप अपने वर्तमान विधायक ${mlaName} के कार्यों से खुश हैं?`
+                  : "क्या आप अपने वर्तमान विधायक के कार्यों से खुश हैं?"}
+              </h2>
+              <p className={questionHelper}>कृपया नीचे दिए गए विकल्पों में से एक को चुनें।</p>
 
-              {/* 4 Options: Compact 58-64px height, 8-10px gap */}
-              <div className="flex flex-col gap-2.5 sm:gap-3 pt-1">
+              <div role="radiogroup" aria-labelledby="q-title" className="mt-4 grid grid-cols-2 gap-2.5 sm:mt-5 sm:gap-3">
                 {MLA_OPTIONS.map((opt) => {
                   const isSelected = answers.mla_satisfaction === opt.key;
                   const IconComp = opt.icon;
-
                   return (
                     <button
                       key={opt.key}
                       type="button"
+                      role="radio"
+                      aria-checked={isSelected}
                       onClick={() => selectSingle("mla_satisfaction", opt.key)}
                       className={cn(
-                        "w-full flex items-center gap-3.5 px-4 py-3 sm:px-4.5 sm:py-3.5 min-h-[58px] sm:min-h-[62px] rounded-[14px] border text-left transition-all cursor-pointer shadow-2xs",
+                        "relative flex w-full cursor-pointer flex-col items-center gap-2 rounded-2xl border px-2.5 pb-3.5 pt-4 text-center shadow-2xs transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 sm:min-h-[84px] sm:flex-row sm:gap-3.5 sm:px-4 sm:py-3.5 sm:text-left",
                         opt.bgClass,
                         isSelected && opt.selectedClass
                       )}
                     >
-                      {/* Radio Circle (20px) */}
-                      <div
-                        className={cn(
-                          "w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors",
-                          isSelected
-                            ? "border-slate-800 bg-white"
-                            : "border-slate-300 bg-white"
-                        )}
-                      >
-                        {isSelected && (
-                          <div className="w-2.5 h-2.5 rounded-full bg-slate-800" />
-                        )}
-                      </div>
-
-                      {/* Smiley Icon (36-40px) */}
-                      <div
-                        className={cn(
-                          "w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center shrink-0",
-                          opt.iconColor
-                        )}
-                      >
-                        <IconComp size={22} strokeWidth={2.4} />
-                      </div>
-
-                      {/* Option Text (17-18px desktop, 15-17px mobile) */}
-                      <span className="font-bold text-slate-900 text-[16px] sm:text-[18px] leading-snug">
+                      <RadioDot selected={isSelected} className="absolute left-2.5 top-2.5 sm:static" />
+                      <span className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-full sm:h-12 sm:w-12", opt.iconColor)}>
+                        <IconComp size={24} strokeWidth={2.3} />
+                      </span>
+                      <span className="text-[14px] font-bold leading-snug text-slate-900 sm:text-[17px]">
                         {locale === "en" ? opt.labelEn : opt.label}
                       </span>
                     </button>
@@ -947,40 +903,27 @@ export function SurveyExperience({
             </div>
           )}
 
-          {/* QUESTION 2: PARTY PREFERENCE */}
+          {/* Q2 — party preference (single select, options from the survey config) */}
           {pageKey === "party_preference" && (
-            <div className="space-y-3.5 sm:space-y-4">
-              <div>
-                <h2 className="text-[22px] sm:text-[26px] lg:text-[28px] font-black text-slate-900 tracking-tight leading-snug">
-                  विधानसभा चुनाव में आप किस पार्टी को वोट देंगे?
-                </h2>
-                <p className="text-slate-500 text-sm sm:text-[15px] font-medium mt-1">
-                  कृपया नीचे दिए गए विकल्पों में से एक को चुनें।
-                </p>
-              </div>
+            <div>
+              <h2 id="q-title" className={questionTitle}>
+                विधानसभा चुनाव में आप किस पार्टी को वोट देंगे?
+              </h2>
+              <p className={questionHelper}>कृपया नीचे दिए गए विकल्पों में से एक को चुनें।</p>
 
-              {/* Party rows: Compact 58-64px height, 8-10px gap */}
-              <div className="flex flex-col gap-2.5 sm:gap-3 pt-1">
+              <div role="radiogroup" aria-labelledby="q-title" className="mt-4 grid grid-cols-2 gap-2.5 sm:mt-5 sm:gap-3">
                 {parties.map((party) => {
                   const isSelected = answers.party_preference === party.key;
                   const keyLower = party.key.toLowerCase();
                   const isOther = keyLower === "other";
                   const isNota = keyLower === "nota";
-
-                  let cardBg = "bg-[#f8fafc] border-[#e2e8f0]/80";
-                  if (keyLower.includes("bjp")) {
-                    cardBg = "bg-[#fff8f0] border-[#fed7aa] hover:border-orange-300";
-                  } else if (keyLower.includes("inc") || keyLower.includes("congress")) {
-                    cardBg = "bg-[#f0f9ff] border-[#bae6fd] hover:border-sky-300";
-                  } else if (keyLower.includes("sp") || keyLower.includes("samajwadi")) {
-                    cardBg = "bg-[#f0fdf4] border-[#bbf7d0] hover:border-emerald-300";
-                  } else if (keyLower.includes("bsp")) {
-                    cardBg = "bg-[#f5f7ff] border-[#c7d2fe] hover:border-indigo-300";
-                  } else if (isOther) {
-                    cardBg = "bg-[#fdf2f8] border-[#fbcfe8] hover:border-pink-300";
-                  } else if (isNota) {
-                    cardBg = "bg-[#f8fafc] border-[#e2e8f0] hover:border-slate-300";
-                  }
+                  const isUndecided = keyLower === "undecided";
+                  // Tint comes from each party's own configured colour — the
+                  // same treatment for every party, so no option is favoured.
+                  const tint = isOther ? "#db2777" : isNota ? "#64748b" : isUndecided ? "#d97706" : party.colorHex;
+                  const style = isSelected
+                    ? undefined
+                    : { backgroundColor: withAlpha(tint, 0.06) ?? "#f8fafc", borderColor: withAlpha(tint, 0.3) ?? "#e2e8f0" };
 
                   const displayName = isOther
                     ? locale === "hi"
@@ -993,60 +936,43 @@ export function SurveyExperience({
                     : locale === "hi"
                     ? party.labelHi || party.label
                     : party.label;
+                  const showAbbr = !isOther && !isNota && !isUndecided && party.abbreviation && !displayName.includes(party.abbreviation);
 
                   return (
                     <button
                       key={party.key}
                       type="button"
+                      role="radio"
+                      aria-checked={isSelected}
                       onClick={() => selectSingle("party_preference", party.key)}
+                      style={style}
                       className={cn(
-                        "w-full flex items-center gap-3.5 px-4 py-3 sm:px-4.5 sm:py-3.5 min-h-[58px] sm:min-h-[62px] rounded-[14px] border text-left transition-all cursor-pointer shadow-2xs",
-                        cardBg,
-                        isSelected &&
-                          "border-2 border-[#ea580c] bg-orange-50/50 ring-1 ring-[#ea580c]/30 shadow-xs"
+                        "relative flex w-full cursor-pointer flex-col items-center gap-2 rounded-2xl border px-2.5 pb-3.5 pt-4 text-center shadow-2xs transition-all hover:shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 sm:min-h-[84px] sm:flex-row sm:gap-3.5 sm:px-4 sm:py-3.5 sm:text-left",
+                        isSelected && "border-[#ea580c] bg-orange-50 ring-2 ring-[#ea580c]/25"
                       )}
                     >
-                      {/* Radio Circle (20px) */}
-                      <div
-                        className={cn(
-                          "w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors",
-                          isSelected
-                            ? "border-slate-800 bg-white"
-                            : "border-slate-300 bg-white"
-                        )}
-                      >
-                        {isSelected && (
-                          <div className="w-2.5 h-2.5 rounded-full bg-slate-800" />
-                        )}
-                      </div>
-
-                      {/* Party Logo / Icon (36-40px) */}
-                      <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center shrink-0 overflow-hidden bg-white shadow-2xs border border-slate-100">
+                      <RadioDot selected={isSelected} className="absolute left-2.5 top-2.5 sm:static" />
+                      <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-100 bg-white shadow-2xs sm:h-12 sm:w-12">
                         {isOther ? (
-                          <Users2 className="w-5 h-5 text-pink-600" />
+                          <MoreHorizontal className="h-5 w-5 text-pink-600" />
                         ) : isNota ? (
-                          <Ban className="w-5 h-5 text-slate-600" />
+                          <Ban className="h-5 w-5 text-slate-600" />
+                        ) : isUndecided ? (
+                          <HelpCircle className="h-5 w-5 text-amber-600" />
                         ) : party.logoUrl ? (
-                          <Image
-                            src={party.logoUrl}
-                            alt=""
-                            width={34}
-                            height={34}
-                            className="w-full h-full object-contain p-0.5"
-                          />
+                          <Image src={party.logoUrl} alt="" width={44} height={44} className="h-full w-full object-contain p-1" />
                         ) : (
                           <span
-                            className="text-xs font-bold text-white w-full h-full flex items-center justify-center"
+                            className="flex h-full w-full items-center justify-center text-xs font-bold text-white"
                             style={{ backgroundColor: party.colorHex ?? "#64748b" }}
                           >
                             {(party.abbreviation ?? party.label).slice(0, 3)}
                           </span>
                         )}
-                      </div>
-
-                      {/* Party Name (17-18px desktop, 15-17px mobile) */}
-                      <span className="font-bold text-slate-900 text-[16px] sm:text-[18px] leading-snug">
+                      </span>
+                      <span className="min-w-0 break-words text-[14px] font-bold leading-snug text-slate-900 sm:text-[16.5px]">
                         {displayName}
+                        {showAbbr && <span className="block text-[12px] font-semibold text-slate-500 sm:text-[13px]">({party.abbreviation})</span>}
                       </span>
                     </button>
                   );
@@ -1055,382 +981,269 @@ export function SurveyExperience({
             </div>
           )}
 
-          {/* QUESTION 3: TOP DEVELOPMENT ISSUE — EXACTLY MATCHING REFERENCE IMAGE 1 */}
-          {pageKey === "top_issue" && (() => {
-            const orderedIssues = [...issues].sort((a, b) => {
-              const ia = Q3_ORDER.indexOf(a.key.toLowerCase());
-              const ib = Q3_ORDER.indexOf(b.key.toLowerCase());
-              return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
-            });
-
-            return (
-              <div className="space-y-3.5 sm:space-y-4">
+          {/* Q3 — top issues (MULTI-select) */}
+          {pageKey === "top_issue" &&
+            (() => {
+              const orderedIssues = [...issues].sort((a, b) => {
+                const ia = Q3_ORDER.indexOf(a.key.toLowerCase());
+                const ib = Q3_ORDER.indexOf(b.key.toLowerCase());
+                return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+              });
+              return (
                 <div>
-                  <h2 className="text-[22px] sm:text-[26px] lg:text-[28px] font-black text-slate-900 tracking-tight leading-snug">
+                  <h2 id="q-title" className={questionTitle}>
                     आपके लिए इस विधानसभा क्षेत्र में सबसे महत्वपूर्ण मुद्दा क्या है?
                   </h2>
-                  <p className="text-slate-600 text-sm sm:text-[15px] font-medium mt-1">
-                    आप एक से अधिक मुद्दे चुन सकते हैं, या इस प्रश्न को छोड़ दें।
-                  </p>
-                </div>
+                  <p className={questionHelper}>आप एक से अधिक मुद्दे चुन सकते हैं, या इस प्रश्न को छोड़ दें।</p>
 
-                {/* 2-Column Grid of Horizontal Cards */}
-                <div className="grid grid-cols-2 gap-2.5 sm:gap-3.5 pt-1.5">
-                  {orderedIssues.map((issue) => {
-                    const isSelected = selectedIssues.includes(issue.key);
-                    const meta = ISSUE_META[issue.key] ?? {
-                      title: issue.label,
-                      subtitle: "",
-                      icon: HelpCircle,
-                      iconColor: "text-slate-600",
-                      iconBg: "bg-slate-100",
-                      border: "border-slate-300",
-                      hoverBorder: "hover:border-slate-400",
-                    };
-                    const IconComp = meta.icon;
-
-                    return (
-                      <button
-                        key={issue.key}
-                        type="button"
-                        onClick={() => toggleIssue(issue.key)}
-                        className={cn(
-                          "relative flex items-center justify-between p-2.5 sm:p-3 rounded-2xl border-2 transition-all text-left bg-white cursor-pointer group shadow-2xs",
-                          meta.border,
-                          meta.hoverBorder,
-                          isSelected &&
-                            "border-blue-600 bg-blue-50/40 ring-2 ring-blue-500/20 shadow-xs"
-                        )}
-                      >
-                        {/* Left: Icon in circular badge */}
-                        <div
+                  <div role="group" aria-labelledby="q-title" className="mt-4 grid grid-cols-2 gap-2.5 sm:mt-5 sm:gap-3">
+                    {orderedIssues.map((issue) => {
+                      const isSelected = selectedIssues.includes(issue.key);
+                      const meta = ISSUE_META[issue.key] ?? {
+                        title: issue.label,
+                        subtitle: "",
+                        icon: HelpCircle,
+                        iconColor: "text-slate-600",
+                        iconBg: "bg-slate-100",
+                        border: "border-slate-300",
+                        hoverBorder: "hover:border-slate-400",
+                      };
+                      const IconComp = meta.icon;
+                      return (
+                        <button
+                          key={issue.key}
+                          type="button"
+                          role="checkbox"
+                          aria-checked={isSelected}
+                          onClick={() => toggleIssue(issue.key)}
                           className={cn(
-                            "w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center shrink-0 transition-transform group-hover:scale-105",
-                            meta.iconBg,
-                            meta.iconColor
+                            "relative flex w-full cursor-pointer flex-col items-center gap-1.5 rounded-2xl border-2 bg-white px-2.5 pb-3 pt-4 text-center shadow-2xs transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 sm:flex-row sm:gap-3 sm:px-3.5 sm:py-3 sm:text-left",
+                            meta.border,
+                            meta.hoverBorder,
+                            isSelected && "border-blue-600 bg-blue-50/60 ring-2 ring-blue-500/20"
                           )}
                         >
-                          <IconComp className="w-5 h-5 sm:w-5.5 sm:h-5.5" size={20} strokeWidth={2.4} />
-                        </div>
-
-                        {/* Center: Title & Subtitle */}
-                        <div className="flex-1 min-w-0 pl-2 sm:pl-2.5 pr-1 sm:pr-2">
-                          <p className="font-extrabold text-slate-900 text-xs sm:text-[14.5px] leading-tight truncate">
-                            {meta.title}
-                          </p>
-                          <p className="text-[10px] sm:text-[11.5px] text-slate-500 leading-tight mt-0.5 line-clamp-2">
-                            {meta.subtitle}
-                          </p>
-                        </div>
-
-                        {/* Right: Round Selection Indicator */}
-                        <div
-                          className={cn(
-                            "w-5 h-5 sm:w-6 sm:h-6 rounded-full border-2 shrink-0 flex items-center justify-center transition-all",
-                            isSelected
-                              ? "border-blue-600 bg-blue-600 text-white shadow-2xs"
-                              : "border-slate-300 bg-white group-hover:border-slate-400"
-                          )}
-                        >
-                          {isSelected && <Check size={13} strokeWidth={3.5} />}
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* Privacy Assurance Banner */}
-                <div className="flex items-start gap-2.5 rounded-xl border border-slate-200/80 bg-[#f8fafc] p-2.5 sm:p-3 text-xs text-slate-700 mt-3">
-                  <ShieldCheck size={18} className="mt-0.5 text-slate-600 shrink-0" />
-                  <div>
-                    <p className="font-bold text-slate-900 leading-tight">
-                      आपका उत्तर पूरी तरह गोपनीय है
-                    </p>
-                    <p className="text-slate-500 text-[11px] sm:text-xs mt-0.5 leading-relaxed">
-                      आपकी व्यक्तिगत जानकारी सुरक्षित है और इसे किसी के साथ साझा नहीं किया जाएगा।
-                    </p>
+                          <CheckBoxDot selected={isSelected} className="absolute left-2.5 top-2.5 sm:static" />
+                          <span className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-full sm:h-11 sm:w-11", meta.iconBg, meta.iconColor)}>
+                            <IconComp className="h-5 w-5" size={20} strokeWidth={2.4} />
+                          </span>
+                          <span className="min-w-0 flex-1">
+                            <span className="block break-words text-[14px] font-extrabold leading-tight text-slate-900 sm:text-[15.5px]">{meta.title}</span>
+                            {meta.subtitle && (
+                              <span className="mt-0.5 block text-[11px] leading-snug text-slate-500 sm:text-xs">{meta.subtitle}</span>
+                            )}
+                          </span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
-              </div>
-            );
-          })()}
+              );
+            })()}
 
-          {/* QUESTION 4: PROFILE DEMOGRAPHICS — EXACTLY MATCHING REFERENCE IMAGE 2 */}
-          {pageKey === "personal_info" && (() => {
-            const orderedAgeGroups = prepareDemographicOptions(ageGroups, AGE_ORDER);
-            const orderedGenders = prepareDemographicOptions(genders, GENDER_ORDER);
-            const orderedSocialCategories = prepareDemographicOptions(socialCategories, SOCIAL_ORDER);
-            const orderedReligions = prepareDemographicOptions(religions, RELIGION_ORDER);
+          {/* Q4 — optional profile */}
+          {pageKey === "personal_info" &&
+            (() => {
+              const sections: {
+                key: Exclude<SingleAnswerKey, "mla_satisfaction" | "party_preference">;
+                title: string;
+                helper: string;
+                icon: ReactNode;
+                options: { key: string; labelDisplay: string }[];
+                card: string;
+                iconBox: string;
+                pill: string;
+                pillSelected: string;
+              }[] = [
+                {
+                  key: "age_group",
+                  title: "1. आपकी आयु क्या है?",
+                  helper: "अपनी आयु का सही वर्ग चुनें",
+                  icon: <Users size={22} />,
+                  options: prepareDemographicOptions(ageGroups, AGE_ORDER),
+                  card: "bg-[#f4f8ff] border-[#bfdbfe]",
+                  iconBox: "bg-blue-600",
+                  pill: "border-[#bfdbfe] hover:border-blue-400",
+                  pillSelected: "border-blue-600 bg-blue-600 text-white ring-2 ring-blue-500/20",
+                },
+                {
+                  key: "gender",
+                  title: "2. आपका लिंग क्या है?",
+                  helper: "अपना लिंग चुनें",
+                  icon: <GenderIcon className="h-[22px] w-[22px]" />,
+                  options: prepareDemographicOptions(genders, GENDER_ORDER),
+                  card: "bg-[#fff5f8] border-[#fbcfe8]",
+                  iconBox: "bg-[#ec4899]",
+                  pill: "border-[#fbcfe8] hover:border-pink-400",
+                  pillSelected: "border-[#ec4899] bg-[#ec4899] text-white ring-2 ring-pink-500/20",
+                },
+                {
+                  key: "social_category",
+                  title: "3. आपकी सामाजिक श्रेणी क्या है?",
+                  helper: "अपनी सामाजिक श्रेणी चुनें",
+                  icon: <Users2 size={22} />,
+                  options: prepareDemographicOptions(socialCategories, SOCIAL_ORDER),
+                  card: "bg-[#f0fbf4] border-[#bbf7d0]",
+                  iconBox: "bg-[#16a34a]",
+                  pill: "border-[#bbf7d0] hover:border-emerald-400",
+                  pillSelected: "border-[#16a34a] bg-[#16a34a] text-white ring-2 ring-emerald-500/20",
+                },
+                {
+                  key: "religion",
+                  title: "4. आपका धर्म क्या है?",
+                  helper: "अपना धर्म चुनें",
+                  icon: <PrayerHandsIcon className="h-[22px] w-[22px]" />,
+                  options: prepareDemographicOptions(religions, RELIGION_ORDER),
+                  card: "bg-[#faf5ff] border-[#e9d5ff]",
+                  iconBox: "bg-[#9333ea]",
+                  pill: "border-[#e9d5ff] hover:border-purple-400",
+                  pillSelected: "border-[#9333ea] bg-[#9333ea] text-white ring-2 ring-purple-500/20",
+                },
+              ];
 
-            return (
-              <div className="space-y-4">
+              return (
                 <div>
-                  <h2 className="text-[22px] sm:text-[26px] lg:text-[28px] font-black text-slate-900 tracking-tight leading-snug">
-                    अपनी प्रोफ़ाइल बताना चाहेंगे?
-                  </h2>
-                  <p className="text-slate-500 text-sm sm:text-[15px] font-medium mt-1">
-                    यह जानकारी वैकल्पिक है और केवल समग्र सांख्यिकीय विश्लेषण के लिए उपयोग की जाएगी।
-                  </p>
-                </div>
+                  <h2 className={questionTitle}>अपनी प्रोफ़ाइल बताना चाहेंगे?</h2>
+                  <p className={questionHelper}>यह जानकारी वैकल्पिक है और केवल समग्र सांख्यिकीय विश्लेषण के लिए उपयोग की जाएगी।</p>
 
-                {/* 4 STACKED FULL-WIDTH SECTIONS */}
-                <div className="flex flex-col gap-3.5 sm:gap-4.5 pt-1">
-                  {/* 1. Age Group (Blue) */}
-                  <div className="bg-[#f4f8ff] border border-[#bfdbfe] rounded-2xl p-4 sm:p-5 shadow-2xs">
-                    <div className="flex items-center gap-3 mb-3.5">
-                      <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-2xs">
-                        <Users size={20} />
+                  <div className="mt-4 flex flex-col gap-3 sm:mt-5">
+                    {sections.map((s) => (
+                      <div
+                        key={s.key}
+                        className={cn("flex flex-col gap-3 rounded-2xl border p-3.5 shadow-2xs sm:p-4 lg:flex-row lg:items-center lg:gap-5", s.card)}
+                      >
+                        <div className="flex items-center gap-3 lg:w-[230px] lg:shrink-0">
+                          <span className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-white shadow-2xs", s.iconBox)} aria-hidden="true">
+                            {s.icon}
+                          </span>
+                          <span className="min-w-0">
+                            <span id={`q4-${s.key}`} className="block text-[15px] font-extrabold leading-tight text-slate-900 sm:text-base">
+                              {s.title}
+                            </span>
+                            <span className="mt-0.5 block text-xs leading-tight text-slate-500 sm:text-[13px]">{s.helper}</span>
+                          </span>
+                        </div>
+                        <div role="radiogroup" aria-labelledby={`q4-${s.key}`} className="flex flex-1 flex-wrap gap-2">
+                          {s.options.map((opt) => {
+                            const isSelected = answers[s.key] === opt.key;
+                            return (
+                              <button
+                                key={opt.key}
+                                type="button"
+                                role="radio"
+                                aria-checked={isSelected}
+                                onClick={() => selectSingle(s.key, opt.key)}
+                                className={cn(
+                                  "min-h-[38px] cursor-pointer rounded-full border bg-white px-4 py-1.5 text-[13px] font-bold text-slate-800 shadow-2xs transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 sm:px-4.5 sm:text-sm",
+                                  s.pill,
+                                  isSelected && s.pillSelected
+                                )}
+                              >
+                                {opt.labelDisplay}
+                              </button>
+                            );
+                          })}
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-extrabold text-slate-900 text-sm sm:text-base leading-tight">
-                          1. आपकी आयु क्या है?
-                        </p>
-                        <p className="text-xs sm:text-[13px] text-slate-500 leading-tight mt-0.5">
-                          अपनी आयु का सही वर्ग चुनें।
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex flex-wrap gap-2 sm:gap-2.5">
-                      {orderedAgeGroups.map((opt) => {
-                        const isSelected = answers.age_group === opt.key;
-                        return (
-                          <button
-                            key={opt.key}
-                            type="button"
-                            onClick={() => selectSingle("age_group", opt.key)}
-                            className={cn(
-                              "rounded-full bg-white border border-[#bfdbfe] px-4 sm:px-5 py-1.5 sm:py-2 text-xs sm:text-[13.5px] font-bold text-slate-800 shadow-2xs hover:border-blue-400 transition-all cursor-pointer",
-                              isSelected &&
-                                "bg-blue-600 text-white border-blue-600 shadow-xs ring-2 ring-blue-500/20"
-                            )}
-                          >
-                            {opt.labelDisplay}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* 2. Gender (Pink) */}
-                  <div className="bg-[#fff5f8] border border-[#fbcfe8] rounded-2xl p-4 sm:p-5 shadow-2xs">
-                    <div className="flex items-center gap-3 mb-3.5">
-                      <div className="w-10 h-10 rounded-xl bg-[#ec4899] text-white flex items-center justify-center shrink-0 shadow-2xs">
-                        <GenderIcon className="w-5 h-5 text-white" />
-                      </div>
-                      <div>
-                        <p className="font-extrabold text-slate-900 text-sm sm:text-base leading-tight">
-                          2. आपका लिंग क्या है?
-                        </p>
-                        <p className="text-xs sm:text-[13px] text-slate-500 leading-tight mt-0.5">
-                          अपना लिंग चुनें।
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex flex-wrap gap-2 sm:gap-2.5">
-                      {orderedGenders.map((opt) => {
-                        const isSelected = answers.gender === opt.key;
-                        return (
-                          <button
-                            key={opt.key}
-                            type="button"
-                            onClick={() => selectSingle("gender", opt.key)}
-                            className={cn(
-                              "rounded-full bg-white border border-[#fbcfe8] px-4 sm:px-5 py-1.5 sm:py-2 text-xs sm:text-[13.5px] font-bold text-slate-800 shadow-2xs hover:border-pink-400 transition-all cursor-pointer",
-                              isSelected &&
-                                "bg-[#ec4899] text-white border-[#ec4899] shadow-xs ring-2 ring-pink-500/20"
-                            )}
-                          >
-                            {opt.labelDisplay}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* 3. Social Category (Green) */}
-                  <div className="bg-[#f0fbf4] border border-[#bbf7d0] rounded-2xl p-4 sm:p-5 shadow-2xs">
-                    <div className="flex items-center gap-3 mb-3.5">
-                      <div className="w-10 h-10 rounded-xl bg-[#16a34a] text-white flex items-center justify-center shrink-0 shadow-2xs">
-                        <Users2 size={20} />
-                      </div>
-                      <div>
-                        <p className="font-extrabold text-slate-900 text-sm sm:text-base leading-tight">
-                          3. आपकी सामाजिक श्रेणी क्या है?
-                        </p>
-                        <p className="text-xs sm:text-[13px] text-slate-500 leading-tight mt-0.5">
-                          अपनी सामाजिक श्रेणी चुनें।
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex flex-wrap gap-2 sm:gap-2.5">
-                      {orderedSocialCategories.map((opt) => {
-                        const isSelected = answers.social_category === opt.key;
-                        return (
-                          <button
-                            key={opt.key}
-                            type="button"
-                            onClick={() => selectSingle("social_category", opt.key)}
-                            className={cn(
-                              "rounded-full bg-white border border-[#bbf7d0] px-4 sm:px-5 py-1.5 sm:py-2 text-xs sm:text-[13.5px] font-bold text-slate-800 shadow-2xs hover:border-emerald-400 transition-all cursor-pointer",
-                              isSelected &&
-                                "bg-[#16a34a] text-white border-[#16a34a] shadow-xs ring-2 ring-emerald-500/20"
-                            )}
-                          >
-                            {opt.labelDisplay}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* 4. Religion (Purple) */}
-                  <div className="bg-[#faf5ff] border border-[#e9d5ff] rounded-2xl p-4 sm:p-5 shadow-2xs">
-                    <div className="flex items-center gap-3 mb-3.5">
-                      <div className="w-10 h-10 rounded-xl bg-[#9333ea] text-white flex items-center justify-center shrink-0 shadow-2xs">
-                        <PrayerHandsIcon className="w-5 h-5 text-white" />
-                      </div>
-                      <div>
-                        <p className="font-extrabold text-slate-900 text-sm sm:text-base leading-tight">
-                          4. आपका धर्म क्या है?
-                        </p>
-                        <p className="text-xs sm:text-[13px] text-slate-500 leading-tight mt-0.5">
-                          अपना धर्म चुनें।
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex flex-wrap gap-2 sm:gap-2.5">
-                      {orderedReligions.map((opt) => {
-                        const isSelected = answers.religion === opt.key;
-                        return (
-                          <button
-                            key={opt.key}
-                            type="button"
-                            onClick={() => selectSingle("religion", opt.key)}
-                            className={cn(
-                              "rounded-full bg-white border border-[#e9d5ff] px-4 sm:px-5 py-1.5 sm:py-2 text-xs sm:text-[13.5px] font-bold text-slate-800 shadow-2xs hover:border-purple-400 transition-all cursor-pointer",
-                              isSelected &&
-                                "bg-[#9333ea] text-white border-[#9333ea] shadow-xs ring-2 ring-purple-500/20"
-                            )}
-                          >
-                            {opt.labelDisplay}
-                          </button>
-                        );
-                      })}
-                    </div>
+                    ))}
                   </div>
                 </div>
+              );
+            })()}
 
-                {/* Bottom Privacy Assurance Banner */}
-                <div className="flex items-start gap-2.5 rounded-xl border border-slate-200/80 bg-[#f8fafc] p-2.5 sm:p-3 text-xs text-slate-700">
-                  <ShieldCheck size={18} className="mt-0.5 text-slate-600 shrink-0" />
-                  <div>
-                    <p className="font-bold text-slate-900 leading-tight">
-                      आपका उत्तर पूरी तरह गोपनीय है
-                    </p>
-                    <p className="text-slate-500 text-[11px] sm:text-xs mt-0.5 leading-relaxed">
-                      आपकी व्यक्तिगत जानकारी सुरक्षित है और इसे किसी के साथ साझा नहीं किया जाएगा।
-                    </p>
-                  </div>
-                </div>
-              </div>
-            );
-          })()}
+          <PrivacyNote />
 
-          {/* ERROR ALERT */}
           {error && (
-            <div className="mt-3 p-2.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs sm:text-sm font-medium">
+            <div role="alert" className="mt-3 rounded-xl border border-red-200 bg-red-50 p-2.5 text-xs font-medium text-red-700 sm:text-sm">
               {error}
             </div>
           )}
-        </div>
+        </section>
       </div>
 
-      {/* 4. MOBILE STATS STRIP (Directly below question card on mobile) */}
-      <div className="md:hidden mt-4 bg-white rounded-xl border border-slate-200/80 p-3 shadow-2xs">
-        <div className="grid grid-cols-3 gap-1.5 text-center divide-x divide-slate-100">
-          <div className="px-1 flex flex-col items-center">
-            <div className="w-6 h-6 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center mb-1">
-              <Landmark size={13} />
-            </div>
-            <span className="font-extrabold text-slate-900 text-xs sm:text-sm leading-tight">
-              {validResponseCount}
-            </span>
-            <span className="text-[9.5px] font-bold text-slate-700 leading-tight mt-0.5">
-              कुल प्रतिक्रियाएं
-            </span>
-            <span className="text-[8.5px] text-slate-400 leading-tight">अब तक प्राप्त</span>
-          </div>
-
-          <div className="px-1 flex flex-col items-center">
-            <div className="w-6 h-6 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center mb-1">
-              <ShieldCheck size={13} />
-            </div>
-            <span className="font-extrabold text-slate-900 text-xs sm:text-sm leading-tight">
-              {constituencyNumber ? `#${constituencyNumber}` : "100%"}
-            </span>
-            <span className="text-[9.5px] font-bold text-slate-700 leading-tight mt-0.5">
-              {constituencyNumber ? "विधानसभा संख्या" : "सुरक्षित एवं गोपनीय"}
-            </span>
-            <span className="text-[8.5px] text-slate-400 leading-tight">इस क्षेत्र में</span>
-          </div>
-
-          <div className="px-1 flex flex-col items-center">
-            <div className="w-6 h-6 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center mb-1">
-              <BarChart3 size={13} />
-            </div>
-            <span className="font-extrabold text-slate-900 text-xs sm:text-sm leading-tight">
-              {electionYear}
-            </span>
-            <span className="text-[9.5px] font-bold text-slate-700 leading-tight mt-0.5">
-              विधानसभा चुनाव
-            </span>
-            <span className="text-[8.5px] text-slate-400 leading-tight">आने वाला है</span>
-          </div>
-        </div>
-      </div>
-
-      {/* 5. STICKY / FIXED BOTTOM ACTION BAR (Positioned above mobile tab nav on mobile, flush on desktop) */}
-      <div className="fixed bottom-[56px] lg:bottom-0 inset-x-0 z-[60] bg-white/95 backdrop-blur-md border-t border-slate-200/90 shadow-[0_-4px_24px_rgba(0,0,0,0.09)] py-2.5 sm:py-3.5 px-3.5 sm:px-6 lg:px-8">
-        <div className="max-w-6xl mx-auto flex items-center justify-between gap-3">
-          {pageIndex > 0 && (
-            <button
-              type="button"
-              onClick={handleBack}
-              disabled={submitting}
-              className="flex-1 sm:flex-none sm:min-w-[130px] flex items-center justify-center gap-1.5 px-4 sm:px-6 h-[48px] sm:h-[50px] rounded-xl border border-slate-300 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-sm sm:text-base shadow-2xs transition-colors cursor-pointer"
-            >
-              <span>← पिछला</span>
-            </button>
+      {/* Survey actions — in normal flow so they never cover the options */}
+      <div className="mt-3 flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-white p-3 shadow-2xs sm:mt-4 sm:justify-between sm:p-4">
+        <button
+          type="button"
+          onClick={handleBack}
+          disabled={pageIndex === 0 || submitting}
+          className="flex h-12 flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-5 text-[15px] font-bold text-slate-800 shadow-2xs transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-45 sm:flex-none sm:min-w-[170px] sm:text-base"
+        >
+          <ArrowLeft size={18} aria-hidden="true" />
+          पिछला
+        </button>
+        <button
+          type="button"
+          onClick={handlePrimary}
+          disabled={!canAdvance || submitting}
+          className={cn(
+            "flex h-12 flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl px-5 text-[15px] font-bold text-white shadow-2xs transition-all sm:flex-none sm:min-w-[220px] sm:text-base",
+            !canAdvance || submitting ? "cursor-not-allowed bg-orange-300" : "bg-[#ea580c] hover:bg-[#c2410c] active:scale-[0.98]"
           )}
+        >
+          {submitting ? (
+            <>
+              <Loader2 size={18} className="animate-spin" aria-hidden="true" />
+              जमा हो रहा है...
+            </>
+          ) : (
+            <>
+              {pageIndex === PAGE_KEYS.length - 1 ? "सर्वे जमा करें" : "अगला प्रश्न"}
+              <ArrowRight size={18} aria-hidden="true" />
+            </>
+          )}
+        </button>
+      </div>
+    </div>
+  );
+}
 
-          <button
-            type="button"
-            onClick={handlePrimary}
-            disabled={!canAdvance || submitting}
-            className={cn(
-              "flex items-center justify-center gap-2 h-[48px] sm:h-[50px] rounded-xl font-bold text-sm sm:text-base text-white shadow-2xs transition-all cursor-pointer",
-              pageIndex === 0 ? "w-full" : "flex-1 sm:flex-none sm:min-w-[150px] px-6 sm:px-8",
-              !canAdvance || submitting
-                ? "bg-orange-300 cursor-not-allowed"
-                : "bg-[#ea580c] hover:bg-[#c2410c] active:scale-[0.98]"
-            )}
-          >
-            {submitting ? (
-              <>
-                <Loader2 size={18} className="animate-spin" />
-                <span>जमा हो रहा है...</span>
-              </>
-            ) : pageIndex === 3 ? (
-              <>
-                <span>सर्वे जमा करें →</span>
-              </>
-            ) : (
-              <>
-                <span>अगला प्रश्न →</span>
-              </>
-            )}
-          </button>
-        </div>
+function withAlpha(hex: string | null | undefined, alpha: number): string | null {
+  if (!hex || !/^#[0-9a-f]{6}$/i.test(hex)) return null;
+  return `${hex}${Math.round(alpha * 255)
+    .toString(16)
+    .padStart(2, "0")}`;
+}
+
+function RadioDot({ selected, className }: { selected: boolean; className?: string }) {
+  return (
+    <span
+      aria-hidden="true"
+      className={cn(
+        "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 bg-white transition-colors",
+        selected ? "border-slate-800" : "border-slate-300",
+        className
+      )}
+    >
+      {selected && <span className="h-2.5 w-2.5 rounded-full bg-slate-800" />}
+    </span>
+  );
+}
+
+function CheckBoxDot({ selected, className }: { selected: boolean; className?: string }) {
+  return (
+    <span
+      aria-hidden="true"
+      className={cn(
+        "flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 transition-all",
+        selected ? "border-blue-600 bg-blue-600 text-white" : "border-slate-300 bg-white",
+        className
+      )}
+    >
+      {selected && <Check size={13} strokeWidth={3.5} />}
+    </span>
+  );
+}
+
+function PrivacyNote() {
+  return (
+    <div className="mt-4 flex items-start gap-3 rounded-xl border border-slate-200/80 bg-[#f8fafc] px-3 py-2.5 sm:mt-5 sm:px-4 sm:py-3">
+      <ShieldCheck size={20} className="mt-0.5 shrink-0 text-slate-600" aria-hidden="true" />
+      <div>
+        <p className="text-[13px] font-bold leading-tight text-slate-900 sm:text-sm">आपका उत्तर पूरी तरह गोपनीय है</p>
+        <p className="mt-0.5 text-[11.5px] leading-relaxed text-slate-500 sm:text-[13px]">
+          आपकी व्यक्तिगत जानकारी सुरक्षित है और इसे किसी के साथ साझा नहीं किया जाएगा।
+        </p>
       </div>
     </div>
   );

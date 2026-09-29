@@ -15,7 +15,6 @@ export async function GET(req: NextRequest) {
     const hi = locale === "hi";
     const { scope: requested, filters } = readAnalysisParams(req.nextUrl.searchParams);
     const scope = await resolveScope(requested, locale);
-    if (scope.level === "none") return NextResponse.json({ error: hi ? "राज्य चुनें।" : "Select a state." }, { status: 400 });
     const a = await getScopedAnalysis(scope, locale, filters);
     if (!a) return NextResponse.json({ error: hi ? "डेटा उपलब्ध नहीं है।" : "No data available." }, { status: 404 });
 
@@ -41,7 +40,8 @@ export async function GET(req: NextRequest) {
         name: L("सारांश", "Summary"),
         rows: [
           [L("विवरण", "Field"), L("मान", "Value")],
-          [L("राज्य", "State"), scope.state?.name],
+          [L("दायरा", "Scope"), scope.level === "none" ? L("समग्र विश्लेषण (सभी उपलब्ध राज्य)", "Overall analysis (all available states)") : L("क्षेत्र-विशिष्ट", "Scoped")],
+          [L("राज्य", "State"), scope.state?.name ?? L("सभी राज्य", "All states")],
           [L("जिला", "District"), scope.district?.name ?? L("सभी", "All")],
           [L("विधानसभा क्षेत्र", "Constituency"), scope.constituency ? `${scope.constituency.name} (${scope.constituency.number})` : L("सभी", "All")],
           [L("उत्तरदाता समूह", "Respondent group"), segLabel],

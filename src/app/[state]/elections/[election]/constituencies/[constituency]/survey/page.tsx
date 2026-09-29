@@ -9,6 +9,9 @@ import { getIssueIcon } from "@/lib/survey-issue-icons";
 import { buildPageMetadata } from "@/lib/seo";
 import { getServerLocale } from "@/lib/i18n/locale-cookie";
 import { prisma } from "@/lib/prisma";
+import { displayStateName } from "@/lib/utils";
+import { getDistrictDisplayName } from "@/lib/district-hindi";
+import { getConstituencyDisplayName } from "@/lib/constituency-hindi";
 
 export async function generateMetadata({
   params,
@@ -41,6 +44,7 @@ export default async function SurveyPage({
   const constituency = await getConstituencyBySlug(stateSlug, slug, electionSlug);
   if (!constituency) notFound();
 
+  const locale = await getServerLocale();
   const [survey, currentMla, validResponseCount] = await Promise.all([
     getFullSurveyForConstituency(constituency.id, election.id),
     getCurrentMlaForConstituency(constituency, election.id),
@@ -109,11 +113,11 @@ export default async function SurveyPage({
     <div className="min-h-screen bg-[#f4f7fa] dark:bg-slate-950">
       <SurveyExperience
         surveyId={survey.id}
-        constituencyName={constituency.name}
+        constituencyName={getConstituencyDisplayName(constituency.slug, constituency.name, locale)}
         constituencyNumber={constituency.number}
-        districtName={constituency.district.name}
+        districtName={getDistrictDisplayName(constituency.district.slug, constituency.district.name, locale)}
         districtSlug={constituency.district.slug}
-        stateName={constituency.state.name}
+        stateName={displayStateName(constituency.state.name, state.slug, locale)}
         stateSlug={state.slug}
         electionYear={election.year}
         validResponseCount={validResponseCount}

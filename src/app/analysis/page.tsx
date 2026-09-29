@@ -48,6 +48,6 @@ export default async function AnalysisPage({ searchParams }: { searchParams: Sea
   const scope = await resolveScope(requested, locale);
   if (!sameScope(requested, scope.params)) redirect(`/analysis${analysisQuery(scope.params, filters)}`);
 
-  const data = scope.level === "none" ? null : await getScopedAnalysis(scope, locale, filters);
+  const data = await getScopedAnalysis(scope, locale, filters);
   return <ScopedAnalysisView scope={scope} data={data} hi={locale === "hi"} />;
 }

@@ -19,7 +19,7 @@ export default async function AnalysisReportPage({ searchParams }: { searchParam
   const locale = await getServerLocale();
   const { scope: requested, filters } = readAnalysisParams(await searchParams);
   const scope = await resolveScope(requested, locale);
-  const data = scope.level === "none" ? null : await getScopedAnalysis(scope, locale, filters);
+  const data = await getScopedAnalysis(scope, locale, filters);
   const hi = locale === "hi";
 
   return (

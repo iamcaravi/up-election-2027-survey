@@ -3,9 +3,11 @@ import type { ReactNode } from "react";
 import {
   Award,
   BarChart3,
+  Building2,
   Calendar,
   CheckCircle2,
   Download,
+  Landmark,
   Lightbulb,
   ListChecks,
   MapPinned,
@@ -85,13 +87,21 @@ export function ScopedAnalysisView({
         scope={scope}
         hi={hi}
         leaf={hi ? "विश्लेषण" : "Analysis"}
-        titleFallback={hi ? "विस्तृत विश्लेषण" : "Detailed Analysis"}
-        subtitle={hi ? `विधानसभा चुनाव सर्वेक्षण ${year} — विस्तृत विश्लेषण` : `Assembly Election Survey ${year} — Detailed Analysis`}
+        titleFallback={scope.level === "none" ? (hi ? "समग्र विश्लेषण" : "Overall Analysis") : hi ? "विस्तृत विश्लेषण" : "Detailed Analysis"}
+        subtitle={
+          scope.level === "none"
+            ? hi
+              ? "समग्र चुनाव सर्वेक्षण विश्लेषण"
+              : "Overall Election Survey Analysis"
+            : hi
+              ? `विधानसभा चुनाव सर्वेक्षण ${year} — विस्तृत विश्लेषण`
+              : `Assembly Election Survey ${year} — Detailed Analysis`
+        }
         description={
           scope.level === "none"
             ? hi
-              ? "राज्य, जिला या विधानसभा क्षेत्र चुनकर सर्वेक्षण परिणामों का विस्तृत विश्लेषण देखें — अलग-अलग समूहों की राय, मुद्दे, रुझान और तुलना।"
-              : "Choose a state, district or constituency for a detailed analysis — group-wise opinion, issues, trends and comparisons."
+              ? "उपलब्ध सभी राज्यों के सर्वेक्षण प्रतिक्रियाओं के आधार पर समग्र विश्लेषण — उपलब्ध सर्वेक्षण प्रतिक्रियाओं के आधार पर, संपूर्ण भारत या सभी मतदाताओं का प्रतिनिधित्व नहीं।"
+              : "Overall analysis based on survey responses from all available states — based on available survey responses, not a representation of all of India or all voters."
             : hi
               ? `यहाँ ${place} के सर्वेक्षण परिणामों का विस्तृत विश्लेषण है — अलग-अलग समूहों की राय, प्रमुख मुद्दे, विधायक के कार्यों पर राय और पार्टी समर्थन के अनुसार विस्तृत आंकड़े।`
               : `A detailed analysis of ${place}'s survey results — group-wise opinion, key issues, MLA opinion and party support.`
@@ -100,26 +110,55 @@ export function ScopedAnalysisView({
         below={
           data ? (
             <div className="grid grid-cols-2 gap-2.5 sm:gap-3.5 lg:grid-cols-4">
-              <Kpi icon={<Users size={20} />} tone="bg-violet-100 text-violet-600" value={formatNumber(data.total)} label={hi ? "कुल प्रतिक्रियाएं" : "Total responses"} sub={filtered ? (hi ? "चुने गए फ़िल्टर में" : "In selected filter") : hi ? "अब तक प्राप्त" : "So far"} />
-              <Kpi icon={<Calendar size={20} />} tone="bg-orange-100 text-orange-500" value={formatNumber(data.today)} label={hi ? "आज की प्रतिक्रियाएं" : "Today's responses"} sub={hi ? "आज प्राप्त" : "Received today"} />
-              <Kpi
-                icon={<TrendingUp size={20} />}
-                tone="bg-emerald-100 text-emerald-600"
-                value={data.surveyActive ? (hi ? "सक्रिय" : "Active") : hi ? "बंद" : "Closed"}
-                valueClass={data.surveyActive ? "text-emerald-600" : "text-slate-500"}
-                label={hi ? "सर्वेक्षण स्थिति" : "Survey status"}
-                sub={data.surveyActive ? (hi ? "मत देना जारी है" : "Voting open") : hi ? "सर्वे बंद है" : "Survey closed"}
-              />
-              {scope.level === "constituency" ? (
-                <Kpi icon={<Vote size={20} />} tone="bg-blue-100 text-blue-600" value={formatNumber(data.last7Days)} label={hi ? "पिछले 7 दिन" : "Last 7 days"} sub={hi ? "पिछले 7 दिनों की प्रतिक्रियाएं" : "Responses in the last 7 days"} />
+              {scope.level === "none" ? (
+                <>
+                  <Kpi icon={<Users size={20} />} tone="bg-violet-100 text-violet-600" value={formatNumber(data.total)} label={hi ? "कुल प्रतिक्रियाएं" : "Total responses"} sub={filtered ? (hi ? "चुने गए फ़िल्टर में" : "In selected filter") : hi ? "उपलब्ध सभी राज्यों से" : "From all available states"} />
+                  <Kpi
+                    icon={<Landmark size={20} />}
+                    tone="bg-orange-100 text-orange-500"
+                    value={`${formatNumber(data.respondingStates)}/${formatNumber(data.statesInScope)}`}
+                    label={hi ? "उपलब्ध राज्य" : "Available states"}
+                    sub={hi ? "प्रतिक्रिया वाले राज्य" : "States with responses"}
+                  />
+                  <Kpi
+                    icon={<MapPinned size={20} />}
+                    tone="bg-emerald-100 text-emerald-600"
+                    value={`${formatNumber(data.respondingDistricts)}/${formatNumber(data.districtsInScope)}`}
+                    label={hi ? "कवर किए गए जिले" : "Districts covered"}
+                    sub={hi ? "प्रतिक्रिया वाले जिले" : "Districts with responses"}
+                  />
+                  <Kpi
+                    icon={<Building2 size={20} />}
+                    tone="bg-blue-100 text-blue-600"
+                    value={`${formatNumber(data.respondingConstituencies)}/${formatNumber(data.constituenciesInScope)}`}
+                    label={hi ? "कवर किए गए विधानसभा क्षेत्र" : "Constituencies covered"}
+                    sub={hi ? "प्रतिक्रिया वाले विधानसभा क्षेत्र" : "Constituencies with responses"}
+                  />
+                </>
               ) : (
-                <Kpi
-                  icon={<MapPinned size={20} />}
-                  tone="bg-blue-100 text-blue-600"
-                  value={`${formatNumber(data.respondingConstituencies)}/${formatNumber(data.constituenciesInScope)}`}
-                  label={hi ? "सर्वे में शामिल क्षेत्र" : "Areas with responses"}
-                  sub={hi ? "प्रतिक्रिया वाले विधानसभा क्षेत्र" : "Constituencies with responses"}
-                />
+                <>
+                  <Kpi icon={<Users size={20} />} tone="bg-violet-100 text-violet-600" value={formatNumber(data.total)} label={hi ? "कुल प्रतिक्रियाएं" : "Total responses"} sub={filtered ? (hi ? "चुने गए फ़िल्टर में" : "In selected filter") : hi ? "अब तक प्राप्त" : "So far"} />
+                  <Kpi icon={<Calendar size={20} />} tone="bg-orange-100 text-orange-500" value={formatNumber(data.today)} label={hi ? "आज की प्रतिक्रियाएं" : "Today's responses"} sub={hi ? "आज प्राप्त" : "Received today"} />
+                  <Kpi
+                    icon={<TrendingUp size={20} />}
+                    tone="bg-emerald-100 text-emerald-600"
+                    value={data.surveyActive ? (hi ? "सक्रिय" : "Active") : hi ? "बंद" : "Closed"}
+                    valueClass={data.surveyActive ? "text-emerald-600" : "text-slate-500"}
+                    label={hi ? "सर्वेक्षण स्थिति" : "Survey status"}
+                    sub={data.surveyActive ? (hi ? "मत देना जारी है" : "Voting open") : hi ? "सर्वे बंद है" : "Survey closed"}
+                  />
+                  {scope.level === "constituency" ? (
+                    <Kpi icon={<Vote size={20} />} tone="bg-blue-100 text-blue-600" value={formatNumber(data.last7Days)} label={hi ? "पिछले 7 दिन" : "Last 7 days"} sub={hi ? "पिछले 7 दिनों की प्रतिक्रियाएं" : "Responses in the last 7 days"} />
+                  ) : (
+                    <Kpi
+                      icon={<MapPinned size={20} />}
+                      tone="bg-blue-100 text-blue-600"
+                      value={`${formatNumber(data.respondingConstituencies)}/${formatNumber(data.constituenciesInScope)}`}
+                      label={hi ? "सर्वे में शामिल क्षेत्र" : "Areas with responses"}
+                      sub={hi ? "प्रतिक्रिया वाले विधानसभा क्षेत्र" : "Constituencies with responses"}
+                    />
+                  )}
+                </>
               )}
             </div>
           ) : undefined
@@ -148,18 +187,20 @@ export function ScopedAnalysisView({
         )}
 
         <ScopeContent hi={hi}>
-          {scope.level === "none" ? (
-            <Notice text={hi ? "विश्लेषण देखने के लिए राज्य चुनें।" : "Select a state to view the analysis."} />
-          ) : !hasData ? (
+          {!hasData ? (
             <Notice
               text={
                 filtered
                   ? hi
                     ? "चुने गए फ़िल्टर के लिए कोई प्रतिक्रिया उपलब्ध नहीं है।"
                     : "No responses match the selected filters."
-                  : hi
-                    ? "इस क्षेत्र के लिए अभी पर्याप्त सर्वेक्षण डेटा उपलब्ध नहीं है।"
-                    : "Not enough survey data is available for this area yet."
+                  : scope.level === "none"
+                    ? hi
+                      ? "अभी पर्याप्त सर्वेक्षण डेटा उपलब्ध नहीं है।"
+                      : "Not enough survey data is available yet."
+                    : hi
+                      ? "इस क्षेत्र के लिए अभी पर्याप्त सर्वेक्षण डेटा उपलब्ध नहीं है।"
+                      : "Not enough survey data is available for this area yet."
               }
             />
           ) : (
@@ -302,12 +343,12 @@ export function ScopedAnalysisView({
               <div id="compare" className="grid scroll-mt-24 grid-cols-1 gap-5 lg:grid-cols-3">
                 <Section
                   className="lg:col-span-2"
-                  title={hi ? "भौगोलिक तुलना" : "Geographic comparison"}
+                  title={data!.geo?.unit === "state" ? (hi ? "राज्यवार तुलना" : "State-wise comparison") : hi ? "भौगोलिक तुलना" : "Geographic comparison"}
                   sub={
                     data!.geo
                       ? hi
-                        ? `${data!.geo.unit === "district" ? "जिलों" : "विधानसभा क्षेत्रों"} के अनुसार — ${data!.geo.rows.length}/${data!.geo.totalUnits} में प्रतिक्रियाएं`
-                        : `By ${data!.geo.unit === "district" ? "district" : "constituency"} — ${data!.geo.rows.length}/${data!.geo.totalUnits} with responses`
+                        ? `${data!.geo.unit === "state" ? "राज्यों" : data!.geo.unit === "district" ? "जिलों" : "विधानसभा क्षेत्रों"} के अनुसार — ${data!.geo.rows.length}/${data!.geo.totalUnits} में प्रतिक्रियाएं`
+                        : `By ${data!.geo.unit === "state" ? "state" : data!.geo.unit === "district" ? "district" : "constituency"} — ${data!.geo.rows.length}/${data!.geo.totalUnits} with responses`
                       : undefined
                   }
                 >
@@ -485,7 +526,9 @@ function GeoTable({ geo, hi }: { geo: NonNullable<ScopeAnalysis["geo"]>; hi: boo
       <table className="w-full min-w-[520px] text-left text-xs">
         <thead className="sticky top-0 bg-white">
           <tr className="border-b border-slate-100 text-slate-500">
-            <th className="py-2 pr-2 font-semibold">{geo.unit === "district" ? (hi ? "जिला" : "District") : hi ? "विधानसभा क्षेत्र" : "Constituency"}</th>
+            <th className="py-2 pr-2 font-semibold">
+              {geo.unit === "state" ? (hi ? "राज्य" : "State") : geo.unit === "district" ? (hi ? "जिला" : "District") : hi ? "विधानसभा क्षेत्र" : "Constituency"}
+            </th>
             <th className="py-2 pr-2 font-semibold">{hi ? "प्रतिक्रियाएं (N)" : "Responses (N)"}</th>
             <th className="py-2 pr-2 font-semibold">{hi ? "सर्वे में सर्वाधिक समर्थन" : "Highest survey support"}</th>
             <th className="py-2 pr-2 font-semibold">{hi ? "शीर्ष मुद्दा" : "Top issue"}</th>

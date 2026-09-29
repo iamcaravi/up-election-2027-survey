@@ -172,6 +172,7 @@ interface OptionMeta {
 
 interface ResponseRecord {
   createdAt: number;
+  stateId: string;
   constituencyId: string;
   districtId: string;
   answers: Partial<Record<QuestionKey, string[]>>;
@@ -181,8 +182,10 @@ interface Dataset {
   records: ResponseRecord[];
   meta: Record<QuestionKey, Map<string, OptionMeta>>;
   activeSurveyConstituencies: Set<string>;
+  stateNames: Map<string, string>;
   districtNames: Map<string, string>;
   constituencyInfo: Map<string, { name: string; districtId: string; number: number }>;
+  totalStates: number;
   totalConstituencies: number;
   totalDistricts: number;
 }
@@ -207,48 +210,57 @@ function partyLabel(slug: string, shortName: string, locale: Locale) {
   return shortName;
 }
 
-async function loadStateDataset(scope: ResolvedScope, locale: Locale): Promise<Dataset | null> {
-  if (!scope.state || !scope.election) return null;
-  const isSynthetic = await getSiteSetting<boolean>(SYNTHETIC_DATA_MODE_KEY, false);
-  const dataSource = isSynthetic ? SYNTHETIC_DATA_SOURCE : REAL_DATA_SOURCE;
+type RawResponse = {
+  createdAt: Date;
+  constituencyId: string;
+  constituency: { districtId: string; stateId: string };
+  answers: {
+    question: { key: string };
+    option: {
+      key: string;
+      label: string;
+      order: number;
+      party: { slug: string; shortName: string; colorHex: string; logoUrl: string | null; displayOrder: number } | null;
+    } | null;
+  }[];
+};
 
-  const responses = await prisma.surveyResponse.findMany({
-    where: {
-      status: ELIGIBLE_RESPONSE_STATUS,
-      dataSource,
-      survey: { electionId: scope.election.id },
-      constituency: { stateId: scope.state.id },
-    },
+const QUESTION_KEYS_MUT: string[] = [...QUESTION_KEYS];
+
+const RESPONSE_SELECT = {
+  createdAt: true,
+  constituencyId: true,
+  constituency: { select: { districtId: true, stateId: true } },
+  answers: {
+    where: { optionId: { not: null }, question: { key: { in: QUESTION_KEYS_MUT } } },
     select: {
-      createdAt: true,
-      constituencyId: true,
-      constituency: { select: { districtId: true } },
-      answers: {
-        where: { optionId: { not: null }, question: { key: { in: [...QUESTION_KEYS] } } },
+      question: { select: { key: true } },
+      option: {
         select: {
-          question: { select: { key: true } },
-          option: {
-            select: {
-              key: true,
-              label: true,
-              order: true,
-              party: { select: { slug: true, shortName: true, colorHex: true, logoUrl: true, displayOrder: true } },
-            },
-          },
+          key: true,
+          label: true,
+          order: true,
+          party: { select: { slug: true, shortName: true, colorHex: true, logoUrl: true, displayOrder: true } },
         },
       },
     },
-  });
-  const districts = await prisma.district.findMany({ where: { stateId: scope.state.id }, select: { id: true, slug: true, name: true } });
-  const constituencies = await prisma.constituency.findMany({
-    where: { stateId: scope.state.id },
-    select: { id: true, slug: true, name: true, number: true, districtId: true },
-  });
-  const activeSurveys = await prisma.survey.findMany({
-    where: { electionId: scope.election.id, status: "ACTIVE", isActive: true, constituencyId: { not: null } },
-    select: { constituencyId: true },
-  });
+  },
+};
 
+// Shared record/meta builder for both a single state's dataset and the
+// combined all-states dataset — the response → ResponseRecord mapping and
+// option-metadata accumulation are identical either way, only the Prisma
+// `where` clauses (and how many states' worth of districts/constituencies
+// are attached) differ between the two callers.
+function buildDataset(
+  responses: RawResponse[],
+  districts: { id: string; slug: string; name: string }[],
+  constituencies: { id: string; slug: string; name: string; number: number; districtId: string }[],
+  activeSurveys: { constituencyId: string | null }[],
+  stateNames: Map<string, string>,
+  totalStates: number,
+  locale: Locale
+): Dataset {
   const options = dict(locale);
   const meta = Object.fromEntries(QUESTION_KEYS.map((k) => [k, new Map<string, OptionMeta>()])) as Dataset["meta"];
   const records: ResponseRecord[] = responses.map((r) => {
@@ -270,20 +282,99 @@ async function loadStateDataset(scope: ResolvedScope, locale: Locale): Promise<D
         });
       }
     }
-    return { createdAt: r.createdAt.getTime(), constituencyId: r.constituencyId, districtId: r.constituency.districtId, answers };
+    return { createdAt: r.createdAt.getTime(), stateId: r.constituency.stateId, constituencyId: r.constituencyId, districtId: r.constituency.districtId, answers };
   });
 
   return {
     records,
     meta,
     activeSurveyConstituencies: new Set(activeSurveys.map((s) => s.constituencyId!).filter(Boolean)),
+    stateNames,
     districtNames: new Map(districts.map((d) => [d.id, getDistrictDisplayName(d.slug, d.name, locale)])),
     constituencyInfo: new Map(
       constituencies.map((c) => [c.id, { name: getConstituencyDisplayName(c.slug, c.name, locale), districtId: c.districtId, number: c.number }])
     ),
+    totalStates,
     totalConstituencies: constituencies.length,
     totalDistricts: districts.length,
   };
+}
+
+async function loadStateDataset(scope: ResolvedScope, locale: Locale): Promise<Dataset | null> {
+  if (!scope.state || !scope.election) return null;
+  const isSynthetic = await getSiteSetting<boolean>(SYNTHETIC_DATA_MODE_KEY, false);
+  const dataSource = isSynthetic ? SYNTHETIC_DATA_SOURCE : REAL_DATA_SOURCE;
+
+  const responses = await prisma.surveyResponse.findMany({
+    where: {
+      status: ELIGIBLE_RESPONSE_STATUS,
+      dataSource,
+      survey: { electionId: scope.election.id },
+      constituency: { stateId: scope.state.id },
+    },
+    select: RESPONSE_SELECT,
+  });
+  const districts = await prisma.district.findMany({ where: { stateId: scope.state.id }, select: { id: true, slug: true, name: true } });
+  const constituencies = await prisma.constituency.findMany({
+    where: { stateId: scope.state.id },
+    select: { id: true, slug: true, name: true, number: true, districtId: true },
+  });
+  const activeSurveys = await prisma.survey.findMany({
+    where: { electionId: scope.election.id, status: "ACTIVE", isActive: true, constituencyId: { not: null } },
+    select: { constituencyId: true },
+  });
+
+  return buildDataset(responses, districts, constituencies, activeSurveys, new Map([[scope.state.id, scope.state.name]]), 1, locale);
+}
+
+// Combined dataset across every active state's active election — used only
+// for the Overall Analysis scope (no state/district/constituency selected).
+// Mirrors loadStateDataset's query shape exactly, but with `in: [...]`
+// clauses instead of a per-state loop, so this is still a fixed, small
+// number of queries (states, elections, responses, districts,
+// constituencies, active surveys) regardless of how many states exist —
+// never one query per state.
+async function loadAllStatesDataset(locale: Locale): Promise<Dataset | null> {
+  const states = await prisma.state.findMany({ where: { isActive: true }, select: { id: true, name: true, slug: true } });
+  if (states.length === 0) return null;
+  const stateIds = states.map((s) => s.id);
+
+  const elections = await prisma.election.findMany({
+    where: { stateId: { in: stateIds }, isActive: true },
+    orderBy: { year: "desc" },
+    select: { id: true, stateId: true },
+  });
+  // One active election per state (the most recent, matching resolveScope's
+  // per-state `findFirst` ordered by year desc).
+  const electionIdByState = new Map<string, string>();
+  for (const e of elections) if (!electionIdByState.has(e.stateId)) electionIdByState.set(e.stateId, e.id);
+  const electionIds = [...electionIdByState.values()];
+  if (electionIds.length === 0) return null;
+
+  const isSynthetic = await getSiteSetting<boolean>(SYNTHETIC_DATA_MODE_KEY, false);
+  const dataSource = isSynthetic ? SYNTHETIC_DATA_SOURCE : REAL_DATA_SOURCE;
+
+  const responses = await prisma.surveyResponse.findMany({
+    where: {
+      status: ELIGIBLE_RESPONSE_STATUS,
+      dataSource,
+      survey: { electionId: { in: electionIds } },
+      constituency: { stateId: { in: stateIds } },
+    },
+    select: RESPONSE_SELECT,
+  });
+  const districts = await prisma.district.findMany({ where: { stateId: { in: stateIds } }, select: { id: true, slug: true, name: true } });
+  const constituencies = await prisma.constituency.findMany({
+    where: { stateId: { in: stateIds } },
+    select: { id: true, slug: true, name: true, number: true, districtId: true },
+  });
+  const activeSurveys = await prisma.survey.findMany({
+    where: { electionId: { in: electionIds }, status: "ACTIVE", isActive: true, constituencyId: { not: null } },
+    select: { constituencyId: true },
+  });
+
+  const stateNames = new Map(states.map((s) => [s.id, displayStateName(s.name, s.slug, locale)]));
+  return buildDataset(responses, districts, constituencies, activeSurveys, stateNames, states.length, locale);
 }
 
 function inScope(r: ResponseRecord, scope: ResolvedScope) {
@@ -364,6 +455,12 @@ export interface ScopeSummary {
   /** Constituencies in scope / with ≥1 valid response. */
   constituenciesInScope: number;
   respondingConstituencies: number;
+  /** Districts in scope / with ≥1 valid response — meaningful mainly for the state-and-above scopes. */
+  districtsInScope: number;
+  respondingDistricts: number;
+  /** States in scope / with ≥1 valid response — meaningful mainly for Overall Analysis (no scope selected). */
+  statesInScope: number;
+  respondingStates: number;
   firstResponseAt: string | null;
   lastResponseAt: string | null;
   party: Distribution;
@@ -386,6 +483,10 @@ function summarize(records: ResponseRecord[], ds: Dataset, scope: ResolvedScope,
     scope.constituency ? id === scope.constituency.id : scope.district ? c.districtId === scope.district.id : true
   );
   const responding = new Set(records.map((r) => r.constituencyId));
+  const respondingDistricts = new Set(records.map((r) => r.districtId));
+  const respondingStates = new Set(records.map((r) => r.stateId));
+  const districtsInScope = scope.district || scope.constituency ? 1 : ds.totalDistricts;
+  const statesInScope = scope.state ? 1 : ds.totalStates;
   const times = records.map((r) => r.createdAt);
   return {
     total: records.length,
@@ -394,6 +495,10 @@ function summarize(records: ResponseRecord[], ds: Dataset, scope: ResolvedScope,
     surveyActive: scopeConstituencies.some(([id]) => ds.activeSurveyConstituencies.has(id)),
     constituenciesInScope: scopeConstituencies.length,
     respondingConstituencies: responding.size,
+    districtsInScope,
+    respondingDistricts: respondingDistricts.size,
+    statesInScope,
+    respondingStates: respondingStates.size,
     firstResponseAt: times.length ? new Date(Math.min(...times)).toISOString() : null,
     lastResponseAt: times.length ? new Date(Math.max(...times)).toISOString() : null,
     party: distribution(records, "party_preference", ds.meta, "count"),
@@ -477,7 +582,7 @@ export interface ScopeAnalysis extends ScopeSummary {
   crossAgeIssue: CrossTab;
   crossGenderIssue: CrossTab;
   crossPartyMla: CrossTab;
-  geo: { unit: "district" | "constituency"; rows: GeoRow[]; totalUnits: number } | null;
+  geo: { unit: "state" | "district" | "constituency"; rows: GeoRow[]; totalUnits: number } | null;
   comparison: LevelComparison[];
   quality: { key: string; label: string; answered: number; pct: number }[];
   profileComplete: { count: number; pct: number };
@@ -631,22 +736,28 @@ function applyFilters(records: ResponseRecord[], f: AnalysisFilters) {
 }
 
 function geoOf(records: ResponseRecord[], ds: Dataset, scope: ResolvedScope, locale: Locale): ScopeAnalysis["geo"] {
-  if (scope.level === "constituency" || scope.level === "none") return null;
-  const unit = scope.level === "state" ? "district" : "constituency";
+  if (scope.level === "constituency") return null;
+  // Overall Analysis (no scope selected) compares by state; a selected state
+  // compares by district; a selected district compares by constituency.
+  const unit = scope.level === "none" ? "state" : scope.level === "state" ? "district" : "constituency";
   const groups = new Map<string, ResponseRecord[]>();
   for (const r of records) {
-    const k = unit === "district" ? r.districtId : r.constituencyId;
+    const k = unit === "state" ? r.stateId : unit === "district" ? r.districtId : r.constituencyId;
     (groups.get(k) ?? groups.set(k, []).get(k)!).push(r);
   }
   const totalUnits =
-    unit === "district" ? ds.totalDistricts : [...ds.constituencyInfo.values()].filter((c) => c.districtId === scope.district!.id).length;
+    unit === "state"
+      ? ds.totalStates
+      : unit === "district"
+        ? ds.totalDistricts
+        : [...ds.constituencyInfo.values()].filter((c) => c.districtId === scope.district!.id).length;
   const rows: GeoRow[] = [...groups.entries()].map(([k, rs]) => {
     const party = distribution(rs, "party_preference", ds.meta, "count");
     const issues = distribution(rs, "top_issue", ds.meta, "count");
     const mla = mlaDistribution(rs, locale);
     return {
       key: k,
-      label: unit === "district" ? ds.districtNames.get(k) ?? k : ds.constituencyInfo.get(k)?.name ?? k,
+      label: unit === "state" ? ds.stateNames.get(k) ?? k : unit === "district" ? ds.districtNames.get(k) ?? k : ds.constituencyInfo.get(k)?.name ?? k,
       n: rs.length,
       topParty: party.items[0] ? { label: party.items[0].label, pct: party.items[0].pct } : null,
       topIssue: issues.items[0] ? { label: issues.items[0].label, pct: issues.items[0].pct } : null,
@@ -797,7 +908,10 @@ function insightsOf(a: Omit<ScopeAnalysis, "findings" | "insights">, locale: Loc
 }
 
 export async function getScopedAnalysis(scope: ResolvedScope, locale: Locale, filters: AnalysisFilters): Promise<ScopeAnalysis | null> {
-  const ds = await loadStateDataset(scope, locale);
+  // No state/district/constituency selected → Overall Analysis, combining
+  // every active state's eligible responses. getScopedResults (the Result
+  // page) intentionally keeps requiring a state and is not touched here.
+  const ds = scope.level === "none" ? await loadAllStatesDataset(locale) : await loadStateDataset(scope, locale);
   if (!ds) return null;
   const isSynthetic = await getSiteSetting<boolean>(SYNTHETIC_DATA_MODE_KEY, false);
   const stateAll = applyFilters(ds.records, filters);
