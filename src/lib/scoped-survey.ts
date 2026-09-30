@@ -62,8 +62,8 @@ export interface ResolvedScope {
 /** Minimum respondents in a demographic group before a cross-tab row is drawn. */
 export const MIN_GROUP_N = 5;
 
-const QUESTION_KEYS = ["party_preference", "mla_satisfaction", "top_issue", "age_group", "gender", "social_category", "religion"] as const;
-type QuestionKey = (typeof QUESTION_KEYS)[number];
+export const QUESTION_KEYS = ["party_preference", "mla_satisfaction", "top_issue", "age_group", "gender", "social_category", "religion"] as const;
+export type QuestionKey = (typeof QUESTION_KEYS)[number];
 export const DEMOGRAPHIC_KEYS = ["gender", "age_group", "social_category", "religion"] as const;
 export type DemographicKey = (typeof DEMOGRAPHIC_KEYS)[number];
 
@@ -160,9 +160,30 @@ export function sameScope(a: ScopeParams, b: ScopeParams) {
   return (a.state ?? "") === (b.state ?? "") && (a.district ?? "") === (b.district ?? "") && (a.constituency ?? "") === (b.constituency ?? "");
 }
 
+/** State a Result/Analysis page opens with when the URL carries no scope. */
+export const DEFAULT_SCOPE_STATE = "uttar-pradesh";
+
+/**
+ * The scope to resolve for a request: a bare URL (/results, /analysis) opens
+ * the default state (all districts, all constituencies) instead of the
+ * combined all-states view. Any explicit scope is used exactly as given.
+ */
+export function withDefaultScope(params: ScopeParams): ScopeParams {
+  return params.state || params.district || params.constituency ? params : { state: DEFAULT_SCOPE_STATE };
+}
+
+/**
+ * Whether the request must be redirected to the canonical URL of the resolved
+ * scope. A bare URL that resolved to the default state renders in place (no
+ * redirect); invalid or mismatched slugs still redirect.
+ */
+export function needsScopeRedirect(requested: ScopeParams, resolved: ScopeParams) {
+  return !sameScope(requested, resolved) && !sameScope(withDefaultScope(requested), resolved);
+}
+
 // ── Dataset ─────────────────────────────────────────────────────────────────
 
-interface OptionMeta {
+export interface OptionMeta {
   key: string;
   label: string;
   order: number;
@@ -170,7 +191,7 @@ interface OptionMeta {
   logoUrl?: string | null;
 }
 
-interface ResponseRecord {
+export interface ResponseRecord {
   createdAt: number;
   stateId: string;
   constituencyId: string;
@@ -178,7 +199,7 @@ interface ResponseRecord {
   answers: Partial<Record<QuestionKey, string[]>>;
 }
 
-interface Dataset {
+export interface Dataset {
   records: ResponseRecord[];
   meta: Record<QuestionKey, Map<string, OptionMeta>>;
   activeSurveyConstituencies: Set<string>;
@@ -188,6 +209,8 @@ interface Dataset {
   totalStates: number;
   totalConstituencies: number;
   totalDistricts: number;
+  /** Raw DB names/slugs of the loaded areas (used by the Analysis "Ask the data" name matcher). */
+  areaNames?: { districts: { id: string; slug: string; name: string }[]; constituencies: { id: string; slug: string; name: string }[] };
 }
 
 // Older survey versions stored MLA-opinion answers under different option
@@ -297,6 +320,10 @@ function buildDataset(
     totalStates,
     totalConstituencies: constituencies.length,
     totalDistricts: districts.length,
+    areaNames: {
+      districts: districts.map((d) => ({ id: d.id, slug: d.slug, name: d.name })),
+      constituencies: constituencies.map((c) => ({ id: c.id, slug: c.slug, name: c.name })),
+    },
   };
 }
 
@@ -377,7 +404,36 @@ async function loadAllStatesDataset(locale: Locale): Promise<Dataset | null> {
   return buildDataset(responses, districts, constituencies, activeSurveys, stateNames, states.length, locale);
 }
 
-function inScope(r: ResponseRecord, scope: ResolvedScope) {
+// Short-lived per-isolate cache for the Analysis page and its lazily loaded
+// modules, so switching a cross-analysis dimension (or opening the next
+// module) reuses the dataset instead of re-querying every response. The
+// Result page keeps calling loadStateDataset directly and is unaffected.
+const ANALYSIS_DATASET_TTL_MS = 30_000;
+const ANALYSIS_DATASET_CACHE_MAX = 16;
+const analysisDatasetCache = new Map<string, { at: number; value: Promise<Dataset | null> }>();
+
+export function loadAnalysisDataset(scope: ResolvedScope, locale: Locale): Promise<Dataset | null> {
+  const key = `${scope.level === "none" ? "all" : `${scope.state?.id}:${scope.election?.id}`}:${locale}`;
+  const now = Date.now();
+  const hit = analysisDatasetCache.get(key);
+  if (hit && now - hit.at < ANALYSIS_DATASET_TTL_MS) return hit.value;
+  const value = (scope.level === "none" ? loadAllStatesDataset(locale) : loadStateDataset(scope, locale)).catch((error) => {
+    analysisDatasetCache.delete(key);
+    throw error;
+  });
+  analysisDatasetCache.set(key, { at: now, value });
+  if (analysisDatasetCache.size > ANALYSIS_DATASET_CACHE_MAX) {
+    const oldest = [...analysisDatasetCache.entries()].sort((a, b) => a[1].at - b[1].at)[0];
+    if (oldest) analysisDatasetCache.delete(oldest[0]);
+  }
+  return value;
+}
+
+export function isSyntheticDataMode() {
+  return getSiteSetting<boolean>(SYNTHETIC_DATA_MODE_KEY, false);
+}
+
+export function inScope(r: ResponseRecord, scope: ResolvedScope) {
   if (scope.constituency) return r.constituencyId === scope.constituency.id;
   if (scope.district) return r.districtId === scope.district.id;
   return true;
@@ -401,9 +457,9 @@ export interface Distribution {
   items: DistItem[];
 }
 
-const pct = (count: number, total: number) => (total > 0 ? Math.round((count / total) * 1000) / 10 : 0);
+export const pct = (count: number, total: number) => (total > 0 ? Math.round((count / total) * 1000) / 10 : 0);
 
-function distribution(records: ResponseRecord[], q: QuestionKey, meta: Dataset["meta"], sort: "count" | "order"): Distribution {
+export function distribution(records: ResponseRecord[], q: QuestionKey, meta: Dataset["meta"], sort: "count" | "order"): Distribution {
   let answered = 0;
   const counts = new Map<string, number>();
   for (const r of records) {
@@ -420,7 +476,7 @@ function distribution(records: ResponseRecord[], q: QuestionKey, meta: Dataset["
   return { answered, items: items.map((i) => ({ key: i.key, label: i.label, count: i.count, pct: i.pct, color: i.color, logoUrl: i.logoUrl })) };
 }
 
-function mlaDistribution(records: ResponseRecord[], locale: Locale): Distribution {
+export function mlaDistribution(records: ResponseRecord[], locale: Locale): Distribution {
   let answered = 0;
   const counts = new Map<string, number>();
   for (const r of records) {
@@ -520,8 +576,11 @@ export async function getScopedResults(scope: ResolvedScope, locale: Locale): Pr
 export interface AnalysisFilters {
   /** "all" or "<demographicKey>:<optionKey>" */
   segment: string;
-  /** "all" | "30d" | "7d" */
+  /** "all" | "30d" | "7d" | "custom" (custom uses from/to) */
   period: string;
+  /** Inclusive IST calendar dates (YYYY-MM-DD), only with period "custom". */
+  from?: string;
+  to?: string;
 }
 
 export interface CrossTabRow {
@@ -567,6 +626,8 @@ export interface Finding {
   icon: "party" | "mla" | "issue" | "demographic" | "geo" | "compare";
   title: string;
   text: string;
+  /** Smallest sample (N) the finding rests on, when the producer knows it (see reportableFindings). */
+  base?: number;
 }
 
 export interface ScopeAnalysis extends ScopeSummary {
@@ -640,7 +701,7 @@ function crossTab(
   return { columns, rows, meaningful: rows.filter((r) => r.sufficient).length >= 2 };
 }
 
-function bucketKey(t: number, g: "day" | "week" | "month") {
+export function bucketKey(t: number, g: "day" | "week" | "month") {
   const d = new Date(t + 5.5 * 60 * 60 * 1000); // IST calendar
   if (g === "month") return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
   if (g === "week") {
@@ -651,7 +712,7 @@ function bucketKey(t: number, g: "day" | "week" | "month") {
   return d.toISOString().slice(0, 10);
 }
 
-function bucketLabel(key: string, g: "day" | "week" | "month", locale: Locale) {
+export function bucketLabel(key: string, g: "day" | "week" | "month", locale: Locale) {
   const loc = locale === "hi" ? "hi-IN" : "en-IN";
   if (g === "month") {
     const [y, m] = key.split("-").map(Number);
@@ -661,7 +722,7 @@ function bucketLabel(key: string, g: "day" | "week" | "month", locale: Locale) {
   return new Intl.DateTimeFormat(loc, { day: "numeric", month: "short", timeZone: "UTC" }).format(new Date(Date.UTC(y, m - 1, d)));
 }
 
-function granularityFor(records: ResponseRecord[]): "day" | "week" | "month" {
+export function granularityFor(records: ResponseRecord[]): "day" | "week" | "month" {
   const times = records.map((r) => r.createdAt);
   const span = (Math.max(...times) - Math.min(...times)) / (24 * 60 * 60 * 1000);
   return span <= 45 ? "day" : span <= 180 ? "week" : "month";
@@ -722,11 +783,21 @@ function issueTrendOf(records: ResponseRecord[], topIssues: DistItem[], locale: 
   };
 }
 
-function applyFilters(records: ResponseRecord[], f: AnalysisFilters) {
+/** Start of an IST calendar day ("YYYY-MM-DD") as a UTC timestamp. */
+export function istDayStart(date: string) {
+  return Date.parse(`${date}T00:00:00+05:30`);
+}
+
+export function applyFilters(records: ResponseRecord[], f: AnalysisFilters) {
   let out = records;
   if (f.period === "7d" || f.period === "30d") {
     const since = Date.now() - (f.period === "7d" ? 7 : 30) * 24 * 60 * 60 * 1000;
     out = out.filter((r) => r.createdAt >= since);
+  }
+  if (f.period === "custom" && f.from && f.to) {
+    const start = istDayStart(f.from);
+    const end = istDayStart(f.to) + 24 * 60 * 60 * 1000;
+    out = out.filter((r) => r.createdAt >= start && r.createdAt < end);
   }
   if (f.segment !== "all") {
     const [q, key] = f.segment.split(":");
@@ -882,8 +953,8 @@ function insightsOf(a: Omit<ScopeAnalysis, "findings" | "insights">, locale: Loc
           : `Among the ${young.label} age group (N=${young.n}), ${best.label} is the most selected issue (${fmtPct(best.pct)}).`
       );
   }
-  // Scope vs parent comparison for the leading party.
-  if (a.comparison.length >= 2 && a.comparison[0].party[0]) {
+  // Scope vs parent comparison for the leading party (not on a sample below MIN_GROUP_N).
+  if (a.comparison.length >= 2 && a.comparison[0].party[0] && a.comparison[0].n >= MIN_GROUP_N) {
     const self = a.comparison[0];
     const parent = a.comparison[a.comparison.length - 1];
     const lead = self.party[0];
@@ -907,13 +978,8 @@ function insightsOf(a: Omit<ScopeAnalysis, "findings" | "insights">, locale: Loc
   return out;
 }
 
-export async function getScopedAnalysis(scope: ResolvedScope, locale: Locale, filters: AnalysisFilters): Promise<ScopeAnalysis | null> {
-  // No state/district/constituency selected → Overall Analysis, combining
-  // every active state's eligible responses. getScopedResults (the Result
-  // page) intentionally keeps requiring a state and is not touched here.
-  const ds = scope.level === "none" ? await loadAllStatesDataset(locale) : await loadStateDataset(scope, locale);
-  if (!ds) return null;
-  const isSynthetic = await getSiteSetting<boolean>(SYNTHETIC_DATA_MODE_KEY, false);
+/** Analysis aggregation for a loaded dataset (no I/O) — used by the Analysis engine (analysis-engine.ts). */
+export function buildScopedAnalysis(ds: Dataset, scope: ResolvedScope, locale: Locale, filters: AnalysisFilters, isSynthetic: boolean): ScopeAnalysis {
   const stateAll = applyFilters(ds.records, filters);
   const records = stateAll.filter((r) => inScope(r, scope));
   const base = summarize(records, ds, scope, locale, isSynthetic);

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getServerLocale } from "@/lib/i18n/locale-cookie";
-import { getScopedResults, resolveScope, sameScope, scopeQuery, type ScopeParams } from "@/lib/scoped-survey";
+import { getScopedResults, needsScopeRedirect, resolveScope, scopeQuery, withDefaultScope, type ScopeParams } from "@/lib/scoped-survey";
 import { ScopedResultsView } from "@/components/results/ScopedResultsView";
 import { buildPageMetadata } from "@/lib/seo";
 import { applySeoOverride } from "@/lib/seo-overrides";
@@ -21,7 +21,7 @@ function readScope(sp: Record<string, string | string[] | undefined>): ScopePara
 export async function generateMetadata({ searchParams }: { searchParams: SearchParams }): Promise<Metadata> {
   const locale = await getServerLocale();
   const hi = locale === "hi";
-  const scope = await resolveScope(readScope(await searchParams), locale);
+  const scope = await resolveScope(withDefaultScope(readScope(await searchParams)), locale);
   const place = scope.constituency?.name ?? scope.district?.name ?? scope.state?.name;
   const year = scope.election?.year ?? 2027;
   const title = place
@@ -51,8 +51,8 @@ export const dynamic = "force-dynamic";
 export default async function ResultsPage({ searchParams }: { searchParams: SearchParams }) {
   const locale = await getServerLocale();
   const requested = readScope(await searchParams);
-  const scope = await resolveScope(requested, locale);
-  if (!sameScope(requested, scope.params)) redirect(`/results${scopeQuery(scope.params)}`);
+  const scope = await resolveScope(withDefaultScope(requested), locale);
+  if (needsScopeRedirect(requested, scope.params)) redirect(`/results${scopeQuery(scope.params)}`);
 
   const data = scope.level === "none" ? null : await getScopedResults(scope, locale);
   return <ScopedResultsView scope={scope} data={data} hi={locale === "hi"} />;

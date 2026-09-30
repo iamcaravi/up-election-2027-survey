@@ -1310,11 +1310,11 @@ function SuccessScreen({
   }
 
   return (
-    <div className="w-full max-w-4xl mx-auto px-3 sm:px-5 lg:px-6 py-3 sm:py-5">
+    <div className="w-full max-w-4xl lg:max-w-5xl xl:max-w-[1240px] mx-auto px-3 sm:px-5 lg:px-6 xl:px-8 py-3 sm:py-5 xl:py-8">
       {/* 1. TOP BREADCRUMB MATCHING REFERENCE 5 */}
       <nav
         aria-label="Breadcrumb"
-        className="flex items-center flex-wrap gap-1.5 text-xs sm:text-[13px] text-slate-500 mb-2.5 sm:mb-4"
+        className="flex items-center flex-wrap gap-1.5 text-xs sm:text-[13px] xl:text-sm text-slate-500 mb-2.5 sm:mb-4 xl:mb-5"
       >
         <Link href="/" className="hover:text-slate-900 transition-colors">
           होम
@@ -1356,30 +1356,30 @@ function SuccessScreen({
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.25 }}
-        className="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-7 shadow-xs relative overflow-hidden"
+        className="bg-white rounded-2xl xl:rounded-3xl border border-slate-200/80 p-5 sm:p-7 lg:px-10 lg:py-9 xl:px-14 xl:py-12 shadow-xs relative overflow-hidden"
       >
         {/* Soft Background Radial Gradient */}
-        <div className="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-sky-50/50 via-emerald-50/20 to-transparent pointer-events-none" />
+        <div className="absolute top-0 inset-x-0 h-32 xl:h-48 bg-gradient-to-b from-sky-50/50 via-emerald-50/20 to-transparent pointer-events-none" />
 
         {/* HERO SECTION */}
         <div className="relative z-10 flex flex-col items-center text-center">
           {/* Green Halo Checkmark Badge (Compact) */}
-          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-emerald-100 flex items-center justify-center mb-2.5 ring-6 ring-emerald-50">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-emerald-500 flex items-center justify-center text-white shadow-2xs">
-              <Check size={22} strokeWidth={3.5} />
+          <div className="w-14 h-14 sm:w-16 sm:h-16 xl:w-20 xl:h-20 rounded-full bg-emerald-100 flex items-center justify-center mb-2.5 xl:mb-4 ring-6 xl:ring-8 ring-emerald-50">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 xl:w-12 xl:h-12 rounded-full bg-emerald-500 flex items-center justify-center text-white shadow-2xs">
+              <Check size={22} strokeWidth={3.5} className="xl:h-7 xl:w-7" />
             </div>
           </div>
 
           {/* Heading & Subtitle */}
-          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+          <h1 className="text-2xl sm:text-3xl xl:text-[42px] xl:leading-tight font-black text-slate-900 tracking-tight">
             धन्यवाद!
           </h1>
-          <p className="mt-1 text-sm sm:text-base font-bold text-slate-800">
+          <p className="mt-1 xl:mt-2 text-sm sm:text-base xl:text-xl font-bold text-slate-800">
             आपका उत्तर सफलतापूर्वक जमा हो गया है।
           </p>
 
           {/* Dynamic Constituency Acknowledgment */}
-          <p className="mt-1 text-xs sm:text-sm text-slate-700">
+          <p className="mt-1 xl:mt-2 text-xs sm:text-sm xl:text-[17px] text-slate-700">
             आपने{" "}
             <strong className="font-bold text-slate-900">
               {constituencyName.toLowerCase().trim() === districtName.toLowerCase().trim()
@@ -1388,58 +1388,58 @@ function SuccessScreen({
             </strong>{" "}
             विधानसभा क्षेत्र के लिए अपना मत दर्ज कर दिया है।
           </p>
-          <p className="mt-0.5 text-[11px] sm:text-xs text-slate-500">
+          <p className="mt-0.5 xl:mt-1 text-[11px] sm:text-xs xl:text-sm text-slate-500">
             आपका उत्तर सुरक्षित रूप से हमारे सिस्टम में रिकॉर्ड कर लिया गया है।
           </p>
 
           {/* 1. REAL STATS BOXES */}
-          <div className="w-full max-w-xl grid grid-cols-3 gap-2 mt-4 bg-slate-50/70 border border-slate-200/80 rounded-xl p-3 divide-x divide-slate-200">
-            <div className="px-1.5 flex flex-col items-center">
-              <div className="w-7 h-7 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center mb-1">
-                <Users size={14} />
+          <div className="w-full max-w-xl lg:max-w-3xl xl:max-w-[920px] grid grid-cols-3 gap-2 mt-4 xl:mt-8 bg-slate-50/70 border border-slate-200/80 rounded-xl xl:rounded-2xl p-3 lg:p-4 xl:py-6 divide-x divide-slate-200">
+            <div className="px-1.5 xl:px-4 flex flex-col items-center">
+              <div className="w-7 h-7 xl:w-10 xl:h-10 rounded-lg xl:rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center mb-1 xl:mb-2">
+                <Users size={14} className="xl:h-5 xl:w-5" />
               </div>
-              <span className="font-extrabold text-slate-900 text-sm sm:text-base leading-tight">
+              <span className="font-extrabold text-slate-900 text-sm sm:text-base xl:text-[28px] leading-tight">
                 {validResponseCount}
               </span>
-              <span className="text-[10px] font-bold text-slate-700 leading-tight mt-0.5">
+              <span className="text-[10px] xl:text-sm font-bold text-slate-700 leading-tight mt-0.5 xl:mt-1">
                 कुल प्रतिभागी
               </span>
-              <span className="text-[9px] text-slate-400 leading-tight">अब तक प्राप्त</span>
+              <span className="text-[9px] xl:text-xs text-slate-400 leading-tight xl:mt-0.5">अब तक प्राप्त</span>
             </div>
 
-            <div className="px-1.5 flex flex-col items-center">
-              <div className="w-7 h-7 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center mb-1">
-                <ShieldCheck size={14} />
+            <div className="px-1.5 xl:px-4 flex flex-col items-center">
+              <div className="w-7 h-7 xl:w-10 xl:h-10 rounded-lg xl:rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center mb-1 xl:mb-2">
+                <ShieldCheck size={14} className="xl:h-5 xl:w-5" />
               </div>
-              <span className="font-extrabold text-slate-900 text-sm sm:text-base leading-tight">
+              <span className="font-extrabold text-slate-900 text-sm sm:text-base xl:text-[28px] leading-tight">
                 {constituencyNumber ? `#${constituencyNumber}` : "100%"}
               </span>
-              <span className="text-[10px] font-bold text-slate-700 leading-tight mt-0.5">
+              <span className="text-[10px] xl:text-sm font-bold text-slate-700 leading-tight mt-0.5 xl:mt-1">
                 {constituencyNumber ? "विधानसभा संख्या" : "सुरक्षित एवं गोपनीय"}
               </span>
-              <span className="text-[9px] text-slate-400 leading-tight">इस क्षेत्र में</span>
+              <span className="text-[9px] xl:text-xs text-slate-400 leading-tight xl:mt-0.5">इस क्षेत्र में</span>
             </div>
 
-            <div className="px-1.5 flex flex-col items-center">
-              <div className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center mb-1">
-                <BarChart3 size={14} />
+            <div className="px-1.5 xl:px-4 flex flex-col items-center">
+              <div className="w-7 h-7 xl:w-10 xl:h-10 rounded-lg xl:rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center mb-1 xl:mb-2">
+                <BarChart3 size={14} className="xl:h-5 xl:w-5" />
               </div>
-              <span className="font-extrabold text-slate-900 text-sm sm:text-base leading-tight">
+              <span className="font-extrabold text-slate-900 text-sm sm:text-base xl:text-[28px] leading-tight">
                 {electionYear}
               </span>
-              <span className="text-[10px] font-bold text-slate-700 leading-tight mt-0.5">
+              <span className="text-[10px] xl:text-sm font-bold text-slate-700 leading-tight mt-0.5 xl:mt-1">
                 विधानसभा चुनाव
               </span>
-              <span className="text-[9px] text-slate-400 leading-tight">आने वाला है</span>
+              <span className="text-[9px] xl:text-xs text-slate-400 leading-tight xl:mt-0.5">आने वाला है</span>
             </div>
           </div>
 
           {/* 2. ACTION CTA BUTTONS (RESULT & SHARE — SIDE BY SIDE & TALLER) */}
-          <div className="w-full max-w-xl grid grid-cols-2 gap-2 sm:gap-3.5 mt-4 sm:mt-5">
+          <div className="w-full max-w-xl lg:max-w-3xl xl:max-w-[920px] grid grid-cols-2 gap-2 sm:gap-3.5 xl:gap-5 mt-4 sm:mt-5 xl:mt-7">
             <button
               type="button"
               onClick={() => router.push(resultsHref)}
-              className="flex items-center justify-center bg-[#ea580c] hover:bg-[#c2410c] text-white font-bold h-[50px] sm:h-[54px] rounded-xl shadow-xs text-[11.5px] min-[380px]:text-[13px] sm:text-sm md:text-base px-1.5 sm:px-4 transition-all cursor-pointer text-center leading-tight whitespace-nowrap"
+              className="flex items-center justify-center bg-[#ea580c] hover:bg-[#c2410c] text-white font-bold h-[50px] sm:h-[54px] xl:h-16 rounded-xl xl:rounded-2xl shadow-xs text-[11.5px] min-[380px]:text-[13px] sm:text-sm md:text-base xl:text-lg px-1.5 sm:px-4 transition-all cursor-pointer text-center leading-tight whitespace-nowrap"
             >
               <span>वर्तमान परिणाम देखें →</span>
             </button>
@@ -1447,73 +1447,73 @@ function SuccessScreen({
             <button
               type="button"
               onClick={handleShare}
-              className="flex items-center justify-center gap-1.5 sm:gap-2 border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 font-bold h-[50px] sm:h-[54px] rounded-xl shadow-xs text-[11.5px] min-[380px]:text-[13px] sm:text-sm md:text-base px-1.5 sm:px-4 transition-all cursor-pointer text-center leading-tight whitespace-nowrap"
+              className="flex items-center justify-center gap-1.5 sm:gap-2 border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 font-bold h-[50px] sm:h-[54px] xl:h-16 rounded-xl xl:rounded-2xl shadow-xs text-[11.5px] min-[380px]:text-[13px] sm:text-sm md:text-base xl:text-lg px-1.5 sm:px-4 transition-all cursor-pointer text-center leading-tight whitespace-nowrap"
             >
-              <Share2 size={16} className="shrink-0" />
+              <Share2 size={16} className="shrink-0 xl:h-5 xl:w-5" />
               <span>{copied ? "कॉपी हो गया!" : "सर्वे शेयर करें"}</span>
             </button>
           </div>
 
           {/* 3. TRUST BADGES (SHIFTED BELOW RESULT & SHARE BUTTONS) */}
-          <div className="w-full max-w-xl grid grid-cols-1 sm:grid-cols-3 gap-2.5 mt-4 sm:mt-5 text-left">
-            <div className="flex items-center gap-2.5 bg-[#f8fbff] border border-blue-100/80 rounded-xl p-2.5 shadow-2xs">
-              <div className="w-7 h-7 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
-                <Lock size={14} />
+          <div className="w-full max-w-xl lg:max-w-3xl xl:max-w-[920px] grid grid-cols-1 sm:grid-cols-3 gap-2.5 xl:gap-4 mt-4 sm:mt-5 xl:mt-7 text-left">
+            <div className="flex items-center gap-2.5 bg-[#f8fbff] border border-blue-100/80 rounded-xl xl:rounded-2xl p-2.5 xl:p-4 xl:gap-3.5 shadow-2xs">
+              <div className="w-7 h-7 xl:w-10 xl:h-10 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+                <Lock size={14} className="xl:h-5 xl:w-5" />
               </div>
               <div>
-                <p className="text-xs font-bold text-slate-900 leading-tight">आपकी गोपनीयता</p>
-                <p className="text-[10.5px] text-slate-500 leading-tight mt-0.5">100% सुरक्षित</p>
+                <p className="text-xs xl:text-[15px] font-bold text-slate-900 leading-tight">आपकी गोपनीयता</p>
+                <p className="text-[10.5px] xl:text-[13px] text-slate-500 leading-tight mt-0.5 xl:mt-1">100% सुरक्षित</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2.5 bg-[#faf8fd] border border-purple-100/80 rounded-xl p-2.5 shadow-2xs">
-              <div className="w-7 h-7 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center shrink-0">
-                <BarChart3 size={14} />
+            <div className="flex items-center gap-2.5 bg-[#faf8fd] border border-purple-100/80 rounded-xl xl:rounded-2xl p-2.5 xl:p-4 xl:gap-3.5 shadow-2xs">
+              <div className="w-7 h-7 xl:w-10 xl:h-10 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center shrink-0">
+                <BarChart3 size={14} className="xl:h-5 xl:w-5" />
               </div>
               <div>
-                <p className="text-xs font-bold text-slate-900 leading-tight">आपका डेटा केवल</p>
-                <p className="text-[10.5px] text-slate-500 leading-tight mt-0.5">सार्वजनिक विश्लेषण के लिए</p>
+                <p className="text-xs xl:text-[15px] font-bold text-slate-900 leading-tight">आपका डेटा केवल</p>
+                <p className="text-[10.5px] xl:text-[13px] text-slate-500 leading-tight mt-0.5 xl:mt-1">सार्वजनिक विश्लेषण के लिए</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2.5 bg-[#f7fcf9] border border-emerald-100/80 rounded-xl p-2.5 shadow-2xs">
-              <div className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
-                <ShieldCheck size={14} />
+            <div className="flex items-center gap-2.5 bg-[#f7fcf9] border border-emerald-100/80 rounded-xl xl:rounded-2xl p-2.5 xl:p-4 xl:gap-3.5 shadow-2xs">
+              <div className="w-7 h-7 xl:w-10 xl:h-10 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                <ShieldCheck size={14} className="xl:h-5 xl:w-5" />
               </div>
               <div>
-                <p className="text-xs font-bold text-slate-900 leading-tight">कोई व्यक्तिगत जानकारी</p>
-                <p className="text-[10.5px] text-slate-500 leading-tight mt-0.5">सार्वजनिक नहीं की जाती</p>
+                <p className="text-xs xl:text-[15px] font-bold text-slate-900 leading-tight">कोई व्यक्तिगत जानकारी</p>
+                <p className="text-[10.5px] xl:text-[13px] text-slate-500 leading-tight mt-0.5 xl:mt-1">सार्वजनिक नहीं की जाती</p>
               </div>
             </div>
           </div>
 
           {/* SOCIAL SHARE STRIP */}
-          <div className="w-full max-w-xl mt-4 p-3 rounded-xl bg-orange-50/50 border border-orange-100 flex flex-col sm:flex-row items-center justify-between gap-3">
-            <div className="flex items-center gap-2.5 text-left">
-              <div className="w-8 h-8 rounded-full bg-orange-100 text-[#ea580c] flex items-center justify-center shrink-0">
-                <Megaphone size={16} />
+          <div className="w-full max-w-xl lg:max-w-3xl xl:max-w-[920px] mt-4 xl:mt-5 p-3 xl:px-6 xl:py-5 rounded-xl xl:rounded-2xl bg-orange-50/50 border border-orange-100 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5 xl:gap-4 text-left">
+              <div className="w-8 h-8 xl:w-11 xl:h-11 rounded-full bg-orange-100 text-[#ea580c] flex items-center justify-center shrink-0">
+                <Megaphone size={16} className="xl:h-6 xl:w-6" />
               </div>
               <div>
-                <p className="font-bold text-slate-900 text-xs sm:text-[13px] leading-tight">अपनी राय साझा करें</p>
-                <p className="text-[11px] text-slate-600 leading-tight mt-0.5">
+                <p className="font-bold text-slate-900 text-xs sm:text-[13px] xl:text-base leading-tight">अपनी राय साझा करें</p>
+                <p className="text-[11px] xl:text-sm text-slate-600 leading-tight mt-0.5 xl:mt-1">
                   इस सर्वेक्षण को अपने परिवार और दोस्तों के साथ शेयर करें।
                 </p>
               </div>
             </div>
 
             {/* Social Share Icons */}
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-2 xl:gap-3 shrink-0">
               <a
                 href={`https://api.whatsapp.com/send?text=${encodeURIComponent(
                   `${shareText} ${shareUrl}`
                 )}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-8 h-8 rounded-full bg-[#25D366] text-white flex items-center justify-center hover:opacity-90 transition-opacity shadow-2xs"
+                className="w-8 h-8 xl:w-11 xl:h-11 rounded-full bg-[#25D366] text-white flex items-center justify-center hover:opacity-90 transition-opacity shadow-2xs"
                 title="WhatsApp"
                 aria-label="Share on WhatsApp"
               >
-                <span className="font-bold text-[11px]">WA</span>
+                <span className="font-bold text-[11px] xl:text-[13px]">WA</span>
               </a>
               <a
                 href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
@@ -1521,11 +1521,11 @@ function SuccessScreen({
                 )}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-8 h-8 rounded-full bg-[#1877F2] text-white flex items-center justify-center hover:opacity-90 transition-opacity shadow-2xs"
+                className="w-8 h-8 xl:w-11 xl:h-11 rounded-full bg-[#1877F2] text-white flex items-center justify-center hover:opacity-90 transition-opacity shadow-2xs"
                 title="Facebook"
                 aria-label="Share on Facebook"
               >
-                <span className="font-bold text-[11px]">FB</span>
+                <span className="font-bold text-[11px] xl:text-[13px]">FB</span>
               </a>
               <a
                 href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(
@@ -1533,11 +1533,11 @@ function SuccessScreen({
                 )}&url=${encodeURIComponent(shareUrl)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center hover:opacity-90 transition-opacity shadow-2xs"
+                className="w-8 h-8 xl:w-11 xl:h-11 rounded-full bg-black text-white flex items-center justify-center hover:opacity-90 transition-opacity shadow-2xs"
                 title="X (Twitter)"
                 aria-label="Share on X"
               >
-                <span className="font-bold text-[11px]">𝕏</span>
+                <span className="font-bold text-[11px] xl:text-[13px]">𝕏</span>
               </a>
               <a
                 href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(
@@ -1545,63 +1545,63 @@ function SuccessScreen({
                 )}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-8 h-8 rounded-full bg-[#0A66C2] text-white flex items-center justify-center hover:opacity-90 transition-opacity shadow-2xs"
+                className="w-8 h-8 xl:w-11 xl:h-11 rounded-full bg-[#0A66C2] text-white flex items-center justify-center hover:opacity-90 transition-opacity shadow-2xs"
                 title="LinkedIn"
                 aria-label="Share on LinkedIn"
               >
-                <span className="font-bold text-[11px]">in</span>
+                <span className="font-bold text-[11px] xl:text-[13px]">in</span>
               </a>
               <button
                 type="button"
                 onClick={handleCopyLink}
-                className="w-8 h-8 rounded-full bg-slate-100 text-slate-700 hover:bg-slate-200 flex items-center justify-center transition-colors shadow-2xs cursor-pointer"
+                className="w-8 h-8 xl:w-11 xl:h-11 rounded-full bg-slate-100 text-slate-700 hover:bg-slate-200 flex items-center justify-center transition-colors shadow-2xs cursor-pointer"
                 title="Copy Link"
                 aria-label="Copy survey link"
               >
-                <Copy size={14} />
+                <Copy size={14} className="xl:h-[18px] xl:w-[18px]" />
               </button>
             </div>
           </div>
 
           {/* 4 CIVIC VALUE CARDS AT BOTTOM */}
-          <div className="w-full max-w-3xl mt-5 pt-4 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-left">
-            <div className="flex items-center gap-2.5 p-2 rounded-lg bg-slate-50/70 border border-slate-100">
-              <div className="w-7 h-7 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center shrink-0">
-                <Users size={14} />
+          <div className="w-full max-w-3xl lg:max-w-4xl xl:max-w-none mt-5 xl:mt-10 pt-4 xl:pt-7 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 xl:gap-4 text-left">
+            <div className="flex items-center gap-2.5 xl:gap-3.5 p-2 xl:p-4 rounded-lg xl:rounded-xl bg-slate-50/70 border border-slate-100">
+              <div className="w-7 h-7 xl:w-10 xl:h-10 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center shrink-0">
+                <Users size={14} className="xl:h-5 xl:w-5" />
               </div>
               <div>
-                <p className="text-[11px] font-bold text-slate-900 leading-tight">जनता की भागीदारी</p>
-                <p className="text-[10px] text-slate-500 leading-tight mt-0.5">बेहतर लोकतंत्र के लिए</p>
+                <p className="text-[11px] xl:text-sm font-bold text-slate-900 leading-tight">जनता की भागीदारी</p>
+                <p className="text-[10px] xl:text-[12.5px] text-slate-500 leading-tight mt-0.5 xl:mt-1">बेहतर लोकतंत्र के लिए</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2.5 p-2 rounded-lg bg-slate-50/70 border border-slate-100">
-              <div className="w-7 h-7 rounded-lg bg-red-100 text-red-600 flex items-center justify-center shrink-0">
-                <Target size={14} />
+            <div className="flex items-center gap-2.5 xl:gap-3.5 p-2 xl:p-4 rounded-lg xl:rounded-xl bg-slate-50/70 border border-slate-100">
+              <div className="w-7 h-7 xl:w-10 xl:h-10 rounded-lg bg-red-100 text-red-600 flex items-center justify-center shrink-0">
+                <Target size={14} className="xl:h-5 xl:w-5" />
               </div>
               <div>
-                <p className="text-[11px] font-bold text-slate-900 leading-tight">हर आवाज मायने रखती है</p>
-                <p className="text-[10px] text-slate-500 leading-tight mt-0.5">आइए मिलकर भविष्य बनाएं</p>
+                <p className="text-[11px] xl:text-sm font-bold text-slate-900 leading-tight">हर आवाज मायने रखती है</p>
+                <p className="text-[10px] xl:text-[12.5px] text-slate-500 leading-tight mt-0.5 xl:mt-1">आइए मिलकर भविष्य बनाएं</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2.5 p-2 rounded-lg bg-slate-50/70 border border-slate-100">
-              <div className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
-                <Leaf size={14} />
+            <div className="flex items-center gap-2.5 xl:gap-3.5 p-2 xl:p-4 rounded-lg xl:rounded-xl bg-slate-50/70 border border-slate-100">
+              <div className="w-7 h-7 xl:w-10 xl:h-10 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                <Leaf size={14} className="xl:h-5 xl:w-5" />
               </div>
               <div>
-                <p className="text-[11px] font-bold text-slate-900 leading-tight">एक जिम्मेदार नागरिक बनें</p>
-                <p className="text-[10px] text-slate-500 leading-tight mt-0.5">अपने क्षेत्र के विकास में भाग लें</p>
+                <p className="text-[11px] xl:text-sm font-bold text-slate-900 leading-tight">एक जिम्मेदार नागरिक बनें</p>
+                <p className="text-[10px] xl:text-[12.5px] text-slate-500 leading-tight mt-0.5 xl:mt-1">अपने क्षेत्र के विकास में भाग लें</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2.5 p-2 rounded-lg bg-slate-50/70 border border-slate-100">
-              <div className="w-7 h-7 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
-                <Heart size={14} className="fill-rose-600" />
+            <div className="flex items-center gap-2.5 xl:gap-3.5 p-2 xl:p-4 rounded-lg xl:rounded-xl bg-slate-50/70 border border-slate-100">
+              <div className="w-7 h-7 xl:w-10 xl:h-10 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
+                <Heart size={14} className="fill-rose-600 xl:h-5 xl:w-5" />
               </div>
               <div>
-                <p className="text-[11px] font-bold text-slate-900 leading-tight">votersurvey.in</p>
-                <p className="text-[10px] text-slate-500 leading-tight mt-0.5">जनता की राय, बेहतर कल के लिए</p>
+                <p className="text-[11px] xl:text-sm font-bold text-slate-900 leading-tight">votersurvey.in</p>
+                <p className="text-[10px] xl:text-[12.5px] text-slate-500 leading-tight mt-0.5 xl:mt-1">जनता की राय, बेहतर कल के लिए</p>
               </div>
             </div>
           </div>

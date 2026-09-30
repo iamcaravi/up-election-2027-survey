@@ -1,659 +1,807 @@
+import Image from "next/image";
 import Link from "next/link";
-import type { ReactNode } from "react";
 import {
-  Award,
-  BarChart3,
-  Building2,
-  Calendar,
+  Activity,
+  ChartLine,
   CheckCircle2,
-  Download,
-  Landmark,
+  ChevronRight,
+  Clock,
+  Flag,
   Lightbulb,
-  ListChecks,
+  Map as MapIcon,
+  MapPin,
   MapPinned,
-  Smile,
-  TrendingUp,
+  Network,
+  ShieldCheck,
+  Target,
   UserCheck,
+  UserRound,
   Users,
-  Vote,
 } from "lucide-react";
-import type { ResolvedScope, ScopeAnalysis, Finding } from "@/lib/scoped-survey";
+import type { ResolvedScope, ScopeAnalysis } from "@/lib/scoped-survey";
 import { MIN_GROUP_N } from "@/lib/scoped-survey";
-import { analysisQuery } from "@/lib/analysis-params";
+import { areaUnitOf, formatIstDate, mlaStance, reportableFindings, todayIst, type AnalysisExtras } from "@/lib/analysis-engine";
+import { ALL_STATES_PARAM, analysisQuery } from "@/lib/analysis-params";
+import { analysisModules } from "@/lib/analysis-modules";
 import { resultsPath } from "@/lib/routes";
 import { cn, formatNumber } from "@/lib/utils";
-import { ScopeHero } from "@/components/scope/ScopeHeader";
-import { ScopeContent, ScopeNavProvider, ScopeSelectors } from "@/components/scope/ScopeNav";
-import { ColumnBars, Donut, EmptyNote, HeatTable, IssueBars, LineTrend, PartyBars, StackedCrossTab, colorOf, round } from "@/components/scope/charts";
-import { AnalysisFiltersRow, PanelTabs } from "./AnalysisControls";
+import { ScopeContent, ScopeNavProvider } from "@/components/scope/ScopeNav";
+import { Donut, PartyBars, StackedCrossTab } from "@/components/scope/charts";
+import { AnalysisMobileNav, AnalysisSideNav } from "./dashboard/AnalysisNav";
+import { AnalysisFilters } from "./dashboard/AnalysisFilters";
+import { DeepHubProvider, PanelSlot, Tile, type PanelDef } from "./dashboard/DeepHub";
+import { CollapsibleCard, DetailDialog, SegTabs } from "./dashboard/interactive";
+import { Card, CardHeader, EmphasizeNumbers, Empty, FooterLink, KpiCard, PillLink, CARD } from "./dashboard/ui";
+import { ColumnChart, IssueRows, MiniDonut, PartyColumns, TrendLine } from "./dashboard/charts";
+import { FactsGrid, FindingCards, GeoTable, InsightList, LevelCompare, Methodology, QualityDetails, SampleNote } from "./dashboard/blocks";
+import { CrossModule } from "./dashboard/modules/CrossModule";
+import { IssueModule } from "./dashboard/modules/IssueModule";
+import { GeoModule } from "./dashboard/modules/GeoModule";
+import { TimeModule } from "./dashboard/modules/TimeModule";
+import { AskCard, AskPanel } from "./dashboard/modules/AskModule";
+import { ReportBuilder, ReportCard } from "./dashboard/modules/ReportModule";
 
-// THE canonical public Analysis experience (State / District / Assembly).
-// Answers "इन परिणामों को अलग-अलग तरीकों से समझने पर क्या पता चलता है?" —
-// trends, demographics, cross-analysis, geography and comparisons, all
-// computed from real responses of the selected scope. Descriptive only: no
-// forecasts, no winners.
+// THE canonical public Analysis page (State / District / Assembly), laid out
+// after the approved Analysis reference: compact sidebar, scope header with the
+// current MLA, filter bar, KPI row, a summary dashboard (profile · findings ·
+// trend, then party · MLA · issues · demographics) and — below it — deep
+// modules that open one at a time. Everything is computed from real survey
+// responses of the selected scope; descriptive only, never a forecast, and
+// entirely free (modules can be switched via src/lib/analysis-modules.ts).
 
-const SECTIONS = [
-  { id: "overview", hi: "मुख्य अवलोकन", en: "Overview" },
-  { id: "demographics", hi: "जनसांख्यिकीय विश्लेषण", en: "Demographics" },
-  { id: "party", hi: "पार्टी समर्थन", en: "Party support" },
-  { id: "mla", hi: "विधायक के कार्य", en: "MLA performance" },
-  { id: "issues", hi: "मुख्य मुद्दे", en: "Main issues" },
-  { id: "compare", hi: "तुलनात्मक विश्लेषण", en: "Comparison" },
-] as const;
+const FINDING_ORDER = ["issue", "party", "demographic", "mla"] as const;
+const FINDING_DOT = ["bg-[#16a34a]", "bg-[#f97316]", "bg-[#2f6fed]", "bg-[#ec4899]"];
 
-export function ScopedAnalysisView({
-  scope,
-  data,
-  hi,
-  printMode = false,
-}: {
-  scope: ResolvedScope;
-  data: ScopeAnalysis | null;
-  hi: boolean;
-  printMode?: boolean;
-}) {
+export function ScopedAnalysisView({ scope, data, extras, hi }: { scope: ResolvedScope; data: ScopeAnalysis | null; extras: AnalysisExtras | null; hi: boolean }) {
+  const T = (h: string, e: string) => (hi ? h : e);
   const year = scope.election?.year ?? 2027;
-  const place = scope.constituency?.name ?? scope.district?.name ?? scope.state?.name ?? "";
-  const hasData = !!data && data.total > 0;
-  const filtered = !!data && (data.filters.segment !== "all" || data.filters.period !== "all");
-  const noData = hi ? "इस विश्लेषण के लिए अभी पर्याप्त डेटा उपलब्ध नहीं है।" : "Not enough data for this analysis yet.";
-  const notEnough = hi ? "इस विश्लेषण के लिए पर्याप्त प्रतिक्रियाएं उपलब्ध नहीं हैं।" : "Not enough responses for this analysis.";
-  const tooFew = hi ? "प्रतिक्रियाएं पर्याप्त नहीं" : "Too few responses";
-  const segLabel = data?.segmentOptions.find((o) => o.value === data.filters.segment)?.label;
+  const hasData = !!data && !!extras && data.total > 0;
+  const query = analysisQuery(scope.params, data?.filters);
+  const today = todayIst();
+  const unit = areaUnitOf(scope);
+  const flags = analysisModules;
 
-  const controls =
-    !printMode && (
-      <div className="w-full shrink-0 rounded-2xl border border-slate-200/80 bg-white/90 p-3 shadow-2xs sm:p-4 lg:w-[600px]">
-        <ScopeSelectors
-          key={JSON.stringify(scope.params)}
-          hi={hi}
-          basePath="/analysis"
-          value={scope.params}
-          options={scope.options}
-          keep={data ? { segment: data.filters.segment, period: data.filters.period } : undefined}
-        />
+  const navIds = hasData
+    ? [
+        "summary",
+        flags.areaProfile && "profile",
+        flags.keyFindings && "findings",
+        flags.responseTrend && "trend",
+        flags.partySupport && "party",
+        flags.mlaOpinion && "mla",
+        flags.issueOverview && "issues",
+        flags.demographics && "demographics",
+        flags.crossAnalysis && "cross",
+        flags.geographicComparison && "geo",
+        (flags.timeComparison || flags.periodComparison) && "time",
+        flags.dataQuality && "quality",
+        flags.askData && "ask",
+        flags.detailedExport && "report",
+      ].filter((x): x is string => !!x)
+    : ["summary"];
+
+  return (
+    <ScopeNavProvider>
+      <div className="bg-[#f4f7fc] pb-8 text-slate-800 lg:pb-10">
+        <div className="mx-auto max-w-[1440px] px-3 pt-3 sm:px-5 sm:pt-5 lg:px-6">
+          <div className="lg:grid lg:grid-cols-[196px_minmax(0,1fr)] lg:items-start lg:gap-5 xl:gap-6">
+            <AnalysisSideNav hi={hi} ids={navIds} />
+            <div className="min-w-0">
+              <AnalysisMobileNav hi={hi} ids={navIds} />
+              <Header scope={scope} data={data} extras={extras} hi={hi} year={year} today={today} />
+              <ScopeContent hi={hi}>
+                {!hasData ? (
+                  <NoData scope={scope} data={data} hi={hi} />
+                ) : (
+                  <Dashboard scope={scope} data={data!} extras={extras!} hi={hi} query={query} today={today} unit={unit} T={T} />
+                )}
+              </ScopeContent>
+            </div>
+          </div>
+        </div>
+      </div>
+    </ScopeNavProvider>
+  );
+}
+
+// ── Header: breadcrumb · title · MLA card · filters · KPIs ──────────────────
+
+function Header({ scope, data, extras, hi, year, today }: { scope: ResolvedScope; data: ScopeAnalysis | null; extras: AnalysisExtras | null; hi: boolean; year: number; today: string }) {
+  const crumbs: { label: string; href?: string }[] = [];
+  if (scope.level === "none") crumbs.push({ label: hi ? "सभी राज्य (समग्र)" : "All states (combined)" });
+  if (scope.state) crumbs.push({ label: scope.state.name, href: scope.district ? `/analysis${analysisQuery({ state: scope.state.slug })}` : undefined });
+  if (scope.state && scope.district) crumbs.push({ label: scope.district.name, href: scope.constituency ? `/analysis${analysisQuery({ state: scope.state.slug, district: scope.district.slug })}` : undefined });
+  if (scope.constituency) crumbs.push({ label: scope.constituency.name });
+  const k = extras?.kpis;
+  const filters = data?.filters ?? { segment: "all", period: "all" };
+  const segmentOptions = data?.segmentOptions ?? [{ value: "all", label: hi ? "सभी उत्तरदाता" : "All respondents" }];
+
+  return (
+    <section id="summary" className="scroll-mt-24">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,300px)] xl:grid-cols-[minmax(0,1fr)_minmax(250px,300px)_200px] xl:items-start">
+        <div className="min-w-0 md:col-span-2 xl:col-span-1">
+          <nav aria-label={hi ? "दायरा" : "Scope"}>
+            <ol className="flex flex-wrap items-center gap-1 text-[13px] font-semibold">
+              {crumbs.map((c, i) => (
+                <li key={i} className="flex items-center gap-1">
+                  {i > 0 && <ChevronRight size={14} className="text-slate-400" aria-hidden="true" />}
+                  {c.href ? (
+                    <Link href={c.href} className="text-[#1677ff] hover:underline">
+                      {c.label}
+                    </Link>
+                  ) : (
+                    <span className={i === crumbs.length - 1 ? "text-[#1677ff]" : "text-slate-600"} aria-current={i === crumbs.length - 1 ? "page" : undefined}>
+                      {c.label}
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ol>
+          </nav>
+          <h1 className="mt-1.5 text-[23px] font-black leading-tight tracking-tight text-[#0b1f3a] sm:text-[28px] xl:text-[30px]">
+            {scope.level === "none" ? (hi ? "समग्र सर्वेक्षण विश्लेषण" : "Overall Survey Analysis") : hi ? `विधानसभा सर्वेक्षण विश्लेषण ${year}` : `Assembly Survey Analysis ${year}`}
+            <span className="sr-only"> — {scope.constituency?.name ?? scope.district?.name ?? scope.state?.name ?? ""}</span>
+          </h1>
+          <p className="mt-1 max-w-3xl text-[12.5px] leading-relaxed text-slate-600 sm:text-[13px]">
+            {hi
+              ? "यह पेज सर्वेक्षण प्रतिक्रियाओं पर आधारित विश्लेषण प्रस्तुत करता है। यह किसी भी प्रकार का चुनावी अनुमान नहीं है।"
+              : "This page presents an analysis based on survey responses. It is not an election forecast of any kind."}
+          </p>
+        </div>
+        <ContextCard scope={scope} extras={extras} hi={hi} />
         {data && (
-          <div className="mt-2.5">
-            <AnalysisFiltersRow hi={hi} scope={scope.params} filters={data.filters} segmentOptions={data.segmentOptions} exportDisabled={!hasData} />
+          <div className="hidden xl:block">
+            <AnalysisFilters key={scopeKey(scope, filters)} hi={hi} variant="header" scope={scope.params} options={scope.options} filters={filters} segmentOptions={segmentOptions} today={today} />
           </div>
         )}
       </div>
-    );
 
-  const body = (
-    <div className={cn("min-h-screen bg-[#f4f7fb] pb-12 text-slate-800", printMode && "min-h-0 bg-white")}>
-      <ScopeHero
-        scope={scope}
-        hi={hi}
-        leaf={hi ? "विश्लेषण" : "Analysis"}
-        titleFallback={scope.level === "none" ? (hi ? "समग्र विश्लेषण" : "Overall Analysis") : hi ? "विस्तृत विश्लेषण" : "Detailed Analysis"}
-        subtitle={
-          scope.level === "none"
-            ? hi
-              ? "समग्र चुनाव सर्वेक्षण विश्लेषण"
-              : "Overall Election Survey Analysis"
-            : hi
-              ? `विधानसभा चुनाव सर्वेक्षण ${year} — विस्तृत विश्लेषण`
-              : `Assembly Election Survey ${year} — Detailed Analysis`
-        }
-        description={
-          scope.level === "none"
-            ? hi
-              ? "उपलब्ध सभी राज्यों के सर्वेक्षण प्रतिक्रियाओं के आधार पर समग्र विश्लेषण — उपलब्ध सर्वेक्षण प्रतिक्रियाओं के आधार पर, संपूर्ण भारत या सभी मतदाताओं का प्रतिनिधित्व नहीं।"
-              : "Overall analysis based on survey responses from all available states — based on available survey responses, not a representation of all of India or all voters."
-            : hi
-              ? `यहाँ ${place} के सर्वेक्षण परिणामों का विस्तृत विश्लेषण है — अलग-अलग समूहों की राय, प्रमुख मुद्दे, विधायक के कार्यों पर राय और पार्टी समर्थन के अनुसार विस्तृत आंकड़े।`
-              : `A detailed analysis of ${place}'s survey results — group-wise opinion, key issues, MLA opinion and party support.`
-        }
-        aside={controls || undefined}
-        below={
-          data ? (
-            <div className="grid grid-cols-2 gap-2.5 sm:gap-3.5 lg:grid-cols-4">
-              {scope.level === "none" ? (
-                <>
-                  <Kpi icon={<Users size={20} />} tone="bg-violet-100 text-violet-600" value={formatNumber(data.total)} label={hi ? "कुल प्रतिक्रियाएं" : "Total responses"} sub={filtered ? (hi ? "चुने गए फ़िल्टर में" : "In selected filter") : hi ? "उपलब्ध सभी राज्यों से" : "From all available states"} />
-                  <Kpi
-                    icon={<Landmark size={20} />}
-                    tone="bg-orange-100 text-orange-500"
-                    value={`${formatNumber(data.respondingStates)}/${formatNumber(data.statesInScope)}`}
-                    label={hi ? "उपलब्ध राज्य" : "Available states"}
-                    sub={hi ? "प्रतिक्रिया वाले राज्य" : "States with responses"}
-                  />
-                  <Kpi
-                    icon={<MapPinned size={20} />}
-                    tone="bg-emerald-100 text-emerald-600"
-                    value={`${formatNumber(data.respondingDistricts)}/${formatNumber(data.districtsInScope)}`}
-                    label={hi ? "कवर किए गए जिले" : "Districts covered"}
-                    sub={hi ? "प्रतिक्रिया वाले जिले" : "Districts with responses"}
-                  />
-                  <Kpi
-                    icon={<Building2 size={20} />}
-                    tone="bg-blue-100 text-blue-600"
-                    value={`${formatNumber(data.respondingConstituencies)}/${formatNumber(data.constituenciesInScope)}`}
-                    label={hi ? "कवर किए गए विधानसभा क्षेत्र" : "Constituencies covered"}
-                    sub={hi ? "प्रतिक्रिया वाले विधानसभा क्षेत्र" : "Constituencies with responses"}
-                  />
-                </>
-              ) : (
-                <>
-                  <Kpi icon={<Users size={20} />} tone="bg-violet-100 text-violet-600" value={formatNumber(data.total)} label={hi ? "कुल प्रतिक्रियाएं" : "Total responses"} sub={filtered ? (hi ? "चुने गए फ़िल्टर में" : "In selected filter") : hi ? "अब तक प्राप्त" : "So far"} />
-                  <Kpi icon={<Calendar size={20} />} tone="bg-orange-100 text-orange-500" value={formatNumber(data.today)} label={hi ? "आज की प्रतिक्रियाएं" : "Today's responses"} sub={hi ? "आज प्राप्त" : "Received today"} />
-                  <Kpi
-                    icon={<TrendingUp size={20} />}
-                    tone="bg-emerald-100 text-emerald-600"
-                    value={data.surveyActive ? (hi ? "सक्रिय" : "Active") : hi ? "बंद" : "Closed"}
-                    valueClass={data.surveyActive ? "text-emerald-600" : "text-slate-500"}
-                    label={hi ? "सर्वेक्षण स्थिति" : "Survey status"}
-                    sub={data.surveyActive ? (hi ? "मत देना जारी है" : "Voting open") : hi ? "सर्वे बंद है" : "Survey closed"}
-                  />
-                  {scope.level === "constituency" ? (
-                    <Kpi icon={<Vote size={20} />} tone="bg-blue-100 text-blue-600" value={formatNumber(data.last7Days)} label={hi ? "पिछले 7 दिन" : "Last 7 days"} sub={hi ? "पिछले 7 दिनों की प्रतिक्रियाएं" : "Responses in the last 7 days"} />
-                  ) : (
-                    <Kpi
-                      icon={<MapPinned size={20} />}
-                      tone="bg-blue-100 text-blue-600"
-                      value={`${formatNumber(data.respondingConstituencies)}/${formatNumber(data.constituenciesInScope)}`}
-                      label={hi ? "सर्वे में शामिल क्षेत्र" : "Areas with responses"}
-                      sub={hi ? "प्रतिक्रिया वाले विधानसभा क्षेत्र" : "Constituencies with responses"}
-                    />
-                  )}
-                </>
-              )}
-            </div>
-          ) : undefined
-        }
-      />
-
-      <div className="mx-auto mt-5 max-w-7xl px-4 sm:px-6 lg:px-8">
-        {!printMode && hasData && (
-          <nav aria-label={hi ? "विश्लेषण अनुभाग" : "Analysis sections"} className="mb-5 -mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
-            <ul className="flex min-w-max gap-2 rounded-2xl border border-slate-200/80 bg-white p-1.5 shadow-2xs sm:min-w-0 sm:justify-between">
-              {SECTIONS.map((s, i) => (
-                <li key={s.id} className="sm:flex-1">
-                  <a
-                    href={`#${s.id}`}
-                    className={cn(
-                      "block whitespace-nowrap rounded-xl px-4 py-2.5 text-center text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40",
-                      i === 0 ? "bg-[#1677ff] text-white" : "text-slate-700 hover:bg-slate-50"
-                    )}
-                  >
-                    {hi ? s.hi : s.en}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </nav>
-        )}
-
-        <ScopeContent hi={hi}>
-          {!hasData ? (
-            <Notice
-              text={
-                filtered
-                  ? hi
-                    ? "चुने गए फ़िल्टर के लिए कोई प्रतिक्रिया उपलब्ध नहीं है।"
-                    : "No responses match the selected filters."
-                  : scope.level === "none"
-                    ? hi
-                      ? "अभी पर्याप्त सर्वेक्षण डेटा उपलब्ध नहीं है।"
-                      : "Not enough survey data is available yet."
-                    : hi
-                      ? "इस क्षेत्र के लिए अभी पर्याप्त सर्वेक्षण डेटा उपलब्ध नहीं है।"
-                      : "Not enough survey data is available for this area yet."
-              }
-            />
-          ) : (
-            <div className="flex flex-col gap-5">
-              {filtered && (
-                <p className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-2.5 text-sm text-blue-900">
-                  {hi ? "फ़िल्टर लागू: " : "Filter applied: "}
-                  {[data!.filters.segment !== "all" ? segLabel : null, data!.filters.period === "7d" ? (hi ? "पिछले 7 दिन" : "Last 7 days") : data!.filters.period === "30d" ? (hi ? "पिछले 30 दिन" : "Last 30 days") : null]
-                    .filter(Boolean)
-                    .join(" · ")}{" "}
-                  — N={formatNumber(data!.total)}
-                </p>
-              )}
-
-              {/* Overview: findings + response trend */}
-              <div id="overview" className="grid scroll-mt-24 grid-cols-1 gap-5 lg:grid-cols-2">
-                <Section title={hi ? "मुख्य निष्कर्ष" : "Key findings"} sub={hi ? "उपलब्ध आंकड़ों के अनुसार" : "From the available data"}>
-                  {data!.findings.length ? <Findings items={data!.findings} /> : <EmptyNote>{noData}</EmptyNote>}
-                </Section>
-                <Section
-                  title={hi ? "प्रतिक्रियाओं का समयानुसार रुझान" : "Responses over time"}
-                  sub={
-                    data!.trend
-                      ? hi
-                        ? `${data!.trend.granularity === "day" ? "दैनिक" : data!.trend.granularity === "week" ? "साप्ताहिक" : "मासिक"} प्रतिक्रियाएं`
-                        : `${data!.trend.granularity === "day" ? "Daily" : data!.trend.granularity === "week" ? "Weekly" : "Monthly"} responses`
-                      : undefined
-                  }
-                >
-                  {data!.trend ? <LineTrend points={data!.trend.points} hi={hi} /> : <EmptyNote>{noData}</EmptyNote>}
-                </Section>
-              </div>
-
-              {/* Party + MLA */}
-              <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-                <Section
-                  id="party"
-                  title={hi ? "पार्टी-वार समर्थन" : "Party-wise support"}
-                  sub={hi ? "सर्वे में किस पार्टी को कितने उत्तरदाताओं का समर्थन मिला?" : "How many respondents chose each party?"}
-                  foot={hi ? `आधार: ${formatNumber(data!.party.answered)} उत्तरदाता` : `Base: ${formatNumber(data!.party.answered)} respondents`}
-                >
-                  {data!.party.answered ? (
-                    <div className="grid grid-cols-1 items-center gap-5 sm:grid-cols-[minmax(0,1fr)_auto]">
-                      <PartyBars dist={data!.party} compact />
-                      <Donut items={data!.party.items} total={data!.party.answered} centerLabel={hi ? "कुल उत्तर" : "answers"} size={150} legend="none" />
-                    </div>
-                  ) : (
-                    <EmptyNote>{noData}</EmptyNote>
-                  )}
-                </Section>
-                <Section
-                  id="mla"
-                  title={scope.level === "constituency" ? (hi ? "वर्तमान विधायक के कार्यों पर राय" : "Opinion on the current MLA") : hi ? "वर्तमान विधायकों के कार्यों पर राय" : "Opinion on current MLAs"}
-                  sub={
-                    scope.level === "constituency" && scope.constituency?.currentMlaName
-                      ? `${hi ? "विधायक" : "MLA"}: ${scope.constituency.currentMlaName}`
-                      : hi
-                        ? "उत्तरदाताओं की अपने क्षेत्र के विधायक पर राय"
-                        : "Respondents' opinion of their own MLA"
-                  }
-                  foot={hi ? `आधार: ${formatNumber(data!.mla.answered)} उत्तर` : `Base: ${formatNumber(data!.mla.answered)} answers`}
-                >
-                  {data!.mla.answered ? <Donut items={data!.mla.items} total={data!.mla.answered} centerLabel={hi ? "कुल उत्तर" : "answers"} legend="side" /> : <EmptyNote>{noData}</EmptyNote>}
-                </Section>
-              </div>
-
-              {/* Issues + categories */}
-              <div id="issues" className="grid scroll-mt-24 grid-cols-1 gap-5 lg:grid-cols-2">
-                <Section
-                  title={hi ? "मुख्य मुद्दे (बहुविकल्पीय)" : "Main issues (multi-select)"}
-                  sub={hi ? `${place} के उत्तरदाताओं के लिए सबसे महत्वपूर्ण मुद्दे` : `Most important issues for respondents in ${place}`}
-                  foot={
-                    hi
-                      ? `प्रतिशत उत्तरदाताओं के आधार पर (आधार: ${formatNumber(data!.issues.answered)}); एक से अधिक विकल्प चुने जा सकते हैं, इसलिए कुल 100% से अधिक हो सकता है।`
-                      : `Share of respondents (base ${formatNumber(data!.issues.answered)}); multiple choices allowed, so totals can exceed 100%.`
-                  }
-                >
-                  {data!.issues.answered ? <IssueBars dist={data!.issues} /> : <EmptyNote>{noData}</EmptyNote>}
-                </Section>
-                <Section
-                  title={hi ? "मुद्दों का वर्गीकरण" : "Issue categories"}
-                  sub={hi ? "मुद्दों को श्रेणियों में समूहित किया गया (किसी भी श्रेणी का मुद्दा चुनने वाले उत्तरदाता)" : "Issues grouped into categories (respondents selecting any issue in a category)"}
-                  foot={hi ? `आधार: ${formatNumber(data!.issueCategoryAnswered)} उत्तरदाता` : `Base: ${formatNumber(data!.issueCategoryAnswered)} respondents`}
-                >
-                  {data!.issueCategories?.length ? <ColumnBars items={data!.issueCategories} /> : <EmptyNote>{noData}</EmptyNote>}
-                </Section>
-              </div>
-
-              {/* Demographics + cross-analysis */}
-              <div id="demographics" className="grid scroll-mt-24 grid-cols-1 gap-5 lg:grid-cols-2">
-                <Section title={hi ? "उत्तरदाताओं की प्रोफ़ाइल (वैकल्पिक)" : "Respondent profile (optional)"} sub={hi ? "जिन्होंने जानकारी दी, उनके आधार पर" : "Based on those who shared the information"}>
-                  <PanelTabs
-                    printMode={printMode}
-                    tabs={(["gender", "age_group", "social_category", "religion"] as const)
-                      .filter((k) => data!.demographics[k].answered > 0)
-                      .map((k) => ({
-                        key: k,
-                        label: { gender: hi ? "लिंग" : "Gender", age_group: hi ? "आयु वर्ग" : "Age", social_category: hi ? "सामाजिक श्रेणी" : "Social category", religion: hi ? "धर्म" : "Religion" }[k],
-                        content: (
-                          <div>
-                            <Donut items={data!.demographics[k].items} total={data!.demographics[k].answered} centerLabel={hi ? "उत्तर" : "answers"} size={140} legend="side" />
-                            <p className="mt-3 text-[11px] text-slate-500">
-                              {hi ? `आधार: ${data!.demographics[k].answered} उत्तरदाता जिन्होंने यह जानकारी दी` : `Base: ${data!.demographics[k].answered} respondents who answered`}
-                            </p>
-                          </div>
-                        ),
-                      }))}
-                  />
-                  {DEMO_EMPTY(data!) && <EmptyNote>{noData}</EmptyNote>}
-                </Section>
-                <Section title={hi ? "क्रॉस विश्लेषण" : "Cross-analysis"} sub={hi ? `समूहों के अनुसार वितरण; न्यूनतम ${MIN_GROUP_N} प्रतिक्रियाओं वाले समूह ही दिखाए गए` : `Distribution by group; only groups with at least ${MIN_GROUP_N} responses are drawn`}>
-                  <PanelTabs
-                    printMode={printMode}
-                    tabs={[
-                      { key: "age-party", label: hi ? "आयु वर्ग × पार्टी समर्थन" : "Age × Party", tab: data!.crossAgeParty, kind: "stack" as const },
-                      { key: "gender-party", label: hi ? "लिंग × पार्टी समर्थन" : "Gender × Party", tab: data!.crossGenderParty, kind: "stack" as const },
-                      { key: "category-party", label: hi ? "श्रेणी × पार्टी समर्थन" : "Category × Party", tab: data!.crossCategoryParty, kind: "stack" as const },
-                      { key: "age-issue", label: hi ? "आयु वर्ग × मुख्य मुद्दे" : "Age × Issues", tab: data!.crossAgeIssue, kind: "heat" as const },
-                      { key: "gender-issue", label: hi ? "लिंग × मुख्य मुद्दे" : "Gender × Issues", tab: data!.crossGenderIssue, kind: "heat" as const },
-                      { key: "party-mla", label: hi ? "पार्टी × विधायक पर राय" : "Party × MLA opinion", tab: data!.crossPartyMla, kind: "stack" as const },
-                    ].map((t) => ({
-                      key: t.key,
-                      label: t.label,
-                      content: !t.tab.meaningful ? (
-                        <EmptyNote>{notEnough}</EmptyNote>
-                      ) : t.kind === "heat" ? (
-                        <HeatTable tab={t.tab} hi={hi} insufficientLabel={tooFew} />
-                      ) : (
-                        <StackedCrossTab tab={t.tab} hi={hi} insufficientLabel={tooFew} />
-                      ),
-                    }))}
-                  />
-                  <p className="mt-3 text-[11px] text-slate-500">
-                    {hi ? "यह केवल वर्णनात्मक है; इससे कारण-परिणाम का निष्कर्ष नहीं निकाला जाना चाहिए।" : "Descriptive only; does not imply cause and effect."}
-                  </p>
-                </Section>
-              </div>
-
-              {/* Comparison: geography + levels */}
-              <div id="compare" className="grid scroll-mt-24 grid-cols-1 gap-5 lg:grid-cols-3">
-                <Section
-                  className="lg:col-span-2"
-                  title={data!.geo?.unit === "state" ? (hi ? "राज्यवार तुलना" : "State-wise comparison") : hi ? "भौगोलिक तुलना" : "Geographic comparison"}
-                  sub={
-                    data!.geo
-                      ? hi
-                        ? `${data!.geo.unit === "state" ? "राज्यों" : data!.geo.unit === "district" ? "जिलों" : "विधानसभा क्षेत्रों"} के अनुसार — ${data!.geo.rows.length}/${data!.geo.totalUnits} में प्रतिक्रियाएं`
-                        : `By ${data!.geo.unit === "state" ? "state" : data!.geo.unit === "district" ? "district" : "constituency"} — ${data!.geo.rows.length}/${data!.geo.totalUnits} with responses`
-                      : undefined
-                  }
-                >
-                  {data!.geo ? <GeoTable geo={data!.geo} hi={hi} /> : data!.comparison.length ? <LevelCompare levels={data!.comparison} hi={hi} /> : <EmptyNote>{noData}</EmptyNote>}
-                </Section>
-                <Section title={hi ? "प्रमुख अंतर्दृष्टि" : "Key insights"} sub={hi ? "केवल उपलब्ध आंकड़ों पर आधारित, वर्णनात्मक" : "Descriptive, from available data only"}>
-                  {data!.insights.length ? (
-                    <ul className="flex flex-col gap-3">
-                      {data!.insights.map((t, i) => (
-                        <li key={i} className="flex items-start gap-2.5 text-sm leading-relaxed text-slate-700">
-                          <CheckCircle2 size={18} className="mt-0.5 shrink-0 text-emerald-500" aria-hidden="true" />
-                          {t}
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <EmptyNote>{noData}</EmptyNote>
-                  )}
-                </Section>
-              </div>
-
-              {data!.geo && data!.comparison.length > 0 && (
-                <Section title={hi ? "राज्य बनाम जिला बनाम विधानसभा" : "State vs District vs Assembly"} sub={hi ? "प्रत्येक स्तर का नमूना आकार (N) दिखाया गया है" : "Sample size (N) shown for each level"}>
-                  <LevelCompare levels={data!.comparison} hi={hi} />
-                </Section>
-              )}
-
-              {/* Quality + issue trend + export */}
-              <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
-                <Section title={hi ? "प्रतिक्रिया गुणवत्ता" : "Response quality"} sub={hi ? "प्रत्येक प्रश्न का उत्तर देने वाले उत्तरदाता" : "Respondents answering each question"}>
-                  <ul className="flex flex-col gap-2">
-                    {data!.quality.map((q) => (
-                      <li key={q.key} className="grid grid-cols-[110px_minmax(0,1fr)_44px] items-center gap-2 text-xs">
-                        <span className="truncate font-semibold text-slate-700">{q.label}</span>
-                        <span className="h-2.5 overflow-hidden rounded-full bg-slate-100">
-                          <span className="block h-full rounded-full bg-[#1677ff]" style={{ width: `${q.pct}%` }} />
-                        </span>
-                        <span className="text-right font-bold text-slate-900">{round(q.pct)}%</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <p className="mt-3 text-[11px] text-slate-500">
-                    {hi
-                      ? `पूर्ण प्रोफ़ाइल (चारों जनसांख्यिकीय प्रश्न): ${data!.profileComplete.count} (${round(data!.profileComplete.pct)}%)`
-                      : `Complete profile (all four demographic questions): ${data!.profileComplete.count} (${round(data!.profileComplete.pct)}%)`}
-                  </p>
-                </Section>
-                <Section title={hi ? "समय के साथ मुद्दों का रुझान" : "Issue trend over time"} sub={hi ? `प्रति अवधि उत्तरदाताओं का प्रतिशत (न्यूनतम ${MIN_GROUP_N} प्रति अवधि)` : `Share of respondents per period (min ${MIN_GROUP_N} each)`}>
-                  {data!.issueTrend ? <IssueTrendTable trend={data!.issueTrend} hi={hi} /> : <EmptyNote>{noData}</EmptyNote>}
-                </Section>
-                {!printMode ? (
-                  <section className="flex flex-col justify-between rounded-2xl border border-orange-200/80 bg-gradient-to-br from-[#fff7ed] to-[#fffaf5] p-5 shadow-2xs">
-                    <div className="flex items-start gap-3">
-                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-orange-100 text-orange-600" aria-hidden="true">
-                        <Download size={20} />
-                      </span>
-                      <div>
-                        <h2 className="text-lg font-black text-slate-900">{hi ? "डेटा डाउनलोड करें" : "Download data"}</h2>
-                        <p className="mt-1 text-xs text-slate-600">
-                          {hi ? `इस क्षेत्र (${place}) के सभी आंकड़े Excel या PDF में डाउनलोड करें।` : `Download all figures for ${place} as Excel or PDF.`}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="mt-4 flex flex-col gap-2">
-                      <a
-                        href={`/api/analysis/export${analysisQuery(scope.params, data!.filters)}`}
-                        download
-                        className="flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50"
-                      >
-                        {hi ? "Excel डाउनलोड करें (.xlsx)" : "Download Excel (.xlsx)"}
-                      </a>
-                      <a
-                        href={`/analysis/report${analysisQuery(scope.params, data!.filters)}`}
-                        target="_blank"
-                        rel="noopener"
-                        className="flex items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/50"
-                      >
-                        {hi ? "PDF डाउनलोड करें (.pdf)" : "Download PDF (.pdf)"}
-                      </a>
-                    </div>
-                  </section>
-                ) : (
-                  <Methodology hi={hi} data={data!} />
-                )}
-              </div>
-
-              {!printMode && (
-                <div className="flex flex-col items-start justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-2xs sm:flex-row sm:items-center">
-                  <p className="text-sm text-slate-600">{hi ? "संक्षिप्त परिणाम देखना चाहते हैं?" : "Want the concise results?"}</p>
-                  <Link href={resultsPath(scope.params)} className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-[#1677ff] hover:bg-slate-50">
-                    {hi ? "परिणाम पर वापस जाएं →" : "Back to results →"}
-                  </Link>
-                </div>
-              )}
-              {printMode ? null : <Methodology hi={hi} data={data!} />}
-            </div>
-          )}
-        </ScopeContent>
+      <div className="mt-3">
+        <AnalysisFilters
+          key={scopeKey(scope, filters)}
+          hi={hi}
+          variant="bar"
+          scope={scope.params}
+          options={scope.options}
+          filters={filters}
+          segmentOptions={segmentOptions}
+          today={today}
+        />
       </div>
-    </div>
+
+      {data && (data.filters.segment !== "all" || data.filters.period !== "all") && (
+        <p className="mt-3 rounded-xl border border-blue-100 bg-blue-50 px-3.5 py-2 text-[12.5px] text-blue-900">
+          {hi ? "फ़िल्टर लागू: " : "Filter applied: "}
+          {[
+            data.filters.segment !== "all" ? data.segmentOptions.find((o) => o.value === data.filters.segment)?.label : null,
+            periodLabel(data.filters, hi),
+          ]
+            .filter(Boolean)
+            .join(" · ")}{" "}
+          — N={formatNumber(data.total)}
+        </p>
+      )}
+
+      {k && (
+        <div className="mt-3 grid grid-cols-2 gap-2.5 sm:gap-3 md:grid-cols-3 xl:grid-cols-5">
+          <KpiCard
+            tone="blue"
+            icon={<Users size={20} />}
+            label={hi ? "कुल प्रतिक्रियाएं" : "Total responses"}
+            value={formatNumber(k.total)}
+            sub={hi ? `+${formatNumber(k.last7Days)} पिछले 7 दिनों में` : `+${formatNumber(k.last7Days)} in last 7 days`}
+            subClass="text-emerald-600"
+          />
+          <KpiCard
+            tone="green"
+            icon={<CheckCircle2 size={20} />}
+            label={hi ? "पूर्ण प्रतिक्रियाएं" : "Complete responses"}
+            value={formatNumber(k.complete)}
+            sub={hi ? `${Math.round(k.completionRate)}% पूर्णता दर` : `${Math.round(k.completionRate)}% completion rate`}
+            subClass="text-emerald-700"
+          />
+          <KpiCard
+            tone="amber"
+            icon={<Clock size={20} />}
+            label={hi ? "सर्वे अवधि" : "Survey period"}
+            value={<span className="text-[14px] sm:text-[16px]">{k.firstResponseAt ? `${formatIstDate(k.firstResponseAt, hi ? "hi" : "en", false)} – ${formatIstDate(k.lastResponseAt!, hi ? "hi" : "en")}` : "—"}</span>}
+            sub={`${k.days ? (hi ? `${k.days} दिन` : `${k.days} days`) : "—"} · ${k.surveyActive ? (hi ? "सर्वे सक्रिय" : "Survey open") : hi ? "सर्वे बंद" : "Survey closed"}`}
+          />
+          <KpiCard tone="red" icon={<MapPin size={20} />} label={k.coverage.label} value={`${formatNumber(k.coverage.covered)} / ${formatNumber(k.coverage.total)}`} sub={k.coverage.sub} />
+          <KpiCard tone="purple" icon={<MapPinned size={20} />} label={k.areas.label} value={`${formatNumber(k.areas.covered)} / ${formatNumber(k.areas.total)}`} sub={k.areas.sub} />
+          {analysisModules.dataQuality && data && data.total > 0 && (
+            <a
+              href="#quality"
+              className="flex items-center justify-center gap-2 rounded-2xl border border-[#dbe7fb] bg-white p-3 text-[13px] font-bold text-[#1677ff] shadow-[0_1px_2px_rgba(15,31,75,0.04)] hover:bg-[#f5f9ff] xl:hidden"
+            >
+              <Activity size={18} aria-hidden="true" />
+              {hi ? "और देखें" : "More"}
+            </a>
+          )}
+        </div>
+      )}
+
+      {extras && (extras.quality.sample.level === "very_small" || extras.quality.sample.level === "small") && (
+        <div className="mt-3">
+          <SampleNote sample={extras.quality.sample} />
+        </div>
+      )}
+    </section>
   );
-
-  return printMode ? body : <ScopeNavProvider>{body}</ScopeNavProvider>;
 }
 
-function DEMO_EMPTY(d: ScopeAnalysis) {
-  return (["gender", "age_group", "social_category", "religion"] as const).every((k) => d.demographics[k].answered === 0);
+function scopeKey(scope: ResolvedScope, f: { segment: string; period: string; from?: string; to?: string }) {
+  return analysisQuery(scope.params, f);
 }
 
-function Kpi({ icon, tone, value, label, sub, valueClass }: { icon: ReactNode; tone: string; value: string; label: string; sub: string; valueClass?: string }) {
+function periodLabel(f: ScopeAnalysis["filters"], hi: boolean) {
+  if (f.period === "7d") return hi ? "पिछले 7 दिन" : "Last 7 days";
+  if (f.period === "30d") return hi ? "पिछले 30 दिन" : "Last 30 days";
+  if (f.period === "custom" && f.from && f.to) return `${formatIstDate(f.from, hi ? "hi" : "en", false)} – ${formatIstDate(f.to, hi ? "hi" : "en")}`;
+  return null;
+}
+
+function ContextCard({ scope, extras, hi }: { scope: ResolvedScope; extras: AnalysisExtras | null; hi: boolean }) {
+  const mla = extras?.mla;
+  if (mla)
+    return (
+      <div className={cn(CARD, "flex min-w-0 items-center gap-3 p-3.5")}>
+        <span
+          className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 bg-white"
+          style={{ borderColor: `${mla.color ?? "#f97316"}55` }}
+          aria-hidden="true"
+        >
+          {mla.logoUrl ? (
+            <Image src={mla.logoUrl} alt="" width={34} height={34} className="object-contain" />
+          ) : (
+            <span className="text-xs font-black" style={{ color: mla.color ?? "#f97316" }}>
+              {(mla.partyShort ?? mla.name).slice(0, 3)}
+            </span>
+          )}
+        </span>
+        <div className="min-w-0">
+          <p className="text-[11.5px] font-bold text-slate-500">{hi ? "वर्तमान विधायक" : "Current MLA"}</p>
+          <p className="truncate text-[15px] font-black leading-tight text-[#0b1f3a]">{mla.name}</p>
+          {mla.party && <p className="truncate text-xs text-slate-600">{mla.party}</p>}
+        </div>
+      </div>
+    );
+  const k = extras?.kpis;
   return (
-    <div className="flex min-w-0 items-center gap-3 rounded-2xl border border-slate-200/80 bg-white p-3 shadow-2xs sm:p-4">
-      <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full sm:h-12 sm:w-12 ${tone}`} aria-hidden="true">
-        {icon}
+    <div className={cn(CARD, "flex min-w-0 items-center gap-3 p-3.5")}>
+      <span className={cn("flex h-12 w-12 shrink-0 items-center justify-center rounded-full", k?.surveyActive ? "bg-[#e7f8ef] text-[#16a34a]" : "bg-slate-100 text-slate-500")} aria-hidden="true">
+        <Activity size={22} />
       </span>
       <div className="min-w-0">
-        <div className={`text-xl font-black leading-tight text-slate-900 sm:text-2xl ${valueClass ?? ""}`}>{value}</div>
-        <div className="text-xs font-bold leading-tight text-slate-700 sm:text-[13px]">{label}</div>
-        <div className="mt-0.5 truncate text-[10.5px] text-slate-500">{sub}</div>
+        <p className="text-[11.5px] font-bold text-slate-500">{hi ? "सर्वेक्षण स्थिति" : "Survey status"}</p>
+        <p className="text-[15px] font-black leading-tight text-[#0b1f3a]">{k?.surveyActive ? (hi ? "सक्रिय" : "Open") : hi ? "बंद / उपलब्ध नहीं" : "Closed / unavailable"}</p>
+        <p className="truncate text-xs text-slate-600">
+          {k?.lastResponseAt
+            ? `${hi ? "अंतिम प्रतिक्रिया" : "Last response"}: ${formatIstDate(k.lastResponseAt, hi ? "hi" : "en")}`
+            : scope.constituency
+              ? hi
+                ? "वर्तमान विधायक की सत्यापित जानकारी उपलब्ध नहीं"
+                : "Verified MLA details not available"
+              : hi
+                ? "अभी कोई प्रतिक्रिया नहीं"
+                : "No responses yet"}
+        </p>
       </div>
     </div>
   );
 }
 
-function Section({ id, title, sub, foot, className, children }: { id?: string; title: string; sub?: string; foot?: string; className?: string; children: ReactNode }) {
+function NoData({ scope, data, hi }: { scope: ResolvedScope; data: ScopeAnalysis | null; hi: boolean }) {
+  const filtered = !!data && (data.filters.segment !== "all" || data.filters.period !== "all");
   return (
-    <section id={id} className={cn("scroll-mt-24 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-2xs sm:p-5", className)}>
-      <div className="mb-4 flex items-start gap-2.5">
-        <span className="mt-1 h-5 w-1.5 shrink-0 rounded-full bg-[#1677ff]" aria-hidden="true" />
-        <div className="min-w-0">
-          <h2 className="text-lg font-black leading-tight tracking-tight text-slate-900">{title}</h2>
-          {sub && <p className="mt-0.5 text-xs text-slate-500">{sub}</p>}
-        </div>
-      </div>
-      {children}
-      {foot && <p className="mt-4 border-t border-slate-100 pt-3 text-[11px] text-slate-500">{foot}</p>}
-    </section>
+    <div className={cn(CARD, "mt-4 px-5 py-12 text-center")}>
+      <p className="text-base font-bold text-slate-700">
+        {filtered
+          ? hi
+            ? "चुने गए फ़िल्टर के लिए कोई प्रतिक्रिया उपलब्ध नहीं है।"
+            : "No responses match the selected filters."
+          : scope.level === "none"
+            ? hi
+              ? "अभी पर्याप्त सर्वेक्षण डेटा उपलब्ध नहीं है।"
+              : "Not enough survey data is available yet."
+            : hi
+              ? "इस क्षेत्र के लिए अभी पर्याप्त सर्वेक्षण डेटा उपलब्ध नहीं है।"
+              : "Not enough survey data is available for this area yet."}
+      </p>
+      <p className="mx-auto mt-2 max-w-lg text-sm text-slate-500">
+        {hi
+          ? "जैसे-जैसे लोग सर्वे में भाग लेंगे, यहां विश्लेषण दिखाई देगा। ऊपर कोई दूसरा राज्य, जिला या विधानसभा क्षेत्र चुनें या फ़िल्टर बदलें।"
+          : "Analysis will appear here as people take part in the survey. Choose another state, district or constituency above, or change the filters."}
+      </p>
+    </div>
   );
 }
 
-const FINDING_ICON: Record<Finding["icon"], { Icon: typeof Award; tone: string }> = {
-  party: { Icon: Award, tone: "bg-orange-100 text-orange-600" },
-  mla: { Icon: Smile, tone: "bg-emerald-100 text-emerald-600" },
-  issue: { Icon: ListChecks, tone: "bg-blue-100 text-blue-600" },
-  demographic: { Icon: UserCheck, tone: "bg-violet-100 text-violet-600" },
-  geo: { Icon: MapPinned, tone: "bg-sky-100 text-sky-600" },
-  compare: { Icon: BarChart3, tone: "bg-pink-100 text-pink-600" },
-};
+// ── Dashboard ────────────────────────────────────────────────────────────────
 
-function Findings({ items }: { items: Finding[] }) {
-  return (
-    <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-      {items.map((f, i) => {
-        const { Icon, tone } = FINDING_ICON[f.icon];
-        return (
-          <li key={i} className="flex items-start gap-3 rounded-xl border border-slate-100 bg-slate-50/60 p-3">
-            <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${tone}`} aria-hidden="true">
-              <Icon size={18} />
-            </span>
-            <div className="min-w-0">
-              <p className="text-sm font-bold leading-snug text-slate-900">{f.title}</p>
-              <p className="mt-0.5 text-xs text-slate-500">{f.text}</p>
-            </div>
-          </li>
-        );
-      })}
-    </ul>
-  );
-}
+function Dashboard({
+  scope,
+  data,
+  extras,
+  hi,
+  query,
+  today,
+  unit,
+  T,
+}: {
+  scope: ResolvedScope;
+  data: ScopeAnalysis;
+  extras: AnalysisExtras;
+  hi: boolean;
+  query: string;
+  today: string;
+  unit: ReturnType<typeof areaUnitOf>;
+  T: (h: string, e: string) => string;
+}) {
+  const flags = analysisModules;
+  const noData = T("इस विश्लेषण के लिए अभी पर्याप्त डेटा उपलब्ध नहीं है।", "Not enough data for this analysis yet.");
+  const closeLabel = T("बंद करें", "Close");
+  const place = scope.constituency?.name ?? scope.district?.name ?? scope.state?.name ?? T("सभी राज्य", "All states");
+  const stance = mlaStance(data.mla);
+  // One suppression rule for page, dialog, PDF and Excel (reportableFindings).
+  const safeHeadline = reportableFindings(data);
+  const safeAdvanced = reportableFindings({ ...data, findings: [] }, extras.advanced);
+  const headline = FINDING_ORDER.map((icon) => safeHeadline.find((f) => f.icon === icon)).filter((f): f is NonNullable<typeof f> => !!f);
+  const compact = [...headline, ...safeAdvanced].slice(0, 4);
+  const allFindings = [...safeHeadline, ...safeAdvanced];
+  // Same small-sample rule as the rest of Analysis: no opinion shares below MIN_GROUP_N answers.
+  const mlaEnough = data.mla.answered >= MIN_GROUP_N;
+  const unitName = unit ? (hi ? { state: "राज्यों", district: "जिलों", constituency: "विधानसभा क्षेत्रों" }[unit] : { state: "states", district: "districts", constituency: "constituencies" }[unit]) : null;
+  const defaultRef = scope.constituency ? `constituency:${scope.constituency.id}` : scope.district ? `district:${scope.district.id}` : undefined;
+  const scopeSummary = [
+    `${T("राज्य", "State")}: ${scope.state?.name ?? T("सभी राज्य", "All states")}`,
+    `${T("जिला", "District")}: ${scope.district?.name ?? T("सभी", "All")}`,
+    `${T("विधानसभा", "Constituency")}: ${scope.constituency?.name ?? T("सभी", "All")}`,
+    `${T("अवधि", "Period")}: ${periodLabel(data.filters, hi) ?? T("सभी समय", "All time")}`,
+    `${T("समूह", "Group")}: ${data.segmentOptions.find((o) => o.value === data.filters.segment)?.label ?? T("सभी उत्तरदाता", "All respondents")}`,
+  ];
 
-function GeoTable({ geo, hi }: { geo: NonNullable<ScopeAnalysis["geo"]>; hi: boolean }) {
-  const max = Math.max(1, ...geo.rows.map((r) => r.n));
+  const deepPanels: Record<string, PanelDef> = {};
+  if (flags.issueIntelligence)
+    deepPanels["issue-analysis"] = {
+      title: T("मुद्दा विश्लेषण (विस्तृत)", "Issue intelligence"),
+      sub: T("कोई मुद्दा चुनें — आयु, लिंग, सामाजिक श्रेणी, धर्म, क्षेत्र और पार्टी समर्थन के अनुसार", "Pick an issue — by age, gender, social category, religion, area and party support"),
+      node: (
+        <IssueModule
+          hi={hi}
+          query={query}
+          issues={data.issues.items.map((i) => ({ key: i.key, label: i.label, count: i.count, pct: i.pct }))}
+          answered={data.issues.answered}
+          categories={data.issueCategories?.map((c) => ({ key: c.key, label: c.label, count: c.count, pct: c.pct })) ?? null}
+        />
+      ),
+    };
+  if (flags.crossAnalysis)
+    deepPanels.cross = {
+      title: T("क्रॉस विश्लेषण", "Cross-analysis"),
+      sub: T(`कोई भी दो आयाम चुनें; न्यूनतम ${MIN_GROUP_N} प्रतिक्रियाओं वाले समूह ही दिखाए जाते हैं`, `Pick any two dimensions; only groups with at least ${MIN_GROUP_N} responses are drawn`),
+      node: <CrossModule hi={hi} query={query} unit={unit} initial={extras.initialCross} />,
+    };
+  if (flags.geographicComparison)
+    deepPanels.geo = {
+      title: scope.level === "none" ? T("राज्यवार तुलना", "State-wise comparison") : T("भौगोलिक तुलना", "Geographic comparison"),
+      sub: data.geo && unitName ? T(`${data.geo.rows.length}/${data.geo.totalUnits} ${unitName} में प्रतिक्रियाएं`, `${data.geo.rows.length}/${data.geo.totalUnits} ${unitName} with responses`) : T("स्तर तुलना और दो क्षेत्रों की तुलना", "Level comparison and area vs area"),
+      node: (
+        <GeoModule
+          hi={hi}
+          query={query}
+          unit={unit}
+          summary={data.geo ? <GeoTable geo={data.geo} hi={hi} /> : null}
+          levels={data.comparison.length ? <LevelCompare levels={data.comparison} hi={hi} /> : null}
+          defaultRef={defaultRef}
+        />
+      ),
+    };
+  if (flags.timeComparison || flags.periodComparison)
+    deepPanels.time = {
+      title: T("समय एवं अवधि तुलना", "Time & period comparison"),
+      sub: T("सर्वे प्रतिक्रियाओं की समय के अनुसार तुलना — कोई पूर्वानुमान नहीं", "Survey responses compared over time — not a forecast"),
+      node: <TimeModule hi={hi} query={query} today={today} />,
+    };
+
+  const lowerPanels: Record<string, PanelDef> = {};
+  if (flags.dataQuality) lowerPanels.quality = { title: T("डेटा गुणवत्ता", "Data quality"), sub: T("नमूना आकार, पूर्णता, कवरेज और छूटे मान", "Sample size, completeness, coverage and missing values"), node: <QualityDetails q={extras.quality} hi={hi} /> };
+  if (flags.askData) lowerPanels["ask-answer"] = { title: T("डेटा से पूछें — उत्तर", "Ask the data — answer"), node: <AskPanel hi={hi} query={query} /> };
+  if (flags.detailedExport) lowerPanels["report-builder"] = { title: T("अनुकूलित रिपोर्ट", "Custom report"), sub: T("मॉड्यूल चुनें और PDF या Excel रिपोर्ट बनाएं", "Choose modules and build a PDF or Excel report"), node: <ReportBuilder hi={hi} query={query} scopeSummary={scopeSummary} /> };
+
   return (
-    <div className="max-h-[420px] overflow-auto">
-      <table className="w-full min-w-[520px] text-left text-xs">
-        <thead className="sticky top-0 bg-white">
-          <tr className="border-b border-slate-100 text-slate-500">
-            <th className="py-2 pr-2 font-semibold">
-              {geo.unit === "state" ? (hi ? "राज्य" : "State") : geo.unit === "district" ? (hi ? "जिला" : "District") : hi ? "विधानसभा क्षेत्र" : "Constituency"}
-            </th>
-            <th className="py-2 pr-2 font-semibold">{hi ? "प्रतिक्रियाएं (N)" : "Responses (N)"}</th>
-            <th className="py-2 pr-2 font-semibold">{hi ? "सर्वे में सर्वाधिक समर्थन" : "Highest survey support"}</th>
-            <th className="py-2 pr-2 font-semibold">{hi ? "शीर्ष मुद्दा" : "Top issue"}</th>
-            <th className="py-2 font-semibold">{hi ? "विधायक से संतुष्ट*" : "Satisfied with MLA*"}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {geo.rows.map((r) => (
-            <tr key={r.key} className="border-b border-slate-50">
-              <th scope="row" className="py-2 pr-2 font-semibold text-slate-800">{r.label}</th>
-              <td className="py-2 pr-2">
-                <span className="flex items-center gap-2">
-                  <span className="h-2 w-16 overflow-hidden rounded-full bg-slate-100">
-                    <span className="block h-full rounded-full bg-[#1677ff]" style={{ width: `${(r.n / max) * 100}%` }} />
+    <DeepHubProvider panelIds={[...Object.keys(deepPanels), ...Object.keys(lowerPanels)]}>
+      {/* Row 2: profile · findings · trend */}
+      <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1fr)]">
+        {flags.areaProfile && (
+          <CollapsibleCard
+            id="profile"
+            className="md:col-span-2 xl:col-span-1"
+            toggleLabel={T("प्रोफ़ाइल दिखाएं/छिपाएं", "Show/hide profile")}
+            header={<CardHeader icon={<UserRound size={19} />} tone="orange" title={extras.profile.title} />}
+          >
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,168px)]">
+              <p className="text-[13px] leading-[1.75] text-slate-600">
+                {extras.profile.summary.map((s, i) => (
+                  <span key={i}>
+                    <EmphasizeNumbers text={s} />{" "}
                   </span>
-                  <span className="font-bold text-slate-900">{r.n}</span>
-                </span>
-              </td>
-              <td className="py-2 pr-2 text-slate-700">{r.topParty ? `${r.topParty.label} (${round(r.topParty.pct)}%)` : "—"}</td>
-              <td className="py-2 pr-2 text-slate-700">{r.topIssue ? `${r.topIssue.label} (${round(r.topIssue.pct)}%)` : "—"}</td>
-              <td className="py-2 text-slate-700">{r.satisfiedPct === null ? "—" : `${round(r.satisfiedPct)}%`}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      <p className="mt-2 text-[11px] text-slate-500">
-        {hi
-          ? "*“बहुत खुश” + “कुछ हद तक खुश”। छोटे N वाले क्षेत्रों के आंकड़े सावधानी से पढ़ें।"
-          : "*“Very happy” + “Somewhat happy”. Read small-N areas with caution."}
-      </p>
-    </div>
-  );
-}
+                ))}
+              </p>
+              <div className="min-w-0 rounded-xl border border-[#e8eef7] bg-[#f7faff] p-3">
+                <p className="mb-2 flex items-center gap-1.5 text-[12px] font-extrabold text-[#0b1f3a]">
+                  <MapPin size={14} className="text-[#f97316]" aria-hidden="true" />
+                  {T("क्षेत्र परिचय", "Area context")}
+                </p>
+                <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-2 gap-y-1.5 text-[12px]">
+                  {extras.profile.context.map((c) => (
+                    <div key={c.label} className="contents">
+                      <dt className="text-slate-500">{c.label}</dt>
+                      <dd className="truncate text-right font-bold text-[#0b1f3a]">{c.value}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
+            </div>
+            <div className="mt-4">
+              <DetailDialog variant="outline" trigger={T("विस्तृत प्रोफ़ाइल देखें", "View detailed profile")} title={`${extras.profile.title} — ${place}`} closeLabel={closeLabel}>
+                <div className="flex flex-col gap-5">
+                  <FactsGrid profile={extras.profile} />
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    {[
+                      { t: T("लिंग वितरण", "Gender"), d: extras.profile.gender },
+                      { t: T("सामाजिक श्रेणी वितरण", "Social category"), d: extras.profile.category },
+                    ].map((x) => (
+                      <div key={x.t} className="rounded-xl border border-slate-100 p-3">
+                        <p className="mb-2 text-[13px] font-extrabold text-[#0b1f3a]">
+                          {x.t} <span className="font-normal text-slate-500">(N={x.d.answered})</span>
+                        </p>
+                        {x.d.answered ? <ColumnChart items={x.d.items} /> : <Empty>{noData}</Empty>}
+                      </div>
+                    ))}
+                  </div>
+                  <SampleNote sample={extras.quality.sample} />
+                </div>
+              </DetailDialog>
+            </div>
+          </CollapsibleCard>
+        )}
 
-function LevelCompare({ levels, hi }: { levels: ScopeAnalysis["comparison"]; hi: boolean }) {
-  return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-      {levels.map((l) => (
-        <div key={l.level} className="rounded-xl border border-slate-100 bg-slate-50/60 p-3">
-          <p className="text-sm font-bold text-slate-900">
-            {l.label} <span className="font-normal text-slate-500">(N={l.n})</span>
-          </p>
-          <p className="mb-2 text-[11px] text-slate-500">
-            {l.level === "state" ? (hi ? "राज्य" : "State") : l.level === "district" ? (hi ? "जिला" : "District") : hi ? "विधानसभा क्षेत्र" : "Constituency"}
-          </p>
-          <ul className="flex flex-col gap-1.5">
-            {l.party.map((p, i) => (
-              <li key={p.key} className="grid grid-cols-[56px_minmax(0,1fr)_36px] items-center gap-2 text-xs">
-                <span className="truncate font-semibold text-slate-700">{p.label}</span>
-                <span className="h-2 overflow-hidden rounded-full bg-slate-200">
-                  <span className="block h-full rounded-full" style={{ width: `${p.pct}%`, backgroundColor: colorOf(p, i) }} />
-                </span>
-                <span className="text-right font-bold text-slate-900">{round(p.pct)}%</span>
-              </li>
-            ))}
-          </ul>
-          {l.topIssues.length > 0 && (
-            <p className="mt-2 text-[11px] text-slate-600">
-              {hi ? "शीर्ष मुद्दे: " : "Top issues: "}
-              {l.topIssues.map((i) => `${i.label} ${round(i.pct)}%`).join(", ")}
-            </p>
-          )}
+        {flags.keyFindings && (
+          <CollapsibleCard
+            id="findings"
+            toggleLabel={T("निष्कर्ष दिखाएं/छिपाएं", "Show/hide findings")}
+            header={
+              <CardHeader
+                icon={<Lightbulb size={19} />}
+                tone="amber"
+                title={T("मुख्य निष्कर्ष", "Key findings")}
+                sub={T("डेटा आधारित प्रमुख अवलोकन", "Key observations from the data")}
+                action={
+                  allFindings.length + data.insights.length > 0 ? (
+                    <DetailDialog variant="pill" trigger={T("सभी देखें", "View all")} title={T("मुख्य निष्कर्ष — सभी", "All key findings")} sub={T("प्रत्येक निष्कर्ष उपलब्ध प्रतिक्रियाओं (N) पर आधारित, वर्णनात्मक", "Each is descriptive and based on the available responses (N)")} closeLabel={closeLabel}>
+                      <div className="flex flex-col gap-5">
+                        {allFindings.length > 0 && <FindingCards items={allFindings} />}
+                        {data.insights.length > 0 && (
+                          <div>
+                            <p className="mb-2 text-[13px] font-extrabold text-[#0b1f3a]">{T("प्रमुख अंतर्दृष्टि", "Key insights")}</p>
+                            <InsightList items={data.insights} />
+                          </div>
+                        )}
+                      </div>
+                    </DetailDialog>
+                  ) : undefined
+                }
+              />
+            }
+          >
+            {compact.length ? (
+              <ol className="flex flex-col gap-3">
+                {compact.map((f, i) => (
+                  <li key={i} className="flex items-start gap-3">
+                    <span className={cn("flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-black text-white", FINDING_DOT[i])} aria-hidden="true">
+                      {i + 1}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-[13.5px] font-extrabold leading-snug text-[#0b1f3a]">{f.title}</p>
+                      <p className="mt-0.5 text-[12px] text-slate-500">{f.text}</p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <Empty>{noData}</Empty>
+            )}
+          </CollapsibleCard>
+        )}
+
+        {flags.responseTrend && (
+          <Card id="trend">
+            <CardHeader
+              icon={<ChartLine size={19} />}
+              tone="blue"
+              title={T("प्रतिक्रिया ट्रेंड", "Response trend")}
+              sub={
+                data.trend
+                  ? hi
+                    ? `${data.trend.granularity === "day" ? "दैनिक" : data.trend.granularity === "week" ? "साप्ताहिक" : "मासिक"} प्रतिक्रियाएं`
+                    : `${data.trend.granularity === "day" ? "Daily" : data.trend.granularity === "week" ? "Weekly" : "Monthly"} responses`
+                  : undefined
+              }
+              action={flags.timeComparison ? <PillLink href="#time">{T("सभी देखें", "View all")}</PillLink> : undefined}
+            />
+            {data.trend ? <TrendLine points={data.trend.points} hi={hi} /> : <Empty>{noData}</Empty>}
+          </Card>
+        )}
+      </div>
+
+      {/* Row 3: party · MLA · issues · demographics */}
+      <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {flags.partySupport && (
+          <Card id="party" className="flex flex-col">
+            <CardHeader icon={<Flag size={19} />} tone="orange" title={T("पार्टी समर्थन", "Party support")} sub={T(`उत्तरदाताओं में प्रतिशत (N=${data.party.answered})`, `Share of respondents (N=${data.party.answered})`)} />
+            <div className="flex-1">{data.party.answered ? <PartyColumns items={data.party.items} /> : <Empty>{noData}</Empty>}</div>
+            {data.party.answered > 0 && (
+              <DetailDialog trigger={T("विस्तृत विश्लेषण", "Detailed analysis")} title={T("पार्टी-वार समर्थन", "Party-wise support")} sub={T(`आधार: ${data.party.answered} उत्तरदाता`, `Base: ${data.party.answered} respondents`)} closeLabel={closeLabel}>
+                <div className="grid grid-cols-1 items-center gap-6 sm:grid-cols-[minmax(0,1fr)_auto]">
+                  <PartyBars dist={data.party} />
+                  <Donut items={data.party.items} total={data.party.answered} centerLabel={T("कुल उत्तर", "answers")} size={170} legend="none" />
+                </div>
+                <p className="mt-4 text-[11px] text-slate-500">{T("यह केवल सर्वे में उत्तरदाताओं की पसंद है, चुनाव परिणाम का अनुमान नहीं।", "This is only respondents' choice in the survey, not an election forecast.")}</p>
+              </DetailDialog>
+            )}
+          </Card>
+        )}
+
+        {flags.mlaOpinion && (
+          <Card id="mla" className="flex flex-col">
+            <CardHeader
+              icon={<UserCheck size={19} />}
+              tone="green"
+              title={T("विधायक के कार्यों पर राय", "Opinion on MLA's work")}
+              sub={
+                extras.mlaSince
+                  ? T(
+                      `यह प्रश्न ${formatIstDate(extras.mlaSince, "hi")} से पूछा जा रहा है (N=${data.mla.answered})`,
+                      `Asked since ${formatIstDate(extras.mlaSince, "en")} (N=${data.mla.answered})`
+                    )
+                  : scope.level === "constituency" && extras.mla
+                    ? extras.mla.name
+                    : T("अपने क्षेत्र के विधायक पर राय", "On their own MLA")
+              }
+            />
+            <div className="flex-1">
+              {!data.mla.answered ? (
+                <Empty>{noData}</Empty>
+              ) : mlaEnough ? (
+                <MiniDonut
+                  items={data.mla.items}
+                  total={data.mla.answered}
+                  centerLabel={T("प्रतिक्रियाएं", "responses")}
+                  shortLabels={
+                    hi
+                      ? { satisfied: "बहुत खुश", somewhat_satisfied: "कुछ हद तक खुश", dissatisfied: "खुश नहीं", undecided: "कह नहीं सकते" }
+                      : { satisfied: "Very happy", somewhat_satisfied: "Somewhat happy", dissatisfied: "Not happy", undecided: "Can't say" }
+                  }
+                />
+              ) : (
+                <SmallSample n={data.mla.answered} hi={hi} />
+              )}
+            </div>
+            {data.mla.answered > 0 && (
+              <DetailDialog trigger={T("विस्तृत विश्लेषण", "Detailed analysis")} title={T("विधायक के कार्यों पर राय", "Opinion on MLA's work")} sub={T(`आधार: ${data.mla.answered} उत्तर`, `Base: ${data.mla.answered} answers`)} closeLabel={closeLabel}>
+                {mlaEnough ? (
+                  <div className="flex flex-col gap-5">
+                    <div className="grid grid-cols-3 gap-2.5">
+                      {[
+                        { l: T("सकारात्मक", "Positive"), v: stance.pos, c: "text-[#16a34a]" },
+                        { l: T("नकारात्मक", "Negative"), v: stance.neg, c: "text-[#dc2626]" },
+                        { l: T("तटस्थ", "Neutral"), v: stance.neu, c: "text-slate-600" },
+                      ].map((s) => (
+                        <div key={s.l} className="rounded-xl border border-slate-100 bg-[#fbfcfe] p-3 text-center">
+                          <p className={cn("text-xl font-black", s.c)}>{Math.round(s.v)}%</p>
+                          <p className="text-[11px] font-semibold text-slate-500">{s.l}</p>
+                        </div>
+                      ))}
+                    </div>
+                    <Donut items={data.mla.items} total={data.mla.answered} centerLabel={T("कुल उत्तर", "answers")} legend="side" />
+                    <div>
+                      <p className="mb-2 text-[13px] font-extrabold text-[#0b1f3a]">{T("पार्टी समर्थन के अनुसार विधायक पर राय", "MLA opinion by party support")}</p>
+                      {data.crossPartyMla.meaningful ? (
+                        <StackedCrossTab tab={data.crossPartyMla} hi={hi} insufficientLabel={T("प्रतिक्रियाएं कम", "Too few")} />
+                      ) : (
+                        <Empty>{T("इस तुलना के लिए पर्याप्त प्रतिक्रियाएं उपलब्ध नहीं हैं।", "Not enough responses for this comparison.")}</Empty>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-slate-500">{T("सकारात्मक = “बहुत खुश” + “कुछ हद तक खुश”; तटस्थ = “कह नहीं सकते”।", "Positive = “very happy” + “somewhat happy”; neutral = “can't say”.")}</p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-4">
+                    <SmallSample n={data.mla.answered} hi={hi} />
+                    <div>
+                      <p className="mb-2 text-[13px] font-extrabold text-[#0b1f3a]">{T("प्राप्त उत्तर (संख्या)", "Answers received (counts)")}</p>
+                      <ul className="flex flex-col divide-y divide-slate-100 rounded-xl border border-slate-100 bg-[#fbfcfe]">
+                        {data.mla.items.map((i) => (
+                          <li key={i.key} className="flex items-center justify-between gap-3 px-3 py-2 text-[13px]">
+                            <span className="text-slate-700">{i.label}</span>
+                            <span className="font-extrabold text-[#0b1f3a]">{formatNumber(i.count)}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <p className="text-[11px] text-slate-500">
+                      {T(
+                        `${MIN_GROUP_N} से कम उत्तर होने पर प्रतिशत या अनुपात नहीं दिखाए जाते — केवल संख्या।`,
+                        `With fewer than ${MIN_GROUP_N} answers, no percentages or proportions are shown — counts only.`
+                      )}
+                    </p>
+                  </div>
+                )}
+              </DetailDialog>
+            )}
+          </Card>
+        )}
+
+        {flags.issueOverview && (
+          <Card id="issues" className="flex flex-col">
+            <CardHeader icon={<Target size={19} />} tone="purple" title={T("मुख्य मुद्दे", "Main issues")} sub={T(`बहुविकल्पीय · उत्तरदाताओं का % (N=${data.issues.answered})`, `Multi-select · % of respondents (N=${data.issues.answered})`)} />
+            <div className="flex-1">{data.issues.answered ? <IssueRows items={data.issues.items} /> : <Empty>{noData}</Empty>}</div>
+            {data.issues.answered > 0 && flags.issueIntelligence && <FooterLink href="#issue-analysis">{T("सभी मुद्दे देखें", "View all issues")}</FooterLink>}
+          </Card>
+        )}
+
+        {flags.demographics && (
+          <Card id="demographics" className="flex flex-col">
+            <CardHeader icon={<Users size={19} />} tone="sky" title={T("जनसांख्यिकीय वितरण", "Demographic profile")} sub={T("जिन्होंने जानकारी दी (वैकल्पिक)", "Of those who shared (optional)")} />
+            <div className="flex-1">
+              {(["age_group", "gender", "social_category", "religion"] as const).some((k) => data.demographics[k].answered) ? (
+                <SegTabs
+                  tabs={(["age_group", "gender", "social_category", "religion"] as const)
+                    .filter((k) => data.demographics[k].answered > 0)
+                    .map((k) => ({
+                      key: k,
+                      label: { age_group: T("आयु", "Age"), gender: T("लिंग", "Gender"), social_category: T("सामाजिक श्रेणी", "Category"), religion: T("धर्म", "Religion") }[k],
+                      content: (() => {
+                        const d = data.demographics[k];
+                        const skipped = d.items.find((i) => i.key === "prefer_not_to_say");
+                        return (
+                          <div>
+                            <ColumnChart items={d.items.filter((i) => i.key !== "prefer_not_to_say")} />
+                            <p className="mt-2 text-[10.5px] text-slate-500">
+                              {T(`आधार: ${d.answered} उत्तरदाता`, `Base: ${d.answered} respondents`)}
+                              {skipped ? T(` · बताना नहीं चाहते: ${skipped.count} (${Math.round(skipped.pct)}%)`, ` · Prefer not to say: ${skipped.count} (${Math.round(skipped.pct)}%)`) : ""}
+                            </p>
+                          </div>
+                        );
+                      })(),
+                    }))}
+                />
+              ) : (
+                <Empty>{noData}</Empty>
+              )}
+            </div>
+            <DetailDialog trigger={T("सभी देखें", "View all")} title={T("उत्तरदाताओं की प्रोफ़ाइल (वैकल्पिक)", "Respondent profile (optional)")} sub={T("जिन्होंने जानकारी दी, उनके आधार पर", "Based on those who shared the information")} closeLabel={closeLabel}>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                {(["gender", "age_group", "social_category", "religion"] as const).map((k) => (
+                  <div key={k} className="rounded-xl border border-slate-100 p-3">
+                    <p className="mb-3 text-[13px] font-extrabold text-[#0b1f3a]">
+                      {{ gender: T("लिंग", "Gender"), age_group: T("आयु वर्ग", "Age group"), social_category: T("सामाजिक श्रेणी", "Social category"), religion: T("धर्म", "Religion") }[k]}{" "}
+                      <span className="font-normal text-slate-500">(N={data.demographics[k].answered})</span>
+                    </p>
+                    {data.demographics[k].answered ? <Donut items={data.demographics[k].items} total={data.demographics[k].answered} centerLabel={T("उत्तर", "answers")} size={130} legend="side" /> : <Empty>{noData}</Empty>}
+                  </div>
+                ))}
+              </div>
+            </DetailDialog>
+          </Card>
+        )}
+      </div>
+
+      {/* Row 4: deep-analysis tiles (+ the open module) */}
+      {Object.keys(deepPanels).length > 0 && (
+        <div className="mt-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {deepPanels["issue-analysis"] && (
+              <Tile
+                id="issue-analysis"
+                icon={<Target size={22} />}
+                tone="orange"
+                title={T("मुद्दा विश्लेषण (विस्तृत)", "Issue intelligence")}
+                desc={T("हर मुद्दे का आयु, लिंग, सामाजिक श्रेणी और क्षेत्र के अनुसार विश्लेषण।", "Every issue by age, gender, social category and area.")}
+                meta={extras.previews.issueTop ? T(`शीर्ष: ${extras.previews.issueTop.label} (${Math.round(extras.previews.issueTop.pct)}%)`, `Top: ${extras.previews.issueTop.label} (${Math.round(extras.previews.issueTop.pct)}%)`) : undefined}
+                cta={T("देखें", "Open")}
+              />
+            )}
+            {deepPanels.cross && (
+              <Tile
+                id="cross"
+                icon={<Network size={22} />}
+                tone="green"
+                title={T("क्रॉस विश्लेषण", "Cross-analysis")}
+                desc={T("किसी भी दो पहलुओं का गतिशील विश्लेषण (जैसे आयु × पार्टी, लिंग × मुद्दा)।", "Any two dimensions, dynamically (e.g. age × party, gender × issue).")}
+                meta={T("8 आयाम · 9 तैयार संयोजन", "8 dimensions · 9 presets")}
+                cta={T("देखें", "Open")}
+              />
+            )}
+            {deepPanels.geo && (
+              <Tile
+                id="geo"
+                icon={<MapIcon size={22} />}
+                tone="sky"
+                title={scope.level === "none" ? T("राज्यवार तुलना", "State comparison") : T("भौगोलिक तुलना", "Geographic comparison")}
+                desc={
+                  scope.level === "none"
+                    ? T("राज्यों की तुलना विभिन्न मानकों पर।", "States compared on several measures.")
+                    : scope.level === "constituency"
+                      ? T("राज्य, जिला और विधानसभा स्तर की तुलना तथा दो क्षेत्रों की आमने-सामने तुलना।", "State vs district vs constituency, and any two areas side by side.")
+                      : T("जिलों और विधानसभा क्षेत्रों की तुलना विभिन्न मानकों पर।", "Districts and constituencies compared on several measures.")
+                }
+                meta={extras.previews.geoUnits && unitName ? T(`${extras.previews.geoUnits} ${unitName} में प्रतिक्रियाएं`, `${extras.previews.geoUnits} ${unitName} with responses`) : undefined}
+                cta={T("देखें", "Open")}
+              />
+            )}
+            {deepPanels.time && (
+              <Tile
+                id="time"
+                icon={<Clock size={22} />}
+                tone="purple"
+                title={T("समय एवं अवधि तुलना", "Time & period comparison")}
+                desc={T("दो अलग-अलग समय अवधि के सर्वे प्रतिक्रियाओं की तुलना।", "Compare survey responses between two periods.")}
+                meta={extras.previews.timeDays ? T(`${extras.previews.timeDays} दिनों का डेटा`, `${extras.previews.timeDays} days of data`) : undefined}
+                cta={T("देखें", "Open")}
+              />
+            )}
+          </div>
+          <PanelSlot panels={deepPanels} closeLabel={closeLabel} />
         </div>
-      ))}
+      )}
+
+      {/* Row 5: data quality · ask the data · report download (+ open panel) */}
+      <div className="mt-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)_minmax(0,1fr)]">
+          {lowerPanels.quality && (
+            <Tile
+              id="quality"
+              icon={<ShieldCheck size={22} />}
+              tone="green"
+              title={T("डेटा गुणवत्ता", "Data quality")}
+              desc={T("प्रतिक्रिया गुणवत्ता, पूर्णता दर, भौगोलिक कवरेज और नमूना आकार का विश्लेषण।", "Response quality, completion rate, geographic coverage and sample size.")}
+              meta={T(`पूर्णता दर ${Math.round(extras.quality.completionRate)}% · N=${extras.quality.total}`, `Completion ${Math.round(extras.quality.completionRate)}% · N=${extras.quality.total}`)}
+              cta={T("देखें", "Open")}
+            />
+          )}
+          {flags.askData && <AskCard hi={hi} />}
+          {flags.detailedExport && <ReportCard hi={hi} query={query} disabled={!data.total} />}
+        </div>
+        <PanelSlot panels={lowerPanels} closeLabel={closeLabel} />
+      </div>
+
+      {/* Method note + link to the concise Result */}
+      <div className={cn(CARD, "mt-4 flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between")}>
+        <Methodology hi={hi} data={data} className="max-w-4xl" />
+        <Link href={scope.params.state === ALL_STATES_PARAM ? resultsPath() : resultsPath(scope.params)} className="shrink-0 rounded-lg border border-slate-200 px-3.5 py-2 text-sm font-semibold text-[#1677ff] hover:bg-slate-50">
+          {T("संक्षिप्त परिणाम देखें →", "Concise results →")}
+        </Link>
+      </div>
+    </DeepHubProvider>
+  );
+}
+
+/** Small-sample state: the count only, never a share (N below MIN_GROUP_N). */
+function SmallSample({ n, hi }: { n: number; hi: boolean }) {
+  return (
+    <div className="flex min-h-[116px] items-center gap-3.5 rounded-xl border border-dashed border-slate-200 bg-[#fbfcfe] px-3.5 py-3">
+      <span className="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-full border-[6px] border-slate-100 bg-white" aria-hidden="true">
+        <span className="text-lg font-black leading-none text-[#0b1f3a]">{n}</span>
+      </span>
+      <div className="min-w-0">
+        <p className="text-[13.5px] font-extrabold leading-snug text-[#0b1f3a]">
+          {hi ? `केवल ${n} ${n === 1 ? "प्रतिक्रिया उपलब्ध है" : "प्रतिक्रियाएं उपलब्ध हैं"}` : `Only ${n} ${n === 1 ? "response" : "responses"} available`}
+        </p>
+        <p className="mt-1 text-[12px] leading-relaxed text-slate-500">
+          {hi ? "प्रतिशत दिखाने के लिए पर्याप्त प्रतिक्रियाएं उपलब्ध नहीं हैं।" : "Not enough responses to show percentages."}
+        </p>
+      </div>
     </div>
   );
 }
-
-function IssueTrendTable({ trend, hi }: { trend: NonNullable<ScopeAnalysis["issueTrend"]>; hi: boolean }) {
-  return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[300px] text-xs">
-        <thead>
-          <tr className="text-slate-500">
-            <th className="py-1.5 text-left font-semibold">{hi ? "मुद्दा" : "Issue"}</th>
-            {trend.buckets.map((b) => (
-              <th key={b} className="px-1 py-1.5 text-right font-semibold">
-                {b}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {trend.series.map((s) => (
-            <tr key={s.key} className="border-t border-slate-50">
-              <th scope="row" className="py-1.5 text-left font-semibold text-slate-700">
-                <span className="mr-1.5 inline-block h-2 w-2 rounded-full" style={{ backgroundColor: s.color }} aria-hidden="true" />
-                {s.label}
-              </th>
-              {s.values.map((v, i) => (
-                <td key={i} className="px-1 py-1.5 text-right font-bold text-slate-900">
-                  {v === null ? "—" : `${round(v)}%`}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-function Methodology({ hi, data }: { hi: boolean; data: ScopeAnalysis }) {
-  const fmt = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString(hi ? "hi-IN" : "en-IN", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Kolkata" }) : "—");
-  return (
-    <section className="rounded-2xl border border-slate-200/80 bg-white p-4 text-xs leading-relaxed text-slate-600 shadow-2xs sm:p-5">
-      <p className="mb-1 flex items-center gap-2 text-sm font-bold text-slate-800">
-        <Lightbulb size={16} className="text-amber-500" aria-hidden="true" />
-        {hi ? "पद्धति और स्रोत" : "Method & source"}
-      </p>
-      <p>
-        {hi
-          ? `यह votersurvey.in पर उपयोगकर्ताओं द्वारा स्वेच्छा से भेजी गई मान्य (VALID) प्रतिक्रियाओं पर आधारित है; यह कोई आधिकारिक चुनाव परिणाम या पूर्वानुमान नहीं है। सर्वे अवधि: ${fmt(data.firstResponseAt)} – ${fmt(data.lastResponseAt)}। प्रत्येक प्रश्न का प्रतिशत उसी प्रश्न का उत्तर देने वाले उत्तरदाताओं के आधार पर है।`
-          : `Based on valid responses voluntarily submitted on votersurvey.in; not an official election result or forecast. Survey period: ${fmt(data.firstResponseAt)} – ${fmt(data.lastResponseAt)}. Each percentage uses respondents who answered that question as the base.`}
-        {data.isSynthetic ? (hi ? " (डेमो डेटा मोड सक्रिय)" : " (Demo data mode active)") : ""}
-      </p>
-    </section>
-  );
-}
-
-function Notice({ text }: { text: string }) {
-  return (
-    <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center">
-      <p className="text-base font-semibold text-slate-700">{text}</p>
-    </div>
-  );
-}
-

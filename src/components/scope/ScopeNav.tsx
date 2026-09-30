@@ -136,7 +136,7 @@ export function ScopeSelectors({ hi, basePath, value, options, keep, className, 
           onChange={(e) => change({ state: local.state, district: local.district, constituency: e.target.value || undefined })}
         >
           <option value="">
-            {local.district ? (hi ? "सभी विधानसभा क्षेत्र" : "All constituencies") : hi ? "विधानसभा क्षेत्र चुनें" : "Select constituency"}
+            {local.state ? (hi ? "सभी विधानसभा क्षेत्र" : "All constituencies") : hi ? "विधानसभा क्षेत्र चुनें" : "Select constituency"}
           </option>
           {options.constituencies.map((o) => (
             <option key={o.slug} value={o.slug}>
@@ -158,48 +158,6 @@ function Field({ icon, label, children }: { icon: ReactNode; label: string; chil
         {icon}
       </span>
       {children}
-      <ChevronDown size={16} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-500" aria-hidden="true" />
-    </label>
-  );
-}
-
-/** A select that updates one query param (used for analysis filters). */
-export function QueryParamSelect({
-  ariaLabel,
-  icon,
-  href,
-  value,
-  options,
-}: {
-  ariaLabel: string;
-  icon: ReactNode;
-  href: (value: string) => string;
-  value: string;
-  options: { value: string; label: string }[];
-}) {
-  const { navigate } = useScopeNav();
-  const [local, setLocal] = useState(value);
-  return (
-    <label className="relative block min-w-0">
-      <span className="sr-only">{ariaLabel}</span>
-      <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-blue-600" aria-hidden="true">
-        {icon}
-      </span>
-      <select
-        aria-label={ariaLabel}
-        value={local}
-        onChange={(e) => {
-          setLocal(e.target.value);
-          navigate(href(e.target.value));
-        }}
-        className="h-11 w-full cursor-pointer appearance-none rounded-xl border border-[#dde5f0] bg-white pl-10 pr-9 text-sm font-semibold text-[#0b1f3a] shadow-[0_1px_2px_rgba(15,31,75,0.05)] focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-      >
-        {options.map((o) => (
-          <option key={o.value} value={o.value}>
-            {o.label}
-          </option>
-        ))}
-      </select>
       <ChevronDown size={16} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-500" aria-hidden="true" />
     </label>
   );
