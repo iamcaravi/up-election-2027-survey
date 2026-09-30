@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { apiServerError } from "@/lib/api-errors";
 import { prisma } from "@/lib/prisma";
 import { getPublicStatewideResults } from "@/lib/public-statewide-results";
 
@@ -14,24 +15,33 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
     return NextResponse.json({ error: "Missing required ?state=<slug> parameter." }, { status: 400 });
   }
 
-  const state = await prisma.state.findUnique({ where: { slug: stateSlug } });
-  if (!state) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  try {
+    const state = await prisma.state.findUnique({ where: { slug: stateSlug } });
+    if (!state) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  const election = electionSlug
-    ? await prisma.election.findUnique({ where: { stateId_slug: { stateId: state.id, slug: electionSlug } } })
-    : await prisma.election.findFirst({ where: { stateId: state.id, isActive: true }, orderBy: { year: "desc" } });
-  if (!election) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    const election = electionSlug
+      ? await prisma.election.findUnique({ where: { stateId_slug: { stateId: state.id, slug: electionSlug } } })
+      : await prisma.election.findFirst({ where: { stateId: state.id, isActive: true }, orderBy: { year: "desc" } });
+    if (!election) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  // District slug is only unique within a state, so it must be resolved
-  // scoped to the resolved state — never globally.
-  const district = await prisma.district.findUnique({
-    where: { stateId_slug: { stateId: state.id, slug } },
-    select: { id: true, name: true, slug: true },
-  });
-  if (!district) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    // District slug is only unique within a state, so it must be resolved
+    // scoped to the resolved state — never globally.
+    const district = await prisma.district.findUnique({
+      where: { stateId_slug: { stateId: state.id, slug } },
+      select: { id: true, name: true, slug: true },
+    });
+    if (!district) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  const results = await getPublicStatewideResults(election.id, district);
-  if (!results) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    const results = await getPublicStatewideResults(election.id, district);
+    if (!results) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  return NextResponse.json(results, { headers: { "Cache-Control": "no-store" } });
+    return NextResponse.json(results, { headers: { "Cache-Control": "no-store" } });
+  } catch (error) {
+    return apiServerError(
+      "GET /api/districts/[slug]/results",
+      `districtResults(state=${stateSlug}, district=${slug})`,
+      "DISTRICT_RESULTS_FAILED",
+      error
+    );
+  }
 }

@@ -75,13 +75,29 @@ export const viewport: Viewport = {
   ],
 };
 
+// Site chrome data (nav state links, header/footer padding, footer social
+// links). The root layout sits above every error boundary, so an error thrown
+// here cannot be rendered as an error page: on the Worker it escapes the fetch
+// handler and Cloudflare answers with Error 1101. If this data cannot be read,
+// log it and render the chrome without it; the page below still reports its
+// own failure through the nearest error.tsx.
+async function loadSiteChromeData() {
+  try {
+    const states = await getStates();
+    const sectionsConfigRaw = await getSiteSetting("HOMEPAGE_SECTIONS_CONFIG", DEFAULT_HOMEPAGE_SECTIONS_CONFIG);
+    const socialLinks = await getSocialLinks();
+    return { states, sectionsConfigRaw, socialLinks };
+  } catch (error) {
+    console.error("[layout] site chrome data failed to load:", error);
+    return { states: [], sectionsConfigRaw: DEFAULT_HOMEPAGE_SECTIONS_CONFIG, socialLinks: {} };
+  }
+}
+
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   // Keep DB reads serialized on Workers. Parallel Prisma calls can cause
   // intermittent request-context failures under concurrent mobile requests.
   const locale = await getServerLocale();
-  const states = await getStates();
-  const sectionsConfigRaw = await getSiteSetting("HOMEPAGE_SECTIONS_CONFIG", DEFAULT_HOMEPAGE_SECTIONS_CONFIG);
-  const socialLinks = await getSocialLinks();
+  const { states, sectionsConfigRaw, socialLinks } = await loadSiteChromeData();
   // Every state's slug + current election slug — SiteChrome (a client
   // component) uses the current URL to resolve nav links to WHICHEVER
   // state the visitor is actually browsing, instead of the site ever

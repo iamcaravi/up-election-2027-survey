@@ -62,6 +62,8 @@ export function FieldSelect<T extends { id: string }>({
   onSelect,
   icon,
   iconClass,
+  errorMessage,
+  onRetry,
 }: {
   label: string;
   placeholder: string;
@@ -74,6 +76,9 @@ export function FieldSelect<T extends { id: string }>({
   onSelect: (item: T) => void;
   icon: ReactNode;
   iconClass: string;
+  /** Set when the options failed to load — shown instead of "no options". */
+  errorMessage?: string;
+  onRetry?: () => void;
 }) {
   const { t, locale } = useLocale();
   const [open, setOpen] = useState(false);
@@ -235,7 +240,25 @@ export function FieldSelect<T extends { id: string }>({
               </div>
             </div>
             <div className="max-h-64 overflow-y-auto">
-              {filteredItems.length === 0 && <p className="px-4 py-3 text-sm text-[#101A3A]/60">{noOptionsLabel}</p>}
+              {errorMessage && items.length === 0 ? (
+                <div role="alert" className="px-4 py-3">
+                  <p className="text-sm font-medium text-red-700">{errorMessage}</p>
+                  {onRetry && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        closeDropdown();
+                        onRetry();
+                      }}
+                      className="mt-2 text-sm font-bold text-[#101A3A] underline underline-offset-2"
+                    >
+                      {t.common.retry}
+                    </button>
+                  )}
+                </div>
+              ) : (
+                filteredItems.length === 0 && <p className="px-4 py-3 text-sm text-[#101A3A]/60">{noOptionsLabel}</p>
+              )}
               {filteredItems.map((item, idx) => (
                 <button
                   key={item.id}
@@ -286,12 +309,17 @@ export function SurveyEntryCard({ states, heading, initialDistricts }: SurveyEnt
   const [selectedConstituency, setSelectedConstituency] = useState<ConstituencyItem | null>(null);
   const [loadingDistricts, setLoadingDistricts] = useState(false);
   const [loadingConstituencies, setLoadingConstituencies] = useState(false);
+  const [districtsError, setDistrictsError] = useState(false);
+  const [constituenciesError, setConstituenciesError] = useState(false);
+  const [districtsReload, setDistrictsReload] = useState(0);
+  const [constituenciesReload, setConstituenciesReload] = useState(0);
   const [startingSurvey, setStartingSurvey] = useState(false);
 
   useEffect(() => {
     setSelectedDistrict(null);
     setConstituencies([]);
     setSelectedConstituency(null);
+    setDistrictsError(false);
     if (!selectedState) {
       setDistricts([]);
       setLoadingDistricts(false);
@@ -306,37 +334,68 @@ export function SurveyEntryCard({ states, heading, initialDistricts }: SurveyEnt
       return;
     }
 
+    // A failed request is an error state, never an empty list: "no districts"
+    // and "could not load districts" must look different to the visitor.
+    let cancelled = false;
     setDistricts([]);
     setLoadingDistricts(true);
     fetch(`/api/districts?state=${selectedState.slug}`)
       .then(async (res) => {
         const data = await res.json().catch(() => null);
-        if (!res.ok) throw new Error(data?.error || "Failed to load districts.");
-        return data;
+        if (!res.ok || !Array.isArray(data)) {
+          throw new Error(`districts request failed: HTTP ${res.status} ${data?.code ?? ""}`.trim());
+        }
+        return data as DistrictItem[];
       })
-      .then((data) => setDistricts(Array.isArray(data) ? data : []))
-      .catch(() => setDistricts([]))
-      .finally(() => setLoadingDistricts(false));
-  }, [selectedState, preloadedDistricts]);
+      .then((data) => {
+        if (!cancelled) setDistricts(data);
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        console.error("[survey-selector] district list failed to load:", error);
+        setDistrictsError(true);
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingDistricts(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedState, preloadedDistricts, districtsReload]);
 
   useEffect(() => {
     setSelectedConstituency(null);
     setConstituencies([]);
+    setConstituenciesError(false);
     if (!selectedState || !selectedDistrict) {
       setLoadingConstituencies(false);
       return;
     }
+    let cancelled = false;
     setLoadingConstituencies(true);
     fetch(`/api/districts/${selectedDistrict.slug}?state=${selectedState.slug}`)
       .then(async (res) => {
         const data = await res.json().catch(() => null);
-        if (!res.ok) throw new Error(data?.error || "Failed to load constituencies.");
-        return data;
+        if (!res.ok || !Array.isArray(data?.constituencies)) {
+          throw new Error(`constituencies request failed: HTTP ${res.status} ${data?.code ?? ""}`.trim());
+        }
+        return data.constituencies as ConstituencyItem[];
       })
-      .then((data) => setConstituencies(Array.isArray(data?.constituencies) ? data.constituencies : []))
-      .catch(() => setConstituencies([]))
-      .finally(() => setLoadingConstituencies(false));
-  }, [selectedState, selectedDistrict]);
+      .then((data) => {
+        if (!cancelled) setConstituencies(data);
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        console.error("[survey-selector] constituency list failed to load:", error);
+        setConstituenciesError(true);
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingConstituencies(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedState, selectedDistrict, constituenciesReload]);
 
   const canSubmit = Boolean(selectedState && selectedConstituency);
 
@@ -423,7 +482,7 @@ export function SurveyEntryCard({ states, heading, initialDistricts }: SurveyEnt
         />
         <FieldSelect
           label={t.heroSurvey.selectDistrict}
-          placeholder={loadingDistricts ? t.common.loading : t.heroSurvey.selectDistrict}
+          placeholder={loadingDistricts ? t.common.loading : districtsError ? t.heroSurvey.loadFailedShort : t.heroSurvey.selectDistrict}
           value={selectedDistrict}
           items={districts}
           disabled={!selectedState || loadingDistricts}
@@ -448,12 +507,14 @@ export function SurveyEntryCard({ states, heading, initialDistricts }: SurveyEnt
             )
           }
           onSelect={setSelectedDistrict}
+          errorMessage={districtsError ? t.heroSurvey.districtsLoadFailed : undefined}
+          onRetry={() => setDistrictsReload((n) => n + 1)}
           icon={<Building2 size={13} strokeWidth={2.5} />}
           iconClass="bg-emerald-100 text-emerald-700"
         />
         <FieldSelect
           label={t.heroSurvey.selectConstituency}
-          placeholder={loadingConstituencies ? t.common.loading : t.heroSurvey.selectConstituency}
+          placeholder={loadingConstituencies ? t.common.loading : constituenciesError ? t.heroSurvey.loadFailedShort : t.heroSurvey.selectConstituency}
           value={selectedConstituency}
           items={constituencies}
           disabled={!selectedDistrict || loadingConstituencies}
@@ -482,6 +543,8 @@ export function SurveyEntryCard({ states, heading, initialDistricts }: SurveyEnt
             )
           }
           onSelect={setSelectedConstituency}
+          errorMessage={constituenciesError ? t.heroSurvey.constituenciesLoadFailed : undefined}
+          onRetry={() => setConstituenciesReload((n) => n + 1)}
           icon={<Users size={13} strokeWidth={2.5} />}
           iconClass="bg-rose-100 text-rose-700"
         />

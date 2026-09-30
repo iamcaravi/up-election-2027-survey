@@ -56,6 +56,10 @@ export function HomeHero({ surveyStates, initialDistricts = [], stats }: HomeHer
 
   const [loadingDistricts, setLoadingDistricts] = useState(false);
   const [loadingConstituencies, setLoadingConstituencies] = useState(false);
+  const [districtsError, setDistrictsError] = useState(false);
+  const [constituenciesError, setConstituenciesError] = useState(false);
+  const [districtsReload, setDistrictsReload] = useState(0);
+  const [constituenciesReload, setConstituenciesReload] = useState(0);
   const [startingSurvey, setStartingSurvey] = useState(false);
 
   // Set default state to UP if available
@@ -71,6 +75,7 @@ export function HomeHero({ surveyStates, initialDistricts = [], stats }: HomeHer
     setSelectedDistrict(null);
     setSelectedConstituency(null);
     setConstituencies([]);
+    setDistrictsError(false);
 
     if (!selectedState) {
       setDistricts([]);
@@ -84,38 +89,69 @@ export function HomeHero({ surveyStates, initialDistricts = [], stats }: HomeHer
       return;
     }
 
+    // A failed request is an error state, never an empty list: "no districts"
+    // and "could not load districts" must look different to the visitor.
+    let cancelled = false;
     setDistricts([]);
     setLoadingDistricts(true);
     fetch(`/api/districts?state=${selectedState.slug}`)
       .then(async (res) => {
         const data = await res.json().catch(() => null);
-        if (!res.ok) throw new Error(data?.error || "Failed to load districts.");
-        return data;
+        if (!res.ok || !Array.isArray(data)) {
+          throw new Error(`districts request failed: HTTP ${res.status} ${data?.code ?? ""}`.trim());
+        }
+        return data as DistrictItem[];
       })
-      .then((data) => setDistricts(Array.isArray(data) ? data : []))
-      .catch(() => setDistricts([]))
-      .finally(() => setLoadingDistricts(false));
-  }, [selectedState, initialDistricts]);
+      .then((data) => {
+        if (!cancelled) setDistricts(data);
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        console.error("[survey-selector] district list failed to load:", error);
+        setDistrictsError(true);
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingDistricts(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedState, initialDistricts, districtsReload]);
 
   // Load constituencies when district changes
   useEffect(() => {
     setSelectedConstituency(null);
     setConstituencies([]);
+    setConstituenciesError(false);
     if (!selectedState || !selectedDistrict) {
       setLoadingConstituencies(false);
       return;
     }
+    let cancelled = false;
     setLoadingConstituencies(true);
     fetch(`/api/districts/${selectedDistrict.slug}?state=${selectedState.slug}`)
       .then(async (res) => {
         const data = await res.json().catch(() => null);
-        if (!res.ok) throw new Error(data?.error || "Failed to load constituencies.");
-        return data;
+        if (!res.ok || !Array.isArray(data?.constituencies)) {
+          throw new Error(`constituencies request failed: HTTP ${res.status} ${data?.code ?? ""}`.trim());
+        }
+        return data.constituencies as ConstituencyItem[];
       })
-      .then((data) => setConstituencies(Array.isArray(data?.constituencies) ? data.constituencies : []))
-      .catch(() => setConstituencies([]))
-      .finally(() => setLoadingConstituencies(false));
-  }, [selectedState, selectedDistrict]);
+      .then((data) => {
+        if (!cancelled) setConstituencies(data);
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        console.error("[survey-selector] constituency list failed to load:", error);
+        setConstituenciesError(true);
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingConstituencies(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedState, selectedDistrict, constituenciesReload]);
 
   const getSurveyHref = () => {
     if (selectedState && selectedConstituency) {
@@ -247,7 +283,7 @@ export function HomeHero({ surveyStates, initialDistricts = [], stats }: HomeHer
               <div className="w-full lg:w-auto">
                 <FieldSelect
                   label={t.heroSurvey.selectDistrict}
-                  placeholder={loadingDistricts ? t.common.loading : t.heroSurvey.selectDistrict}
+                  placeholder={loadingDistricts ? t.common.loading : districtsError ? t.heroSurvey.loadFailedShort : t.heroSurvey.selectDistrict}
                   value={selectedDistrict}
                   items={districts}
                   disabled={!selectedState || loadingDistricts}
@@ -272,6 +308,8 @@ export function HomeHero({ surveyStates, initialDistricts = [], stats }: HomeHer
                     )
                   }
                   onSelect={setSelectedDistrict}
+                  errorMessage={districtsError ? t.heroSurvey.districtsLoadFailed : undefined}
+                  onRetry={() => setDistrictsReload((n) => n + 1)}
                   icon={<Building2 size={15} className="text-blue-600" />}
                   iconClass="bg-blue-50 text-blue-600"
                 />
@@ -281,7 +319,7 @@ export function HomeHero({ surveyStates, initialDistricts = [], stats }: HomeHer
               <div className="w-full lg:w-auto">
                 <FieldSelect
                   label={t.heroSurvey.selectConstituency}
-                  placeholder={loadingConstituencies ? t.common.loading : (locale === "hi" ? "विधानसभा चुनें" : t.heroSurvey.selectConstituency)}
+                  placeholder={loadingConstituencies ? t.common.loading : constituenciesError ? t.heroSurvey.loadFailedShort : (locale === "hi" ? "विधानसभा चुनें" : t.heroSurvey.selectConstituency)}
                   value={selectedConstituency}
                   items={constituencies}
                   disabled={!selectedDistrict || loadingConstituencies}
@@ -310,6 +348,8 @@ export function HomeHero({ surveyStates, initialDistricts = [], stats }: HomeHer
                     )
                   }
                   onSelect={setSelectedConstituency}
+                  errorMessage={constituenciesError ? t.heroSurvey.constituenciesLoadFailed : undefined}
+                  onRetry={() => setConstituenciesReload((n) => n + 1)}
                   icon={<Users size={15} className="text-blue-600" />}
                   iconClass="bg-blue-50 text-blue-600"
                 />

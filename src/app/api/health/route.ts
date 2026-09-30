@@ -4,20 +4,26 @@ import { prisma } from "@/lib/prisma";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
+  const startedAt = Date.now();
   const checks = {
     database: "error" as "ok" | "error",
     sessionSecret: process.env.SESSION_SECRET ? ("configured" as const) : ("missing" as const),
     visitorPresence: "error" as "ok" | "error",
     surveys: "error" as "ok" | "error",
   };
+  // Exact errors stay in the server log; the response only names the failed
+  // check so it never leaks connection details or SQL.
   const errors: Record<string, string> = {};
+  let databaseLatencyMs: number | null = null;
 
   try {
+    const dbStartedAt = Date.now();
     await prisma.$queryRaw`SELECT 1`;
+    databaseLatencyMs = Date.now() - dbStartedAt;
     checks.database = "ok";
   } catch (error) {
-    console.error("Health check database error:", error);
-    errors.database = error instanceof Error ? error.message : "unknown database error";
+    console.error("[api] GET /api/health database check failed:", error);
+    errors.database = "DATABASE_UNAVAILABLE";
   }
 
   if (checks.database === "ok") {
@@ -25,16 +31,16 @@ export async function GET() {
       await prisma.visitorPresence.count();
       checks.visitorPresence = "ok";
     } catch (error) {
-      console.error("Health check visitorPresence error:", error);
-      errors.visitorPresence = error instanceof Error ? error.message : "unknown visitorPresence error";
+      console.error("[api] GET /api/health visitorPresence check failed:", error);
+      errors.visitorPresence = "QUERY_FAILED";
     }
 
     try {
       await prisma.survey.count();
       checks.surveys = "ok";
     } catch (error) {
-      console.error("Health check survey error:", error);
-      errors.surveys = error instanceof Error ? error.message : "unknown survey error";
+      console.error("[api] GET /api/health survey check failed:", error);
+      errors.surveys = "QUERY_FAILED";
     }
   }
 
@@ -45,7 +51,12 @@ export async function GET() {
     checks.surveys === "ok";
 
   return NextResponse.json(
-    { ok, checks, ...(Object.keys(errors).length ? { errors } : {}) },
+    {
+      ok,
+      checks,
+      latencyMs: { database: databaseLatencyMs, total: Date.now() - startedAt },
+      ...(Object.keys(errors).length ? { errors } : {}),
+    },
     {
       status: ok ? 200 : 503,
       headers: { "Cache-Control": "no-store" },

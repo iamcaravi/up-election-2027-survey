@@ -29,7 +29,13 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function Home() {
   const stats = await getHomeStats();
   const states = await getStates();
-  const upDistrictsData = await getDistricts("uttar-pradesh").catch(() => ({ state: null, districts: [] }));
+  // The preloaded UP district list is only an optimisation: if it fails, the
+  // hero loads the list client-side (and shows an error state if that fails
+  // too). Log it so the failure is never silent.
+  const upDistrictsData = await getDistricts("uttar-pradesh").catch((error) => {
+    console.error("[page] / getDistricts(uttar-pradesh) preload failed:", error);
+    return { state: null, districts: [] };
+  });
   const sectionsConfigRaw = await getSiteSetting("HOMEPAGE_SECTIONS_CONFIG", DEFAULT_HOMEPAGE_SECTIONS_CONFIG);
 
   const sections = normalizeHomepageSectionsConfig(sectionsConfigRaw);

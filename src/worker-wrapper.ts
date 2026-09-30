@@ -1,4 +1,5 @@
 import vinextWorker from "vinext/server/fetch-handler";
+import { runInDbRequestScope } from "./lib/db-scope";
 
 function isCacheablePublicGet(request: Request, url: URL): boolean {
   if (request.method !== "GET" && request.method !== "HEAD") return false;
@@ -46,7 +47,7 @@ function getCacheKeyUrl(url: URL, locale: string): string {
   return cacheUrl.toString();
 }
 
-export default {
+const worker = {
   async fetch(request: Request, env: any, ctx: any) {
     // Keep the explicit Worker -> process.env bridge. The Vinext/Next server
     // runtime and Prisma code read DATABASE_URL/SESSION_SECRET from process.env.
@@ -90,6 +91,16 @@ export default {
 
       const response = await (vinextWorker as any).fetch(request, env, ctx);
 
+      // A page whose data failed to load is rendered by its error boundary as
+      // HTTP 200 with no Cache-Control at all. That must never be stored at
+      // the edge (or anywhere downstream) and replayed to other visitors, so
+      // mark it no-store and skip the cache.
+      if (response && response.status === 200 && !response.headers.has("Cache-Control")) {
+        const headers = new Headers(response.headers);
+        headers.set("Cache-Control", "no-store");
+        return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
+      }
+
       if (response && response.status === 200) {
         try {
           const cache = (caches as any).default;
@@ -108,5 +119,14 @@ export default {
 
     // Default live execution for uncached / non-GET / admin / dynamic requests
     return (vinextWorker as any).fetch(request, env, ctx);
+  },
+};
+
+export default {
+  // Every request runs in its own database scope: on Workers a Postgres
+  // WebSocket may only be used by the request that opened it, so the Prisma
+  // client must never be shared between requests (see src/lib/db-scope.ts).
+  fetch(request: Request, env: any, ctx: any) {
+    return runInDbRequestScope(() => worker.fetch(request, env, ctx));
   },
 };
